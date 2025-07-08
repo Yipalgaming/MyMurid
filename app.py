@@ -414,4 +414,5 @@ def transactions():
     return render_template('transactions.html', logs=logs, total_in=total_in, total_out=total_out)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
