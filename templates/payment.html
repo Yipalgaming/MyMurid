@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Payment{% endblock %}
+{% block content %}
+
+<h2>Unpaid Orders</h2>
+
+{% if cart_items %}
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Item</th>
+      <th>Price (RM)</th>
+      <th>Qty</th>
+      <th>Subtotal (RM)</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for item_id in cart_items %}
+    <tr>
+      <td>{{ item_id.item.name }}</td>
+      <td>{{ "%.2f"|format(item_id.item.price) }}</td>
+      <td>{{ item_id.quantity }}</td>
+      <td>{{ "%.2f"|format(item_id.item.price * item_id.quantity) }}</td>
+      <td>
+        <form method="POST" style="display:inline;">
+          <input type="hidden" name="delete" value="{{ item_id.id }}">
+          <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h4>Total: RM{{ "%.2f"|format(total) }}</h4>
+<h4>Balance: <strong>RM{{ "%.2f"|format(user.balance) }}</strong></h4>
+
+<form method="POST" action="{{ url_for('payment') }}">
+  <input type="hidden" name="pay" value="true">
+  <button type="submit" class="btn btn-success">✅ Pay Now</button>
+  <a href="{{ url_for('order') }}" class="btn btn-primary">➕ Add More Orders</a>
+</form>
+
+{% else %}
+<p>No unpaid orders found.</p>
+<a href="{{ url_for('order') }}" class="btn btn-primary">Make a New Order</a>
+{% endif %}
+
+{% endblock %}

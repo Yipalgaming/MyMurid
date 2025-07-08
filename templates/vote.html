@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Vote New Food{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <div class="card p-4 shadow-sm">
+    <h2 class="mb-3">🍲 Suggest New Food</h2>
+    <form method="POST" class="form-inline mb-4">
+      <input class="form-control mr-2" name="food_name" placeholder="Enter new food name" required>
+      <button class="btn btn-primary" type="submit">Submit Vote</button>
+    </form>
+
+    <h4 class="mb-3">📋 All Suggestions</h4>
+    {% if votes %}
+      <ul class="list-group">
+        {% for v in votes %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          {% for food, count in food_summary %}
+            <tr><td>{{ food }}</td><td>{{ count }}</td></tr>
+          {% endfor %}
+          {% if user.id == v.student_id or user.role == 'admin' %}
+          <form method="POST" action="{{ url_for('delete_vote', id=v.id) }}" onsubmit="return confirm('Delete this vote?');">
+            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+          </form>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="alert alert-info">No votes submitted yet.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="/static/style.css" />
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+        integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
+        crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"
+        crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
+  <script>
+  let logoutTimer;
+
+  function resetLogoutTimer() {
+    clearTimeout(logoutTimer);
+    logoutTimer = setTimeout(() => {
+      window.location.href = "{{ url_for('logout') }}";
+    }, 2000000000000 * 60 * 1000);  // 2 minutes inactivity
+  }
+
+  // Events that reset timer
+  ['click', 'mousemove', 'keypress', 'scroll'].forEach(evt =>
+    window.addEventListener(evt, resetLogoutTimer)
+  );
+
+  resetLogoutTimer(); // Start timer on load
+</script>
+
+  <title>{% block title %}Nav Bar{% endblock %}</title>
+</head>
+<body>
+
+  {% if request.endpoint != 'login' %}
+    <div class="topnav">
+      <h2><strong>🍴 Canteen App</strong></h2>
+      <button onclick="toggleSidebar()">☰</button>
+    </div>
+  {% endif %}
+
+  {% if user.is_authenticated %}
+    <div class="wrapper">
+      <div class="sidenav" id="sidebar">
+        <div class="user-info">
+          <div class="mobile-spacer"></div>
+          {% if user.is_authenticated %}
+            {{ user.name }}<br>
+            <h3><small>{{ user.role|capitalize }}</small></h3>
+          {% endif %}
+        </div>
+        {% if user.is_authenticated %}
+          {% if user.role == 'student' %}
+              <br>
+              <br>
+              <a href="{{ url_for('student_dashboard') }}">Dashboard</a>
+              <a href="{{ url_for('order') }}">Order</a>
+              <a href="{{ url_for('payment') }}">Payment</a>
+              <a href="{{ url_for('vote') }}">Vote</a>
+              <a href="{{ url_for('feedback') }}">Feedback</a>
+          {% elif user.role == 'admin' %}
+              <a href="{{ url_for('admin_dashboard') }}">Admin Home</a>
+              <a href="{{ url_for('topup') }}">Top-up</a>
+              <a href="{{ url_for('student_balances') }}">Balances</a>
+              <a href="{{ url_for('transactions') }}">Transactions</a>
+              <a href="{{ url_for('paid_orders') }}">Paid Orders</a>
+              <a href="{{ url_for('vote') }}">Votes</a>
+              <a href="{{ url_for('feedback') }}">Feedbacks</a>
+          {% endif %}
+        <a href="{{ url_for('logout') }}" class="text-danger">Logout</a>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="main">
+    <div class="mobile-spacer"></div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+  {% block content %}{% endblock %}
+</div>
+
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+        crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('active');
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <div class="card shadow p-4">
+    <h2 class="mb-3">Welcome, {{ user.name }}!</h2>
+    <p class="lead">You are logged in as <strong>{{ user.role|capitalize }}</strong>.</p>
+
+    <hr>
+
+    <h4>Admin Tools</h4>
+    <div class="list-group">
+      <a href="{{ url_for('topup') }}" class="list-group-item list-group-item-action">💰 Top-Up Student Balance</a>
+      <a href="{{ url_for('student_balances') }}" class="list-group-item list-group-item-action">📋 View All Student Balances</a>
+      <a href="{{ url_for('transactions') }}" class="list-group-item list-group-item-action">📑 Transaction History</a>
+      <a href="{{ url_for('order') }}" class="list-group-item list-group-item-action">🍽️ Place an Order</a>
+      <a href="{{ url_for('vote') }}" class="list-group-item list-group-item-action">📊 View Food Votes</a>
+      <a href="{{ url_for('feedback') }}" class="list-group-item list-group-item-action">🗣️ View Feedback</a>
+    </div>
+
+    <hr>
+    <a href="{{ url_for('logout') }}" class="btn btn-danger mt-3">🚪 Logout</a>
+  </div>
+</div>
+{% endblock %}

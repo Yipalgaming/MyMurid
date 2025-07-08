@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+{% block content %}
+<h2>Student Login</h2>
+
+<form method="POST">
+  <input type="hidden" name="ic" id="ic" required>
+
+  <label for="pin">Enter PIN:</label><br>
+  <input name="pin" placeholder="PIN (4 digits)" required><br><br>
+
+  <label for="password">Enter Password:</label><br>
+  <input name="password" placeholder="Password (admin/staff only)" ><br><br>
+
+  <button type="submit" class="btn btn-primary" id="submitBtn" disabled>Login</button>
+  <button type="button" class="btn btn-primary" onclick="startScan()" id="resetBtn">📷 Scan IC Barcode</button>
+
+  <div id="scanner-container" style="width:300px; margin-top:10px;"></div>
+</form>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+
+<script>
+let scannerRunning = false;
+
+function startScan() {
+  if (scannerRunning) return;
+
+  document.getElementById('ic').value = '';
+  document.getElementById('submitBtn').disabled = true;
+  document.getElementById('resetBtn').disabled = false;
+
+  Quagga.init({
+    inputStream: {
+      name: "Live",
+      type: "LiveStream",
+      target: document.querySelector('#scanner-container'),
+      constraints: {
+        facingMode: "environment", // 'environment' for rear camera, 'user' for front camera
+      }
+    },
+    decoder: {
+      readers: ["code_128_reader"]
+    },
+    locate: true
+  }, function(err) {
+    if (err) {
+      console.error("Quagga init error:", err);
+      alert("Camera error. Make sure your browser has permission.");
+      return;
+    }
+    Quagga.start();
+    scannerRunning = true;
+  });
+
+  Quagga.onDetected(function(result) {
+    const code = result.codeResult.code;
+    document.getElementById('ic').value = code;
+    document.getElementById('submitBtn').disabled = false;
+    stopScan();
+  });
+}
+
+function stopScan() {
+  if (scannerRunning) {
+    Quagga.stop();
+    scannerRunning = false;
+
+    // Properly clear video/canvas from container
+    const container = document.getElementById('scanner-container');
+    container.innerHTML = '';
+  }
+}
+</script>
+{% endblock %}
