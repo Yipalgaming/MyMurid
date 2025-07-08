@@ -5,7 +5,7 @@
 
 <form method="POST">
   <label for="ic">Enter ID:</label><br>
-  <input  name="ic" id="ic" placeholder="ID (1234 for student, 9999 for admin)" required>
+  <input  name="ic" id="ic" placeholder="ID (1234 for student, 9999 for admin)" required> <!-- type="hidden" -->
 
   <label for="pin">Enter PIN:</label><br>
   <input name="pin" placeholder="PIN (4 digits)" required><br><br>
@@ -13,7 +13,7 @@
   <label for="password">Enter Password:</label><br>
   <input name="password" placeholder="Password (admin/staff only)" ><br><br>
 
-  <button type="submit" class="btn btn-primary" id="submitBtn" disabled>Login</button>
+  <button type="submit" class="btn btn-primary" id="submitBtn" >Login</button>
   <button type="button" class="btn btn-primary" onclick="startScan()" id="resetBtn">📷 Scan IC Barcode</button>
 
   <div id="scanner-container" style="width:300px; margin-top:10px;"></div>
