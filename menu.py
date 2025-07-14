@@ -12,10 +12,10 @@ with app.app_context():
     # Add new sample items
     items = [
         MenuItem(name="Nasi Lemak", price=2.00, image_filename="nasi_lemak.png"),
-        MenuItem(name="Mee Goreng", price=2.50),
-        MenuItem(name="Sandwich", price=1.50),
-        MenuItem(name="Milo", price=1.00),
-        MenuItem(name="Apple Juice", price=1.20),
+        MenuItem(name="Mee Goreng", price=2.00, image_filename="mee_goreng.png"),
+        MenuItem(name="Sandwich", price=2.00, image_filename="sandwich.png"),
+        MenuItem(name="Milo", price=1.00, image_filename="milo.png"),
+        MenuItem(name="Watermelon Juice", price=1.00, image_filename="watermelon_juice.png"),
     ]
 
     db.session.add_all(items)
