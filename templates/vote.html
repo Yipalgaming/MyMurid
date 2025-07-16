@@ -15,8 +15,9 @@
         {% for v in votes %}
         <li class="list-group-item d-flex justify-content-between align-items-center">
           {% for food, count in food_summary %}
-            <tr><td>{{ food }}</td><td>{{ count }}</td></tr>
+            <tr><td>{{ v.food }}</td><td>{{ v.count }}</td></tr>
           {% endfor %}
+          {{ v.food }}
           {% if user.id == v.student_id or user.role == 'admin' %}
           <form method="POST" action="{{ url_for('delete_vote', id=v.id) }}" onsubmit="return confirm('Delete this vote?');">
             <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
