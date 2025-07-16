@@ -18,7 +18,7 @@
     clearTimeout(logoutTimer);
     logoutTimer = setTimeout(() => {
       window.location.href = "{{ url_for('logout') }}";
-    }, 2000000000000 * 60 * 1000);  // 2 minutes inactivity
+    }, 2 * 60 * 1000);  // 2 minutes inactivity
   }
 
   // Events that reset timer
