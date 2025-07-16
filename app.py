@@ -167,6 +167,10 @@ def handle_order_payment(student):
     if student.balance < total_amount:
         flash("❌ Not enough balance.", "error")
         return redirect(url_for("payment"))
+    
+    if student.frozen == True:
+        flash("🧊 Account is frozen", "error")
+        return redirect(url_for("payment"))
 
     student.balance -= total_amount
     for order in unpaid_orders:
