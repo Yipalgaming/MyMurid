@@ -135,9 +135,6 @@ def order():
 @login_required
 def payment():
     student = StudentInfo.query.get(current_user.id)
-    if not student:
-        flash("Student not found.", "error")
-        return redirect(url_for("student_dashboard"))
 
     if request.method == "POST":
         if "delete" in request.form:
@@ -164,12 +161,12 @@ def handle_order_payment(student):
     unpaid_orders = Order.query.filter_by(student_id=student.id, paid=False).all()
     total_amount = sum(order.item.price * order.quantity for order in unpaid_orders)
 
+    if student.frozen:
+        flash("🧊 Account is frozen. Please contact an admin.", "error")
+        return redirect(url_for("payment"))
+
     if student.balance < total_amount:
         flash("❌ Not enough balance.", "error")
-        return redirect(url_for("payment"))
-    
-    if student.frozen == True:
-        flash("🧊 Account is frozen", "error")
         return redirect(url_for("payment"))
 
     student.balance -= total_amount
@@ -345,6 +342,10 @@ def topup():
         amount = request.form.get('amount')
         student = StudentInfo.query.filter_by(ic_last4=ic).first()
 
+        if student.frozen:
+            flash("🧊 Account is frozen. Please contact an admin.", "error")
+            return redirect(url_for("topup"))
+
         if student:
             try:
                 student.balance += int(amount)
@@ -419,4 +420,4 @@ def transactions():
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=port, debug=True)

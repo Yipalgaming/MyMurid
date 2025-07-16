@@ -46,7 +46,7 @@
         <div class="user-info">
           <div class="mobile-spacer"></div>
           {% if user.is_authenticated %}
-            {{ user.name }}<br>
+            <h3>{{ user.name }}</h3>
             <h3><small>{{ user.role|capitalize }}</small></h3>
           {% endif %}
         </div>

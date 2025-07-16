@@ -15,7 +15,7 @@
       </div>
 
       <button type="submit" class="btn btn-success" id="submitBtn">✅ Top-Up</button>
-      <button type="button" class="btn btn-primary mt-2" onclick="startScan()" id="resetBtn">📷 Scan IC Barcode</button>
+      <button type="button" class="btn btn-primary" onclick="startScan()" id="resetBtn">📷 Scan IC Barcode</button>
 
       <div id="scanner-container" style="width:300px; margin-top:10px;"></div>
     </form>
@@ -31,7 +31,6 @@ function startScan() {
   if (scannerRunning) return;
 
   document.getElementById('ic').value = '';
-  document.getElementById('submitBtn').disabled = true;
 
   Quagga.init({
     inputStream: {
