@@ -26,21 +26,21 @@ def create_sample_data():
         students = [
             StudentInfo(
                 name="Ahmad bin Ali",
-                ic_last4="1234",
+                ic_number="1234",
                 pin="1234",
                 role="student",
                 balance=50
             ),
             StudentInfo(
                 name="Sean Chuah Shang En",
-                ic_last4="0415",
+                ic_number="0415",
                 pin="0415",
                 role="student",
                 balance=25
             ),
             StudentInfo(
                 name="Admin Teacher",
-                ic_last4="9999",
+                ic_number="9999",
                 pin="9999",
                 password="adminpass",
                 role="admin",

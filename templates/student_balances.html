@@ -19,12 +19,12 @@
       {% for s in students %}
       <tr class="{% if s.frozen %}table-danger{% endif %}">
         <td>{{ s.name }}</td>
-        <td>{{ s.ic_last4 }}</td>
+        <td>{{ s.ic_number }}</td>
         <td>RM{{ "%.2f"|format(s.balance) }}</td>
         <td>{{ 'Frozen' if s.frozen else 'Active' }}</td>
         <td>
           <form method="POST" action="{{ url_for('toggle_card_status') }}" class="d-inline">
-            <input type="hidden" name="ic" value="{{ s.ic_last4 }}">
+            <input type="hidden" name="ic" value="{{ s.ic_number }}">
             <input type="hidden" name="action" value="{{ 'unfreeze' if s.frozen else 'freeze' }}">
             <button type="submit" class="btn btn-sm {{ 'btn-success' if s.frozen else 'btn-danger' }}">
               {{ 'Unfreeze' if s.frozen else 'Freeze' }}

@@ -12,9 +12,9 @@ with app.app_context():
 
     # Sample student
     users = [
-        StudentInfo(ic_last4='0415', name='Sean Chuah Shang En', pin='1234', role='student', balance=20, frozen=False),
-        StudentInfo(ic_last4='1234', name='Ali', pin='1234', role='student', balance=20, frozen=False),
-        StudentInfo(ic_last4='9999', name='Teacher / Admin', pin='1234', role='admin', password='adminpass', balance=0, frozen=False)
+        StudentInfo(ic_number='0415', name='Sean Chuah Shang En', pin='1234', role='student', balance=20, frozen=False),
+        StudentInfo(ic_number='1234', name='Ali', pin='1234', role='student', balance=20, frozen=False),
+        StudentInfo(ic_number='9999', name='Teacher / Admin', pin='1234', role='admin', password='adminpass', balance=0, frozen=False)
     ]
 
     db.session.add_all(users)

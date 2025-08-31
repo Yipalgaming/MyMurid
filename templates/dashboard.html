@@ -5,7 +5,7 @@
   <div class="card shadow p-4">
     <h2 class="mb-3">Welcome, {{ user.name }}!</h2>
     <p class="lead">You are logged in as <strong>{{ user.role }}</strong>.</p>
-    <p>IC Last 4: {{ user.ic_last4 }}</p>
+    <p>IC Last 4: {{ user.ic_number }}</p>
     <p>Balance: <strong>RM {{ "%.2f"|format(user.balance) }}</strong></p>
     <p>Status: {{ 'Frozen' if user.frozen else 'Active' }}</p>
     

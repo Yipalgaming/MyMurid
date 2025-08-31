@@ -9,21 +9,21 @@
         <div class="barcode-item">
             <h4>Ahmad bin Ali (Student)</h4>
             <p>IC: 1234 | PIN: 1234</p>
-            <img src="{{ url_for('generate_barcode', ic_last4='1234') }}" alt="Barcode 1234" style="max-width: 200px;">
+            <img src="{{ url_for('generate_barcode', ic_number='1234') }}" alt="Barcode 1234" style="max-width: 200px;">
             <p><strong>Scan this barcode to auto-fill IC: 1234</strong></p>
         </div>
         
         <div class="barcode-item">
             <h4>Sean Chuah Shang En (Student)</h4>
             <p>IC: 0415 | PIN: 1234</p>
-            <img src="{{ url_for('generate_barcode', ic_last4='0415') }}" alt="Barcode 0415" style="max-width: 200px;">
+            <img src="{{ url_for('generate_barcode', ic_number='0415') }}" alt="Barcode 0415" style="max-width: 200px;">
             <p><strong>Scan this barcode to auto-fill IC: 0415</strong></p>
         </div>
         
         <div class="barcode-item">
             <h4>Admin Teacher</h4>
             <p>IC: 9999 | PIN: 9999 | Password: adminpass</p>
-            <img src="{{ url_for('generate_barcode', ic_last4='9999') }}" alt="Barcode 9999" style="max-width: 200px;">
+            <img src="{{ url_for('generate_barcode', ic_number='9999') }}" alt="Barcode 9999" style="max-width: 200px;">
             <p><strong>Scan this barcode to auto-fill IC: 9999</strong></p>
         </div>
     </div>

@@ -36,7 +36,7 @@ def create_tables():
             CREATE TABLE IF NOT EXISTS student_info (
                 id SERIAL PRIMARY KEY,
                 name VARCHAR(100) NOT NULL,
-                ic_last4 VARCHAR(4) NOT NULL UNIQUE,
+                ic_number VARCHAR(4) NOT NULL UNIQUE,
                 pin VARCHAR(10) NOT NULL,
                 password VARCHAR(255),
                 role VARCHAR(20) DEFAULT 'student',
@@ -130,11 +130,11 @@ def create_tables():
         # Insert sample data
         print("\n👥 Inserting sample students...")
         cursor.execute("""
-            INSERT INTO student_info (name, ic_last4, pin, role, balance) VALUES
+            INSERT INTO student_info (name, ic_number, pin, role, balance) VALUES
             ('Ahmad bin Ali', '1234', '1234', 'student', 50.00),
             ('Sean Chuah Shang En', '0415', '0415', 'student', 25.00),
             ('Admin Teacher', '9999', '9999', 'admin', 0.00)
-            ON CONFLICT (ic_last4) DO NOTHING;
+            ON CONFLICT (ic_number) DO NOTHING;
         """)
         
         print("🍽️ Inserting sample menu items...")

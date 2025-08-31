@@ -54,7 +54,7 @@ def login():
         ic = request.form.get('ic')
         pin = request.form.get('pin')
         password = request.form.get('password')
-        user = StudentInfo.query.filter_by(ic_last4=ic).first()
+        user = StudentInfo.query.filter_by(ic_number=ic).first()
 
         if user and user.pin == pin:
             if user.role == 'admin' and user.password != password:
@@ -259,18 +259,18 @@ def delete_order(id):
 def scan():
     data = request.get_json()
     code = data.get('code')
-    student = StudentInfo.query.filter_by(ic_last4=code).first()
+    student = StudentInfo.query.filter_by(ic_number=code).first()
     if not student:
         return jsonify({"success": False, "message": "Student not found"})
     if student.frozen:
         return jsonify({"success": False, "message": "Card is frozen."})
     return jsonify({"success": True, "name": student.name, "balance": student.balance})
 
-@app.route('/generate_barcode/<ic_last4>')
-def generate_barcode(ic_last4):
-    filename = f'static/barcodes/{ic_last4}'
+@app.route('/generate_barcode/<ic_number>')
+def generate_barcode(ic_number):
+    filename = f'static/barcodes/{ic_number}'
     if not os.path.exists(filename + '.png'):
-        Code128(ic_last4, writer=ImageWriter()).save(filename)
+        Code128(ic_number, writer=ImageWriter()).save(filename)
     return redirect(f'/{filename}.png')
 
 @app.route('/test-barcodes')
@@ -341,7 +341,7 @@ def topup():
     if request.method == 'POST':
         ic = request.form.get('ic')
         amount = request.form.get('amount')
-        student = StudentInfo.query.filter_by(ic_last4=ic).first()
+        student = StudentInfo.query.filter_by(ic_number=ic).first()
 
         if student.frozen:
             flash("🧊 Account is frozen. Please contact an admin.", "error")
@@ -372,7 +372,7 @@ def freeze_card():
     if current_user.role != 'admin':
         return redirect(url_for('home'))
     ic = request.form['ic']
-    student = StudentInfo.query.filter_by(ic_last4=ic).first()
+    student = StudentInfo.query.filter_by(ic_number=ic).first()
     if student:
         student.frozen = True
         db.session.commit()
@@ -387,7 +387,7 @@ def toggle_card_status():
     ic = request.form.get('ic')
     action = request.form.get('action')
 
-    student = StudentInfo.query.filter_by(ic_last4=ic).first()
+    student = StudentInfo.query.filter_by(ic_number=ic).first()
     if not student:
         flash("Student not found.", "danger")
     else:

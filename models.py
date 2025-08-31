@@ -8,7 +8,7 @@ class StudentInfo(db.Model, UserMixin):
     __tablename__ = 'student_info'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
-    ic_last4 = db.Column(db.String(4), unique=True)
+    ic_number = db.Column(db.String(4), unique=True)
     pin = db.Column(db.String(4), nullable=False)  # PIN for login
     password = db.Column(db.String(10),)  # Password for admin login
     role = db.Column(db.String(10), default='student')  # 'admin' or 'student'
