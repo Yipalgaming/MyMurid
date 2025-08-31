@@ -20,8 +20,8 @@
       {% for item in items %}
       <div class="col-md-3 mb-4">
         <div class="card h-100 text-center">
-          {% if item.image_filename %}
-            <img src="{{ url_for('static', filename='images/' + item.image_filename) }}" class="card-img-top" alt="{{ item.name }}">
+          {% if item.image_path %}
+            <img src="{{ url_for('static', filename='images/' + item.image_path) }}" class="card-img-top" alt="{{ item.name }}">
           {% else %}
             <div class="p-4 text-muted">No image available</div>
           {% endif %}
