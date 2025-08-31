@@ -119,7 +119,8 @@ def order():
             item = MenuItem.query.get(entry["id"])
             if not item:
                 continue
-            order = Order(student_id=student.id, item_id=item.id, quantity=entry["quantity"], paid=False)
+            total_price = item.price * entry["quantity"]
+            order = Order(student_id=student.id, menu_item_id=item.id, quantity=entry["quantity"], total_price=total_price, payment_status='unpaid')
             db.session.add(order)
 
         db.session.commit()
@@ -139,8 +140,8 @@ def payment():
         if "pay" in request.form:
             return handle_order_payment(student)
 
-    unpaid_orders = Order.query.filter_by(student_id=student.id, paid=False).all()
-    total = sum(order.item.price * order.quantity for order in unpaid_orders)
+    unpaid_orders = Order.query.filter_by(student_id=student.id, payment_status='unpaid').all()
+    total = sum(order.total_price for order in unpaid_orders)
     return render_template("payment.html", cart_items=unpaid_orders, total=total, user=student)
 
 def handle_order_delete(student):

@@ -19,22 +19,26 @@ class MenuItem(db.Model):
     __tablename__ = 'menu_item'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
-    price = db.Column(db.Float)
+    description = db.Column(db.Text)
+    price = db.Column(db.Numeric(10, 2))
     category = db.Column(db.String(50))
-    image_filename = db.Column(db.String(100))
+    image_path = db.Column(db.String(100))
+    is_available = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=8))))
 
 
 class Order(db.Model):
     __tablename__ = 'order'
     id = db.Column(db.Integer, primary_key=True)
     student_id = db.Column(db.Integer, db.ForeignKey('student_info.id'))
-    item_id = db.Column(db.Integer, db.ForeignKey('menu_item.id'))
+    menu_item_id = db.Column(db.Integer, db.ForeignKey('menu_item.id'))
     quantity = db.Column(db.Integer)
-    paid = db.Column(db.Boolean, default=False)
+    total_price = db.Column(db.Numeric(10, 2))
+    status = db.Column(db.String(20), default='pending')
     student = db.relationship("StudentInfo", backref="orders")
-    item = db.relationship('MenuItem', backref='orders')
-    timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=8))))
-    is_done = db.Column(db.Boolean, default=False)
+    item = db.relationship('MenuItem', backref='orders', foreign_keys=[menu_item_id])
+    order_time = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=8))))
+    payment_status = db.Column(db.String(20), default='unpaid')
     
 class Feedback(db.Model):
     id = db.Column(db.Integer, primary_key=True)
