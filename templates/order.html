@@ -45,7 +45,7 @@
     <p id="cart-total" class="boldfont">Total: RM0.00</p>
     <form id="order-form" action="{{ url_for('order') }}" method="POST">
       <input type="hidden" name="cart_items" id="cart_items_input">
-      <button type="submit" onclick="return prepareOrderSubmission()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">
+      <button type="submit" onclick="return prepareOrderSubmission()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded object-left">
         Submit Order
       </button>
     </form>
