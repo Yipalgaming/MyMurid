@@ -123,34 +123,34 @@ function startQuaggaScanner() {
     const config = cameraConfigs[configIndex];
     console.log(`Trying camera config ${configIndex + 1}:`, config);
 
-    Quagga.init({
-      inputStream: {
-        name: "Live",
-        type: "LiveStream",
+  Quagga.init({
+    inputStream: {
+      name: "Live",
+      type: "LiveStream",
         target: document.querySelector('#interactive'),
         constraints: config.constraints
-      },
-      decoder: {
+    },
+    decoder: {
         readers: [
           "code_128_reader",
           "ean_reader",
           "code_39_reader"
         ]
-      },
-      locate: true
-    }, function(err) {
-      if (err) {
+    },
+    locate: true
+  }, function(err) {
+    if (err) {
         console.error(`Camera config ${configIndex + 1} failed:`, err);
         // Try next configuration
         setTimeout(() => tryCameraConfig(configIndex + 1), 500);
-        return;
-      }
+      return;
+    }
       
       // Success! Start scanning
-      Quagga.start();
-      scannerRunning = true;
+    Quagga.start();
+    scannerRunning = true;
       document.getElementById('scanner-status').textContent = '✅ Scanner active - Point camera at barcode';
-    });
+  });
   }
 
   // Start with first camera configuration
@@ -183,7 +183,7 @@ function stopScan() {
   if (scannerRunning) {
     Quagga.stop();
     scannerRunning = false;
-    
+
     // Hide scanner and reset buttons
     document.getElementById('scanner-container').style.display = 'none';
     document.getElementById('scanBtn').style.display = 'inline-block';
