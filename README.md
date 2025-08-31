@@ -70,15 +70,15 @@ A comprehensive digital solution for school canteens and cooperatives, featuring
   - Balance: RM 50
 
 - **Sean Chuah Shang En**
-  - IC: `5678`
-  - PIN: `5678`
+  - IC: `0415`
+  - PIN: `0415`
   - Balance: RM 25
 
 ### Administrator
 - **Admin Teacher**
   - IC: `9999`
   - PIN: `9999`
-  - Password: `admin123`
+  - Password: `adminpass`
 
 ## 🗄️ Database Setup
 

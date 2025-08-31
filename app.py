@@ -10,16 +10,12 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from transactions import Transaction
 from sqlalchemy import func
 from datetime import timedelta
+from config import config
 
+# Get configuration based on environment
+config_name = os.environ.get('FLASK_ENV', 'development')
 app = Flask(__name__)
-app.secret_key = 'canteen-secret'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
-
-# Enable permanent session for auto-logout after browser close (optional)
-app.config['SESSION_PERMANENT'] = False
-
-# Optional: Set remember duration (user stays logged in for 30 minutes if remember=True)
-app.config['REMEMBER_COOKIE_DURATION'] = timedelta(minutes=30)
+app.config.from_object(config[config_name])
 
 db.init_app(app)
 migrate = Migrate(app, db)
@@ -276,6 +272,10 @@ def generate_barcode(ic_last4):
     if not os.path.exists(filename + '.png'):
         Code128(ic_last4, writer=ImageWriter()).save(filename)
     return redirect(f'/{filename}.png')
+
+@app.route('/test-barcodes')
+def test_barcodes():
+    return render_template('test_barcodes.html')
 
 @app.route('/vote', methods=['GET', 'POST'])
 @login_required

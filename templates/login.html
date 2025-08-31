@@ -13,11 +13,27 @@
   <input name="password" placeholder="Password (admin/staff only)" ><br><br>
 
   <button type="submit" class="btn btn-primary" id="submitBtn" disabled>Login</button>
-  <button type="button" class="btn btn-primary" onclick="startScan()" id="resetBtn">📷 Scan IC Barcode</button>
+  <button type="button" class="btn btn-secondary" onclick="startScan()" id="scanBtn">📷 Scan IC Barcode</button>
+  <button type="button" class="btn btn-warning" onclick="stopScan()" id="stopBtn" style="display:none;">⏹️ Stop Scanner</button>
 
-  <div id="scanner-container" style="width:300px; margin-top:10px;"></div>
+  <div id="scanner-container" style="width:100%; max-width:700px; margin-top:15px; display:none;">
+    <div id="interactive" class="quagga-container"></div>
+    <div id="scanner-status" style="text-align:center; margin-top:10px; color:#666;"></div>
+    
+    <!-- Troubleshooting Tips -->
+    <div id="troubleshooting" style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #007bff;">
+      <h4 style="margin: 0 0 10px 0; color: #007bff;">🔧 Camera Troubleshooting</h4>
+      <ul style="margin: 0; padding-left: 20px; font-size: 14px; color: #666;">
+        <li><strong>Permission denied?</strong> Look for camera icon in address bar and click "Allow"</li>
+        <li><strong>Camera in use?</strong> Close other apps using camera (Zoom, Teams, etc.)</li>
+        <li><strong>No camera found?</strong> Make sure your device has a working camera</li>
+        <li><strong>Still not working?</strong> Try refreshing the page or using a different browser</li>
+      </ul>
+    </div>
+  </div>
 </form>
 
+<!-- Include Quagga.js for barcode scanning -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
 
 <script>
@@ -26,38 +42,140 @@ let scannerRunning = false;
 function startScan() {
   if (scannerRunning) return;
 
+  // Show scanner container and update buttons
+  document.getElementById('scanner-container').style.display = 'block';
+  document.getElementById('scanBtn').style.display = 'none';
+  document.getElementById('stopBtn').style.display = 'inline-block';
+  document.getElementById('scanner-status').textContent = '🔍 Checking camera permissions...';
+
+  // Check if camera is available
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    document.getElementById('scanner-status').textContent = '❌ Camera not supported in this browser. Please use Chrome, Firefox, or Safari.';
+    return;
+  }
+
+  // Request camera permission first
+  navigator.mediaDevices.getUserMedia({ video: true })
+    .then(function(stream) {
+      // Camera permission granted, stop the test stream
+      stream.getTracks().forEach(track => track.stop());
+      
+      document.getElementById('scanner-status').textContent = '✅ Camera permission granted. Starting scanner...';
+      
+      // Start Quagga scanner
+      startQuaggaScanner();
+    })
+    .catch(function(err) {
+      console.error('Camera permission error:', err);
+      let errorMessage = '❌ Camera access denied. ';
+      
+      if (err.name === 'NotAllowedError') {
+        errorMessage += 'Please allow camera access in your browser and refresh the page.';
+      } else if (err.name === 'NotFoundError') {
+        errorMessage += 'No camera found on this device.';
+      } else if (err.name === 'NotReadableError') {
+        errorMessage += 'Camera is already in use by another application.';
+      } else {
+        errorMessage += 'Error: ' + err.message;
+      }
+      
+      document.getElementById('scanner-status').textContent = errorMessage;
+    });
+}
+
+function startQuaggaScanner() {
+  document.getElementById('scanner-status').textContent = '🚀 Initializing scanner...';
+
+  // Clear previous input
   document.getElementById('ic').value = '';
   document.getElementById('submitBtn').disabled = true;
-  document.getElementById('resetBtn').disabled = false;
 
-  Quagga.init({
-    inputStream: {
-      name: "Live",
-      type: "LiveStream",
-      target: document.querySelector('#scanner-container'),
+  // Try different camera configurations
+  const cameraConfigs = [
+    {
       constraints: {
-        facingMode: "environment", // 'environment' for rear camera, 'user' for front camera
+        facingMode: "environment", // Rear camera
+        width: { min: 640, ideal: 1280 },
+        height: { min: 480, ideal: 720 }
       }
     },
-    decoder: {
-      readers: ["code_128_reader"]
+    {
+      constraints: {
+        facingMode: "user", // Front camera as fallback
+        width: { min: 640, ideal: 1280 },
+        height: { min: 480, ideal: 720 }
+      }
     },
-    locate: true
-  }, function(err) {
-    if (err) {
-      console.error("Quagga init error:", err);
-      alert("Camera error. Make sure your browser has permission.");
+    {
+      constraints: {
+        width: { min: 640, ideal: 1280 },
+        height: { min: 480, ideal: 720 }
+      }
+    }
+  ];
+
+  function tryCameraConfig(configIndex) {
+    if (configIndex >= cameraConfigs.length) {
+      document.getElementById('scanner-status').textContent = '❌ Camera access failed. Please check permissions and try again.';
       return;
     }
-    Quagga.start();
-    scannerRunning = true;
-  });
+
+    const config = cameraConfigs[configIndex];
+    console.log(`Trying camera config ${configIndex + 1}:`, config);
+
+    Quagga.init({
+      inputStream: {
+        name: "Live",
+        type: "LiveStream",
+        target: document.querySelector('#interactive'),
+        constraints: config.constraints
+      },
+      decoder: {
+        readers: [
+          "code_128_reader",
+          "ean_reader",
+          "code_39_reader"
+        ]
+      },
+      locate: true
+    }, function(err) {
+      if (err) {
+        console.error(`Camera config ${configIndex + 1} failed:`, err);
+        // Try next configuration
+        setTimeout(() => tryCameraConfig(configIndex + 1), 500);
+        return;
+      }
+      
+      // Success! Start scanning
+      Quagga.start();
+      scannerRunning = true;
+      document.getElementById('scanner-status').textContent = '✅ Scanner active - Point camera at barcode';
+    });
+  }
+
+  // Start with first camera configuration
+  tryCameraConfig(0);
 
   Quagga.onDetected(function(result) {
     const code = result.codeResult.code;
-    document.getElementById('ic').value = code;
+    console.log("Barcode detected:", code);
+    
+    // Extract last 4 digits if it's a longer code
+    const last4 = code.toString().slice(-4);
+    document.getElementById('ic').value = last4;
     document.getElementById('submitBtn').disabled = false;
-    stopScan();
+    document.getElementById('scanner-status').textContent = 'Barcode detected: ' + last4;
+    
+    // Auto-stop scanner after successful scan
+    setTimeout(stopScan, 2000);
+  });
+
+  Quagga.onProcessed(function(result) {
+    if (result) {
+      if (result.codeResult && result.codeResult.code) {
+        document.getElementById('scanner-status').textContent = 'Processing barcode...';
+      }
+    }
   });
 }
 
@@ -65,11 +183,20 @@ function stopScan() {
   if (scannerRunning) {
     Quagga.stop();
     scannerRunning = false;
-
-    // Properly clear video/canvas from container
-    const container = document.getElementById('scanner-container');
-    container.innerHTML = '';
+    
+    // Hide scanner and reset buttons
+    document.getElementById('scanner-container').style.display = 'none';
+    document.getElementById('scanBtn').style.display = 'inline-block';
+    document.getElementById('stopBtn').style.display = 'none';
+    document.getElementById('scanner-status').textContent = '';
   }
 }
+
+// Auto-enable submit button when IC is entered
+document.getElementById('ic').addEventListener('input', function() {
+  const icValue = this.value.trim();
+  const submitBtn = document.getElementById('submitBtn');
+  submitBtn.disabled = icValue.length !== 4;
+});
 </script>
 {% endblock %}

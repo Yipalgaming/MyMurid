@@ -276,3 +276,115 @@ video {
         height: 60px;
     }
 }
+
+/* Barcode Scanner Styles */
+.quagga-container {
+    position: relative;
+    width: 100%;
+    max-width: 600px;  /* Increased from 400px */
+    margin: 0 auto;
+}
+
+.quagga-container video {
+    width: 100%;
+    height: auto;
+    min-height: 400px;  /* Added minimum height */
+    border-radius: 12px;
+    border: 2px solid #007bff;
+}
+
+#scanner-container {
+    background: #f8f9fa;
+    padding: 20px;  /* Increased padding */
+    border-radius: 12px;
+    border: 1px solid #dee2e6;
+    margin-top: 20px;
+    width: 100%;
+    max-width: 700px;  /* Increased container width */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#scanner-status {
+    font-size: 14px;
+    font-weight: 500;
+    padding: 8px;
+    background: #e9ecef;
+    border-radius: 6px;
+    margin-top: 10px;
+}
+
+/* Scanner button improvements */
+#scanBtn, #stopBtn {
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+#scanBtn:hover {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+#stopBtn:hover {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #212529;
+}
+
+/* Login form improvements */
+form {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #495057;
+}
+
+.form-group input {
+    margin-bottom: 10px;
+}
+
+/* Responsive scanner */
+@media (max-width: 768px) {
+    .quagga-container {
+        max-width: 100%;
+    }
+    
+    .quagga-container video {
+        min-height: 300px;  /* Smaller height on mobile */
+    }
+    
+    #scanner-container {
+        margin: 15px 0;
+        padding: 15px;
+        max-width: 100%;
+    }
+    
+    form {
+        padding: 15px;
+    }
+}
+
+/* Large screen optimization */
+@media (min-width: 1200px) {
+    .quagga-container {
+        max-width: 800px;  /* Even larger on big screens */
+    }
+    
+    #scanner-container {
+        max-width: 900px;
+    }
+    
+    .quagga-container video {
+        min-height: 500px;  /* Taller on large screens */
+    }
+}
