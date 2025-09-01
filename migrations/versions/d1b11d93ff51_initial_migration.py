@@ -29,14 +29,14 @@ def upgrade():
     op.create_table('student_info',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(length=100), nullable=True),
-    sa.Column('ic_number', sa.String(length=4), nullable=True),
+    sa.Column('ic_last4', sa.String(length=4), nullable=True),
     sa.Column('pin', sa.String(length=4), nullable=False),
     sa.Column('password', sa.String(length=10), nullable=True),
     sa.Column('role', sa.String(length=10), nullable=True),
     sa.Column('balance', sa.Integer(), nullable=True),
     sa.Column('frozen', sa.Boolean(), nullable=True),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('ic_number')
+    sa.UniqueConstraint('ic_last4')
     )
     op.create_table('feedback',
     sa.Column('id', sa.Integer(), nullable=False),

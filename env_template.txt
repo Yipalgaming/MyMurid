@@ -1,5 +1,5 @@
 # Local PostgreSQL Database Configuration
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/canteen_kiosk
+DATABASE_URL=postgresql://postgres:password@localhost:5432/canteen_kiosk
 
 # Flask Configuration
 SECRET_KEY=canteen-secret-key-change-in-production

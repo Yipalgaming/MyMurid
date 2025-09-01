@@ -21,18 +21,18 @@
   <tbody>
     {% for student, orders in grouped_orders.items() %}
       {% for order in orders %}
-      <tr class="{% if order.is_done %}done-row{% endif %}">
+      <tr class="{% if order.status == 'completed' %}done-row{% endif %}">
         <td>{{ student.name }}</td>
         <td>{{ order.item.name }} x{{ order.quantity }}</td>
         <td>
-          {% if order.is_done %}
+          {% if order.status == 'completed' %}
             <span class="badge bg-success">Done</span>
           {% else %}
             <span class="badge bg-warning text-dark">Pending</span>
           {% endif %}
         </td>
         <td>
-          {% if not order.is_done %}
+          {% if order.status != 'completed' %}
           <button class="btn btn-sm btn-success" onclick="markDone({{ order.id }}, this)">✔️ Done</button>
           {% endif %}
 

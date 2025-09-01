@@ -147,7 +147,7 @@ def payment():
 def handle_order_delete(student):
     order_id = request.form.get("delete")
     order = Order.query.get(order_id)
-    if order and order.student_id == student.id and not order.paid:
+    if order and order.student_id == student.id and order.payment_status == 'unpaid':
         db.session.delete(order)
         db.session.commit()
         flash("🗑️ Order deleted.", "success")
@@ -156,7 +156,7 @@ def handle_order_delete(student):
     return redirect(url_for("payment"))
 
 def handle_order_payment(student):
-    unpaid_orders = Order.query.filter_by(student_id=student.id, paid=False).all()
+    unpaid_orders = Order.query.filter_by(student_id=student.id, payment_status='unpaid').all()
     total_amount = sum(order.item.price * order.quantity for order in unpaid_orders)
 
     if student.frozen:
@@ -169,12 +169,12 @@ def handle_order_payment(student):
 
     student.balance -= total_amount
     for order in unpaid_orders:
-        order.paid = True
+        order.payment_status = 'paid'
         
     new_tx = Transaction(
-        student_id=student.id,
-        description="Payment",
-        amount=-total_amount
+        type="Payment",
+        amount=-total_amount,
+        description=f"Payment for {len(unpaid_orders)} items"
         )
     db.session.add(new_tx)
 
@@ -211,7 +211,7 @@ def paid_orders():
             flash("✅ Order marked as done.", "success")
         return redirect(url_for("paid_orders"))
 
-    paid_orders = Order.query.filter_by(paid=True).order_by(Order.timestamp.desc()).all()
+    paid_orders = Order.query.filter_by(payment_status='paid').order_by(Order.order_time.desc()).all()
 
     grouped = {}
     for order in paid_orders:
@@ -220,9 +220,9 @@ def paid_orders():
             grouped[student] = []
         grouped[student].append(order)
 
-    # Optional: sort orders by `is_done`
+    # Optional: sort orders by `status`
     for orders in grouped.values():
-        orders.sort(key=lambda x: x.is_done or False)
+        orders.sort(key=lambda x: x.status == 'completed' or False)
 
     return render_template("paid_orders.html", grouped_orders=grouped)
 
@@ -238,7 +238,7 @@ def mark_order_done(id):
         flash("Order not found.", "error")
         return redirect(url_for("paid_orders"))
 
-    order.is_done = True
+    order.status = 'completed'
     db.session.commit()
     return redirect(url_for("paid_orders"))
 
@@ -352,9 +352,9 @@ def topup():
             try:
                 student.balance += int(amount)
                 new_tx = Transaction(
-                    student_id=student.id,
-                    description="Top-up",
-                    amount=amount
+                    type="Top-up",
+                    amount=amount,
+                    description=f"Student top-up"
                 )
                 db.session.add(new_tx)
                 db.session.commit()
@@ -415,7 +415,7 @@ def student_balances():
 def transactions():
     if current_user.role != 'admin':
         return redirect(url_for('home'))
-    logs = Transaction.query.order_by(Transaction.timestamp.desc()).all()
+    logs = Transaction.query.order_by(Transaction.transaction_time.desc()).all()
     total_in = sum(t.amount for t in logs if t.amount > 0)
     total_out = sum(abs(t.amount) for t in logs if t.amount < 0)
     return render_template('transactions.html', logs=logs, total_in=total_in, total_out=total_out)
