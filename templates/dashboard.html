@@ -1,25 +1,156 @@
 {% extends "base.html" %}
 {% block title %}Dashboard{% endblock %}
 {% block content %}
-<div class="container mt-4">
-  <div class="card shadow p-4">
-    <h2 class="mb-3">Welcome, {{ user.name }}!</h2>
-    <p class="lead">You are logged in as <strong>{{ user.role }}</strong>.</p>
-    <p>IC Last 4: {{ user.ic_number }}</p>
-    <p>Balance: <strong>RM {{ "%.2f"|format(user.balance) }}</strong></p>
-    <p>Status: {{ 'Frozen' if user.frozen else 'Active' }}</p>
-    
-    <hr>
+<div class="min-h-screen bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-500 relative overflow-hidden">
+  <!-- Animated background elements -->
+  <div class="absolute inset-0 overflow-hidden">
+    <div class="absolute -top-40 -right-40 w-80 h-80 bg-white rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-pulse"></div>
+    <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-pulse animation-delay-2000"></div>
+    <div class="absolute top-40 left-40 w-80 h-80 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-pulse animation-delay-4000"></div>
+  </div>
+  <!-- Header -->
+  <div class="bg-white/90 backdrop-blur-sm shadow-lg border-b relative z-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Welcome back, {{ user.name }}!</h1>
+          <p class="text-gray-600 mt-1">Student Dashboard</p>
+        </div>
+        <div class="flex items-center space-x-4">
+          <div class="bg-gradient-to-r from-purple-500 to-pink-500 rounded-full p-3 shadow-lg">
+            <i class="fas fa-user text-white text-xl"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    <h4>Available Actions</h4>
-    <div class="list-group">
-      <a href="{{ url_for('order') }}" class="list-group-item list-group-item-action">🍽️ Place an Order</a>
-      <a href="{{ url_for('vote') }}" class="list-group-item list-group-item-action">📊 View Food Votes</a>
-      <a href="{{ url_for('feedback') }}" class="list-group-item list-group-item-action">🗣️ View Feedback</a>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+    <!-- Status Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6 transform hover:scale-105 transition-all duration-300">
+        <div class="flex items-center">
+          <div class="bg-gradient-to-r from-green-400 to-emerald-500 rounded-full p-3 mr-4 shadow-lg">
+            <i class="fas fa-wallet text-white text-xl"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-medium text-gray-600">Balance</h3>
+            <p class="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">RM {{ "%.2f"|format(user.balance) }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6 transform hover:scale-105 transition-all duration-300">
+        <div class="flex items-center">
+          <div class="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full p-3 mr-4 shadow-lg">
+            <i class="fas fa-star text-white text-xl"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-medium text-gray-600">Available Points</h3>
+            <p class="text-2xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">{{ user.available_points or 0 }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6 transform hover:scale-105 transition-all duration-300">
+        <div class="flex items-center">
+          <div class="bg-gradient-to-r from-purple-400 to-pink-500 rounded-full p-3 mr-4 shadow-lg">
+            <i class="fas fa-trophy text-white text-xl"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-medium text-gray-600">Total Points</h3>
+            <p class="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">{{ user.total_points or 0 }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6 transform hover:scale-105 transition-all duration-300">
+        <div class="flex items-center">
+          <div class="{% if user.frozen %}bg-gradient-to-r from-red-400 to-red-500{% else %}bg-gradient-to-r from-blue-400 to-blue-500{% endif %} rounded-full p-3 mr-4 shadow-lg">
+            <i class="fas {% if user.frozen %}fa-ban{% else %}fa-check-circle{% endif %} text-white text-xl"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-medium text-gray-600">Status</h3>
+            <p class="text-2xl font-bold {% if user.frozen %}bg-gradient-to-r from-red-600 to-red-700 bg-clip-text text-transparent{% else %}bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent{% endif %}">{{ 'Frozen' if user.frozen else 'Active' }}</p>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <hr>
-    <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+    <!-- Account Information -->
+    <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-6 mb-8">
+      <h2 class="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+        <i class="fas fa-info-circle text-blue-600 mr-2"></i>Account Information
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="flex items-center p-4 bg-gray-50 rounded-xl">
+          <div class="bg-blue-100 rounded-full p-2 mr-3">
+            <i class="fas fa-id-card text-blue-600 text-sm"></i>
+          </div>
+          <div>
+            <span class="text-gray-600 text-sm">IC Number:</span>
+            <span class="ml-2 font-medium text-gray-900">****{{ user.ic_number }}</span>
+          </div>
+        </div>
+        <div class="flex items-center p-4 bg-gray-50 rounded-xl">
+          <div class="bg-blue-100 rounded-full p-2 mr-3">
+            <i class="fas fa-user-tag text-blue-600 text-sm"></i>
+          </div>
+          <div>
+            <span class="text-gray-600 text-sm">Role:</span>
+            <span class="ml-2 font-medium text-gray-900 capitalize">{{ user.role }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
+      <h2 class="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+        <i class="fas fa-bolt text-blue-600 mr-2"></i>Quick Actions
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <a href="{{ url_for('order') }}" class="group bg-gray-50 rounded-xl p-6 border border-gray-100 hover:shadow-md transition-all duration-300 hover:border-blue-300">
+          <div class="text-center">
+            <div class="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+              <i class="fas fa-utensils text-green-600 text-2xl"></i>
+            </div>
+            <h3 class="font-semibold text-gray-900 mb-2">Place Order</h3>
+            <p class="text-gray-600 text-sm">Order food from canteen</p>
+          </div>
+        </a>
+
+        <a href="{{ url_for('rewards_dashboard') }}" class="group bg-gray-50 rounded-xl p-6 border border-gray-100 hover:shadow-md transition-all duration-300 hover:border-blue-300">
+          <div class="text-center">
+            <div class="bg-yellow-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+              <i class="fas fa-trophy text-yellow-600 text-2xl"></i>
+            </div>
+            <h3 class="font-semibold text-gray-900 mb-2">Rewards</h3>
+            <p class="text-gray-600 text-sm">View achievements & rewards</p>
+          </div>
+        </a>
+
+        <a href="{{ url_for('vote') }}" class="group bg-gray-50 rounded-xl p-6 border border-gray-100 hover:shadow-md transition-all duration-300 hover:border-blue-300">
+          <div class="text-center">
+            <div class="bg-purple-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+              <i class="fas fa-vote-yea text-purple-600 text-2xl"></i>
+            </div>
+            <h3 class="font-semibold text-gray-900 mb-2">Vote</h3>
+            <p class="text-gray-600 text-sm">Vote for your favorite food</p>
+          </div>
+        </a>
+
+        <a href="{{ url_for('feedback') }}" class="group bg-gray-50 rounded-xl p-6 border border-gray-100 hover:shadow-md transition-all duration-300 hover:border-blue-300">
+          <div class="text-center">
+            <div class="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+              <i class="fas fa-comment text-blue-600 text-2xl"></i>
+            </div>
+            <h3 class="font-semibold text-gray-900 mb-2">Feedback</h3>
+            <p class="text-gray-600 text-sm">Share your feedback</p>
+          </div>
+        </a>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}

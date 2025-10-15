@@ -1,0 +1,16 @@
+# Create a simple app icon for MyMurid Canteen
+# This is a placeholder - you should replace this with a proper 1024x1024 PNG icon
+
+# For now, you can use any food/canteen related icon
+# Recommended: Create a simple icon with:
+# - Background: Green (#4CAF50) 
+# - Foreground: White food tray or utensils
+# - Size: 1024x1024 pixels
+# - Format: PNG with transparency
+
+# You can create this icon using:
+# 1. Online tools like Canva, Figma, or GIMP
+# 2. Use free icon libraries like Material Icons
+# 3. Hire a designer for a custom icon
+
+# Place the icon file as "assets/icon.png" in your project

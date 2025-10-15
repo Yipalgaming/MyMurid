@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+{% block title %}Rewards & Achievements{% endblock %}
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-yellow-400 via-orange-500 to-red-500 relative overflow-hidden">
+  <!-- Animated background elements -->
+  <div class="absolute inset-0 overflow-hidden">
+    <div class="absolute -top-40 -right-40 w-80 h-80 bg-white rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
+    <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-2000"></div>
+    <div class="absolute top-40 left-40 w-80 h-80 bg-orange-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-4000"></div>
+  </div>
+  <!-- Header -->
+  <div class="bg-white/90 backdrop-blur-sm shadow-lg border-b relative z-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">Rewards & Achievements</h1>
+          <p class="text-gray-600 mt-1">Earn points and redeem rewards!</p>
+        </div>
+        <div class="flex items-center space-x-4">
+          <div class="bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full p-3 shadow-lg">
+            <i class="fas fa-trophy text-white text-xl"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Points Summary -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
+        <div class="flex items-center">
+          <div class="bg-yellow-100 rounded-full p-3 mr-4">
+            <i class="fas fa-star text-yellow-600 text-xl"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-medium text-gray-600">Total Points</h3>
+            <p class="text-2xl font-bold text-yellow-600">{{ current_user.total_points or 0 }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
+        <div class="flex items-center">
+          <div class="bg-green-100 rounded-full p-3 mr-4">
+            <i class="fas fa-coins text-green-600 text-xl"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-medium text-gray-600">Available Points</h3>
+            <p class="text-2xl font-bold text-green-600">{{ current_user.available_points or 0 }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
+        <div class="flex items-center">
+          <div class="bg-purple-100 rounded-full p-3 mr-4">
+            <i class="fas fa-gift text-purple-600 text-xl"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-medium text-gray-600">Rewards Redeemed</h3>
+            <p class="text-2xl font-bold text-purple-600">{{ recent_redemptions|length }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Available Rewards -->
+    <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-6 mb-8">
+      <h2 class="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+        <i class="fas fa-gift text-blue-600 mr-2"></i>Available Rewards
+      </h2>
+              
+      {% if available_rewards %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {% for reward in available_rewards %}
+            <div class="bg-gray-50 rounded-xl p-6 border border-gray-100 hover:shadow-md transition-all duration-300">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">{{ reward.name }}</h3>
+                <span class="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                  {{ reward.points_cost }} pts
+                </span>
+              </div>
+              
+              <p class="text-gray-600 text-sm mb-4">{{ reward.description }}</p>
+              
+              <div class="space-y-3 mb-6">
+                {% if reward.reward_type == 'discount' and reward.discount_percentage %}
+                  <div class="flex justify-between items-center">
+                    <span class="text-gray-600">Discount:</span>
+                    <span class="font-bold text-green-600 text-lg">{{ reward.discount_percentage }}%</span>
+                  </div>
+                {% elif reward.reward_type == 'free_item' and reward.menu_item %}
+                  <div class="flex justify-between items-center">
+                    <span class="text-gray-600">Free Item:</span>
+                    <span class="font-bold text-blue-600">{{ reward.menu_item.name }}</span>
+                  </div>
+                {% endif %}
+                
+                {% if reward.stock_quantity is not none %}
+                  <div class="flex justify-between items-center">
+                    <span class="text-gray-600">Stock:</span>
+                    <span class="px-3 py-1 rounded-full text-xs font-semibold {% if reward.stock_quantity > 0 %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                      {{ reward.stock_quantity }} available
+                    </span>
+                  </div>
+                {% endif %}
+              </div>
+
+              {% if current_user.available_points >= reward.points_cost and (reward.stock_quantity is none or reward.stock_quantity > 0) %}
+                <form method="POST" action="{{ url_for('redeem_reward', reward_id=reward.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                  <button type="submit" 
+                          class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 px-4 rounded-xl font-medium transition-colors duration-200">
+                    <i class="fas fa-shopping-cart mr-2"></i>Redeem Now
+                  </button>
+                </form>
+              {% else %}
+                <button disabled 
+                        class="w-full bg-gray-200 text-gray-500 py-2.5 px-4 rounded-xl cursor-not-allowed">
+                  {% if current_user.available_points < reward.points_cost %}
+                    <i class="fas fa-lock mr-2"></i>Insufficient Points
+                  {% else %}
+                    <i class="fas fa-times mr-2"></i>Out of Stock
+                  {% endif %}
+                </button>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="text-center py-12">
+          <div class="bg-gray-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-gift text-gray-400 text-2xl"></i>
+          </div>
+          <h3 class="text-lg font-medium text-gray-900 mb-2">No Rewards Available</h3>
+          <p class="text-gray-600">Check back later for new rewards!</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Achievements by Category -->
+    {% for category in categories %}
+    <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-6 mb-8">
+      <h2 class="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+        <i class="{{ category.icon }} mr-2" style="color: {{ category.color }}"></i>{{ category.name.title() }} Achievements
+      </h2>
+      
+      {% if achievements_by_category[category.name] %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {% for achievement in achievements_by_category[category.name] %}
+            <div class="bg-gray-50 rounded-xl p-6 border border-gray-100 hover:shadow-md transition-all duration-300">
+              <div class="flex items-center mb-4">
+                <div class="p-3 rounded-lg" style="background-color: {{ achievement.badge_color }}20;">
+                  <i class="{{ achievement.icon }} text-xl" style="color: {{ achievement.badge_color }};"></i>
+                </div>
+                <div class="ml-4">
+                  <h3 class="text-lg font-semibold text-gray-900">{{ achievement.name }}</h3>
+                  <p class="text-sm text-gray-600 font-medium">{{ achievement.points_value }} points</p>
+                </div>
+              </div>
+              
+              <p class="text-gray-600 text-sm">{{ achievement.description }}</p>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="text-center py-8">
+          <div class="bg-gray-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+            <i class="{{ category.icon }} text-gray-400 text-2xl"></i>
+          </div>
+          <p class="text-gray-600">No achievements available in this category.</p>
+        </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+
+    <!-- Recent Points History -->
+    {% if student_points %}
+    <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-6 mb-8">
+      <h2 class="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+        <i class="fas fa-history text-blue-600 mr-2"></i>Recent Points History
+      </h2>
+      
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead>
+            <tr class="border-b border-gray-200">
+              <th class="text-left py-3 px-4 font-semibold text-gray-700">Achievement</th>
+              <th class="text-left py-3 px-4 font-semibold text-gray-700">Points</th>
+              <th class="text-left py-3 px-4 font-semibold text-gray-700">Reason</th>
+              <th class="text-left py-3 px-4 font-semibold text-gray-700">Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for point in student_points %}
+            <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+              <td class="py-3 px-4">
+                <div class="flex items-center">
+                  <i class="{{ point.achievement.icon }} mr-2" style="color: {{ point.achievement.badge_color }};"></i>
+                  <span class="font-medium">{{ point.achievement.name }}</span>
+                </div>
+              </td>
+              <td class="py-3 px-4 font-bold text-green-600">+{{ point.points_earned }}</td>
+              <td class="py-3 px-4 text-gray-600">{{ point.reason or 'N/A' }}</td>
+              <td class="py-3 px-4 text-gray-600">{{ point.created_at.strftime('%d/%m/%Y') }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Recent Redemptions -->
+    {% if recent_redemptions %}
+    <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
+      <h2 class="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+        <i class="fas fa-receipt text-blue-600 mr-2"></i>Recent Redemptions
+      </h2>
+      
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead>
+            <tr class="border-b border-gray-200">
+              <th class="text-left py-3 px-4 font-semibold text-gray-700">Reward</th>
+              <th class="text-left py-3 px-4 font-semibold text-gray-700">Points Used</th>
+              <th class="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
+              <th class="text-left py-3 px-4 font-semibold text-gray-700">Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for redemption in recent_redemptions %}
+            <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+              <td class="py-3 px-4 font-medium">{{ redemption.reward_item.name }}</td>
+              <td class="py-3 px-4 font-bold text-red-600">-{{ redemption.points_used }}</td>
+              <td class="py-3 px-4">
+                <span class="px-3 py-1 rounded-full text-xs font-semibold 
+                  {% if redemption.status == 'redeemed' %}bg-green-100 text-green-800
+                  {% elif redemption.status == 'pending' %}bg-yellow-100 text-yellow-800
+                  {% else %}bg-red-100 text-red-800{% endif %}">
+                  {{ redemption.status.title() }}
+                </span>
+              </td>
+              <td class="py-3 px-4 text-gray-600">{{ redemption.created_at.strftime('%d/%m/%Y') }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

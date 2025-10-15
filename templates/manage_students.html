@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block title %}Manage Students{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">👥 Manage Students</h2>
+    
+    <!-- Add New Student Form -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4>➕ Add New Student</h4>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('add_student') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label for="name">Full Name:</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label for="ic_number">IC Number (4 digits):</label>
+                            <input type="text" class="form-control" id="ic_number" name="ic_number" 
+                                   pattern="[0-9]{4}" maxlength="4" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group mb-3">
+                            <label for="pin">PIN (4 digits):</label>
+                            <input type="text" class="form-control" id="pin" name="pin" 
+                                   pattern="[0-9]{4}" maxlength="4" required>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group mb-3">
+                            <label for="role">Role:</label>
+                            <select class="form-control" id="role" name="role" required>
+                                <option value="student">Student</option>
+                                <option value="staff">Staff</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group mb-3">
+                            <label for="balance">Initial Balance (RM):</label>
+                            <input type="number" class="form-control" id="balance" name="balance" 
+                                   min="0" value="0" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group mb-3" id="password_group" style="display: none;">
+                    <label for="password">Password (for admin/staff):</label>
+                    <input type="password" class="form-control" id="password" name="password">
+                </div>
+                <button type="submit" class="btn btn-success">➕ Add Student</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Existing Students List -->
+    <div class="card">
+        <div class="card-header">
+            <h4>📋 Existing Students</h4>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>IC Number</th>
+                            <th>Role</th>
+                            <th>Balance</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                        <tr>
+                            <td>{{ student.name }}</td>
+                            <td>{{ student.ic_number }}</td>
+                            <td>
+                                <span class="badge badge-{% if student.role == 'admin' %}danger{% elif student.role == 'staff' %}warning{% else %}primary{% endif %}">
+                                    {{ student.role|title }}
+                                </span>
+                            </td>
+                            <td>RM {{ student.balance }}</td>
+                            <td>
+                                <span class="badge badge-{% if student.frozen %}danger{% else %}success{% endif %}">
+                                    {% if student.frozen %}Frozen{% else %}Active{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-info" onclick="editStudent({{ student.id }})">✏️ Edit</button>
+                                <button class="btn btn-sm btn-{% if student.frozen %}success{% else %}warning{% endif %}" 
+                                        onclick="toggleStatus({{ student.id }}, '{{ student.ic_number|e }}', {{ student.frozen|lower }})">
+                                    {% if student.frozen %}Unfreeze{% else %}Freeze{% endif %}
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Show/hide password field based on role
+document.getElementById('role').addEventListener('change', function() {
+    const passwordGroup = document.getElementById('password_group');
+    const passwordInput = document.getElementById('password');
+    
+    if (this.value === 'admin' || this.value === 'staff') {
+        passwordGroup.style.display = 'block';
+        passwordInput.required = true;
+    } else {
+        passwordGroup.style.display = 'none';
+        passwordInput.required = false;
+        passwordInput.value = '';
+    }
+});
+
+function editStudent(studentId) {
+    // You can implement edit functionality here
+    alert('Edit functionality can be added - for now, use the database script method');
+}
+
+function toggleStatus(studentId, icNumber, isFrozen) {
+    const action = isFrozen ? 'unfreeze' : 'freeze';
+    const actionText = isFrozen ? 'unfreeze' : 'freeze';
+    
+    if (confirm(`Are you sure you want to ${actionText} this student's card?`)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ url_for("toggle_card_status") }}';
+        
+        // Add CSRF token
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrf_token';
+        csrfInput.value = '{{ csrf_token() }}';
+        
+        const icInput = document.createElement('input');
+        icInput.type = 'hidden';
+        icInput.name = 'ic';
+        icInput.value = icNumber;
+        
+        const actionInput = document.createElement('input');
+        actionInput.type = 'hidden';
+        actionInput.name = 'action';
+        actionInput.value = action;
+        
+        form.appendChild(csrfInput);
+        form.appendChild(icInput);
+        form.appendChild(actionInput);
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
+{% endblock %}

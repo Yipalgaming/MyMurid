@@ -4,15 +4,196 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="/static/style.css" />
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
-        integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
-        crossorigin="anonymous" />
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"
-        crossorigin="anonymous" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- CSRF Token -->
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f8fafc;
+      min-height: 100vh;
+    }
+    
+    /* Custom animations */
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+    
+    @keyframes glow {
+      0%, 100% { box-shadow: 0 0 20px rgba(147, 51, 234, 0.3); }
+      50% { box-shadow: 0 0 30px rgba(147, 51, 234, 0.6); }
+    }
+    
+    @keyframes pulse-glow {
+      0%, 100% { transform: scale(1); opacity: 0.7; }
+      50% { transform: scale(1.05); opacity: 0.9; }
+    }
+    
+    .animation-delay-2000 {
+      animation-delay: 2s;
+    }
+    
+    .animation-delay-4000 {
+      animation-delay: 4s;
+    }
+    
+    .float-animation {
+      animation: float 3s ease-in-out infinite;
+    }
+    
+    .glow-animation {
+      animation: glow 2s ease-in-out infinite;
+    }
+    
+    .pulse-glow-animation {
+      animation: pulse-glow 2s ease-in-out infinite;
+    }
+    
+    /* Gradient text */
+    .gradient-text {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    /* Glass morphism effect */
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    /* Modern button styles */
+    .btn-modern {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      border-radius: 12px;
+      padding: 12px 24px;
+      color: white;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-modern:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+    }
+    
+    /* Card hover effects */
+    .card-hover {
+      transition: all 0.3s ease;
+    }
+    
+    .card-hover:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+    }
+    
+    /* Modern card styles */
+    .modern-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    /* Sidebar styles */
+    .sidebar-modern {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-right: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .nav-item-modern {
+      padding: 12px 20px;
+      margin: 4px 12px;
+      border-radius: 12px;
+      transition: all 0.3s ease;
+      color: #4a5568;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .nav-item-modern:hover {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      transform: translateX(4px);
+    }
+    
+    .nav-item-modern.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    /* Alert styles */
+    .alert-modern {
+      border-radius: 12px;
+      border: none;
+      padding: 16px 20px;
+      margin: 16px 0;
+      backdrop-filter: blur(10px);
+    }
+    
+    .alert-success {
+      background: rgba(72, 187, 120, 0.1);
+      color: #22543d;
+      border-left: 4px solid #48bb78;
+    }
+    
+    .alert-danger {
+      background: rgba(245, 101, 101, 0.1);
+      color: #742a2a;
+      border-left: 4px solid #f56565;
+    }
+    
+    .alert-warning {
+      background: rgba(237, 137, 54, 0.1);
+      color: #7c2d12;
+      border-left: 4px solid #ed8936;
+    }
+    
+    .alert-info {
+      background: rgba(66, 153, 225, 0.1);
+      color: #2a4365;
+      border-left: 4px solid #4299e1;
+    }
+  </style>
 
 <!--
   {% if user.is_authenticated %}
+    {% if user.role != 'staff' %}
   <script>
     let logoutTimer;
 
@@ -30,6 +211,7 @@
 
     resetLogoutTimer(); // Start timer on load
   </script>
+    {% endif %}
   {% endif %}
 -->
   
@@ -38,56 +220,157 @@
 <body>
 
   {% if request.endpoint != 'login' %}
-    <div class="topnav">
-      <h2><strong>🍴 Canteen App</strong></h2>
-      <button onclick="toggleSidebar()">☰</button>
+    <nav class="glass-effect fixed top-0 left-0 right-0 z-50 px-6 py-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="bg-white rounded-full w-10 h-10 flex items-center justify-center">
+            <i class="fas fa-graduation-cap text-xl gradient-text"></i>
+          </div>
+          <h1 class="text-2xl font-bold text-white">MyMurid</h1>
+        </div>
+        <button onclick="toggleSidebar()" class="text-white hover:text-gray-200 transition-colors">
+          <i class="fas fa-bars text-xl"></i>
+        </button>
     </div>
+    </nav>
   {% endif %}
 
   {% if user.is_authenticated %}
-    <div class="wrapper">
-      <div class="sidenav" id="sidebar">
-        <div class="user-info">
-          <div class="mobile-spacer"></div>
-          {% if user.is_authenticated %}
-            <h3>{{ user.name }}</h3>
-            <h3><small>{{ user.role|capitalize }}</small></h3>
+    <div class="flex min-h-screen">
+      <div class="sidebar-modern fixed left-0 top-0 h-full w-64 transform transition-transform duration-300 ease-in-out z-50 -translate-x-full lg:translate-x-0" id="sidebar">
+        <div class="p-6">
+          <div class="flex items-center space-x-3 mb-8">
+            <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full w-12 h-12 flex items-center justify-center">
+              <i class="fas fa-user text-white text-lg"></i>
+            </div>
+            <div>
+              <h3 class="font-semibold text-gray-800">{{ user.name }}</h3>
+              <p class="text-sm text-gray-600">{{ user.role|capitalize if user.role else 'Parent' }}</p>
+            </div>
+          </div>
+          
+          <nav class="space-y-2">
+            {% if user.role == 'student' %}
+              <a href="{{ url_for('student_dashboard') }}" class="nav-item-modern">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+              </a>
+              <a href="{{ url_for('order') }}" class="nav-item-modern">
+                <i class="fas fa-utensils"></i>
+                <span>Order Food</span>
+              </a>
+              <a href="{{ url_for('payment') }}" class="nav-item-modern">
+                <i class="fas fa-credit-card"></i>
+                <span>Payment</span>
+              </a>
+              <a href="{{ url_for('rewards_dashboard') }}" class="nav-item-modern">
+                <i class="fas fa-trophy"></i>
+                <span>Rewards</span>
+              </a>
+              <a href="{{ url_for('vote') }}" class="nav-item-modern">
+                <i class="fas fa-vote-yea"></i>
+                <span>Vote</span>
+              </a>
+              <a href="{{ url_for('feedback') }}" class="nav-item-modern">
+                <i class="fas fa-comment"></i>
+                <span>Feedback</span>
+              </a>
+            {% elif user.role == 'admin' %}
+              <a href="{{ url_for('admin_dashboard') }}" class="nav-item-modern">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Admin Home</span>
+              </a>
+              <a href="{{ url_for('manage_students') }}" class="nav-item-modern">
+                <i class="fas fa-users"></i>
+                <span>Manage Students</span>
+              </a>
+              <a href="{{ url_for('topup') }}" class="nav-item-modern">
+                <i class="fas fa-plus-circle"></i>
+                <span>Top-up</span>
+              </a>
+              <a href="{{ url_for('transactions') }}" class="nav-item-modern">
+                <i class="fas fa-exchange-alt"></i>
+                <span>Transactions</span>
+              </a>
+              <a href="{{ url_for('paid_orders') }}" class="nav-item-modern">
+                <i class="fas fa-receipt"></i>
+                <span>Paid Orders</span>
+              </a>
+              <a href="{{ url_for('award_points') }}" class="nav-item-modern">
+                <i class="fas fa-star"></i>
+                <span>Award Points</span>
+              </a>
+              <a href="{{ url_for('manage_rewards') }}" class="nav-item-modern">
+                <i class="fas fa-gift"></i>
+                <span>Manage Rewards</span>
+              </a>
+              <a href="{{ url_for('vote') }}" class="nav-item-modern">
+                <i class="fas fa-vote-yea"></i>
+                <span>Votes</span>
+              </a>
+              <a href="{{ url_for('feedback') }}" class="nav-item-modern">
+                <i class="fas fa-comment"></i>
+                <span>Feedbacks</span>
+              </a>
+            {% elif user.role == 'staff' %}
+              <a href="{{ url_for('staff_dashboard') }}" class="nav-item-modern">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Staff Home</span>
+              </a>
+              <a href="{{ url_for('paid_orders') }}" class="nav-item-modern">
+                <i class="fas fa-receipt"></i>
+                <span>Orders</span>
+              </a>
+            {% elif not user.role %}
+              <!-- Parent navigation -->
+              <a href="{{ url_for('parent_dashboard') }}" class="nav-item-modern">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+              </a>
+              <a href="{{ url_for('add_child') }}" class="nav-item-modern">
+                <i class="fas fa-user-plus"></i>
+                <span>Add Child</span>
+              </a>
           {% endif %}
+            
+            <div class="border-t border-gray-200 my-4"></div>
+            
+            <a href="{{ url_for('logout') }}" class="nav-item-modern text-red-600 hover:bg-red-50 hover:text-red-700">
+              <i class="fas fa-sign-out-alt"></i>
+              <span>Logout</span>
+            </a>
+          </nav>
         </div>
-        {% if user.is_authenticated %}
-          {% if user.role == 'student' %}
-              <br>
-              <br>
-              <a href="{{ url_for('student_dashboard') }}">Dashboard</a>
-              <a href="{{ url_for('order') }}">Order</a>
-              <a href="{{ url_for('payment') }}">Payment</a>
-              <a href="{{ url_for('vote') }}">Vote</a>
-              <a href="{{ url_for('feedback') }}">Feedback</a>
-          {% elif user.role == 'admin' %}
-              <a href="{{ url_for('admin_dashboard') }}">Admin Home</a>
-              <a href="{{ url_for('topup') }}">Top-up</a>
-              <a href="{{ url_for('student_balances') }}">Balances</a>
-              <a href="{{ url_for('transactions') }}">Transactions</a>
-              <a href="{{ url_for('paid_orders') }}">Paid Orders</a>
-              <a href="{{ url_for('vote') }}">Votes</a>
-              <a href="{{ url_for('feedback') }}">Feedbacks</a>
-          {% endif %}
-        <a href="{{ url_for('logout') }}" class="text-danger">Logout</a>
-        {% endif %}
       </div>
     </div>
   {% endif %}
 
-  <div class="main">
-    <div class="mobile-spacer"></div>
+  <div class="main-content {% if user.is_authenticated and request.endpoint not in ['login', 'parent_login', 'parent_register'] %}ml-0 lg:ml-64 pt-20{% endif %} {% if request.endpoint not in ['login', 'parent_login', 'parent_register'] %}px-4 sm:px-6 pb-6{% endif %} {% if request.endpoint in ['login', 'parent_login', 'parent_register'] %}flex justify-center{% endif %}">
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
+        <div class="max-w-4xl mx-auto">
         {% for category, message in messages %}
-          <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <div class="alert-modern alert-{{ 'danger' if category == 'error' else category }} mb-4" role="alert">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                  {% if category == 'success' %}
+                    <i class="fas fa-check-circle text-green-600 mr-3"></i>
+                  {% elif category == 'error' %}
+                    <i class="fas fa-exclamation-circle text-red-600 mr-3"></i>
+                  {% elif category == 'warning' %}
+                    <i class="fas fa-exclamation-triangle text-orange-600 mr-3"></i>
+                  {% else %}
+                    <i class="fas fa-info-circle text-blue-600 mr-3"></i>
+                  {% endif %}
+                  <span>{{ message }}</span>
+                </div>
+                <button type="button" class="text-gray-500 hover:text-gray-700" onclick="this.parentElement.parentElement.remove()">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
           </div>
         {% endfor %}
+        </div>
       {% endif %}
     {% endwith %}
 
@@ -107,8 +390,37 @@
 
 <script>
 function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('active');
+  const sidebar = document.getElementById('sidebar');
+  sidebar.classList.toggle('-translate-x-full');
 }
+
+// Close sidebar when clicking outside on mobile
+document.addEventListener('click', function(event) {
+  const sidebar = document.getElementById('sidebar');
+  const toggleButton = event.target.closest('[onclick="toggleSidebar()"]');
+  
+  if (window.innerWidth <= 768 && !sidebar.contains(event.target) && !toggleButton) {
+    sidebar.classList.add('-translate-x-full');
+  }
+});
+
+// Responsive sidebar behavior
+window.addEventListener('resize', function() {
+  const sidebar = document.getElementById('sidebar');
+  if (window.innerWidth > 768) {
+    sidebar.classList.remove('-translate-x-full');
+  } else {
+    sidebar.classList.add('-translate-x-full');
+  }
+});
+
+// Initialize sidebar state
+document.addEventListener('DOMContentLoaded', function() {
+  const sidebar = document.getElementById('sidebar');
+  if (window.innerWidth <= 768) {
+    sidebar.classList.add('-translate-x-full');
+  }
+});
 </script>
 
 </body>

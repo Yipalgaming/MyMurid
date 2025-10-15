@@ -1,202 +1,330 @@
-{% extends "base.html" %}
-{% block title %}Login{% endblock %}
-{% block content %}
-<h2>Student Login</h2>
-
-<form method="POST">
-  <input type="hidden" name="ic" id="ic" required>
-
-  <label for="pin">Enter PIN:</label><br>
-  <input name="pin" placeholder="PIN (4 digits)" required><br><br>
-
-  <label for="password">Enter Password:</label><br>
-  <input name="password" placeholder="Password (admin/staff only)" ><br><br>
-
-  <button type="submit" class="btn btn-primary" id="submitBtn" disabled>Login</button>
-  <button type="button" class="btn btn-secondary" onclick="startScan()" id="scanBtn">📷 Scan IC Barcode</button>
-  <button type="button" class="btn btn-warning" onclick="stopScan()" id="stopBtn" style="display:none;">⏹️ Stop Scanner</button>
-
-  <div id="scanner-container" style="width:100%; max-width:700px; margin-top:15px; display:none;">
-    <div id="interactive" class="quagga-container"></div>
-    <div id="scanner-status" style="text-align:center; margin-top:10px; color:#666;"></div>
-    
-    <!-- Troubleshooting Tips -->
-    <div id="troubleshooting" style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #007bff;">
-      <h4 style="margin: 0 0 10px 0; color: #007bff;">🔧 Camera Troubleshooting</h4>
-      <ul style="margin: 0; padding-left: 20px; font-size: 14px; color: #666;">
-        <li><strong>Permission denied?</strong> Look for camera icon in address bar and click "Allow"</li>
-        <li><strong>Camera in use?</strong> Close other apps using camera (Zoom, Teams, etc.)</li>
-        <li><strong>No camera found?</strong> Make sure your device has a working camera</li>
-        <li><strong>Still not working?</strong> Try refreshing the page or using a different browser</li>
-      </ul>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login - MyMurid</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+  <style>
+    .animation-delay-2000 { animation-delay: 2s; }
+    .animation-delay-4000 { animation-delay: 4s; }
+    /* Center and constrain the scanner preview */
+    #barcode-scanner { position: relative; width: 100%; max-width: 420px; height: 256px; margin-left: auto; margin-right: auto; overflow: hidden; }
+    /* Force Quagga elements to center inside container */
+    #barcode-scanner video,
+    #barcode-scanner canvas,
+    #barcode-scanner .drawingBuffer { position: absolute !important; top: 50% !important; left: 50% !important; transform: translate(-50%, -50%) !important; height: 100% !important; width: auto !important; object-fit: cover; display: block; }
+    /* Ensure overlay aligns exactly */
+    #barcode-scanner .drawingBuffer { pointer-events: none; }
+  </style>
+</head>
+<body>
+  <div class="min-h-screen bg-gradient-to-br from-purple-500 via-pink-500 to-red-500 relative overflow-hidden">
+    <!-- Decorative background -->
+    <div class="absolute inset-0 pointer-events-none overflow-hidden">
+      <div class="absolute -top-40 -right-40 w-80 h-80 bg-white rounded-full mix-blend-multiply filter blur-2xl opacity-30 animate-pulse"></div>
+      <div class="absolute -bottom-40 -left-40 w-96 h-96 bg-yellow-300 rounded-full mix-blend-multiply filter blur-2xl opacity-20 animate-pulse animation-delay-2000"></div>
+      <div class="absolute top-1/3 left-10 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-2xl opacity-20 animate-pulse animation-delay-4000"></div>
     </div>
-  </div>
+
+    <!-- Outer centering wrapper -->
+    <div class="max-w-3xl mx-auto px-4 py-10 flex items-center justify-center min-h-screen">
+      <!-- Inner column -->
+      <div class="w-full max-w-md">
+        <!-- Logo and Title -->
+        <div class="text-center mb-8">
+          <div class="bg-white rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center shadow-2xl">
+            <i class="fas fa-graduation-cap text-3xl text-indigo-600"></i>
+          </div>
+          <h1 class="text-4xl font-extrabold text-white drop-shadow-md">MyMurid</h1>
+          <p class="text-white/90 mt-1">Student Portal</p>
+        </div>
+
+        <!-- Login Card -->
+        <div class="bg-white rounded-3xl shadow-2xl border border-white/30 p-8 card-shadow">
+          <h2 class="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-6 text-center">Student Login</h2>
+
+          <!-- Flash Messages -->
+          {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+              {% for category, message in messages %}
+                <div class="mb-4 p-3 rounded-xl {% if category == 'error' %}bg-red-100 text-red-700 border border-red-200{% else %}bg-green-100 text-green-700 border border-green-200{% endif %}">
+                  <div class="flex items-center">
+                    {% if category == 'success' %}
+                      <i class="fas fa-check-circle text-green-600 mr-3"></i>
+                    {% elif category == 'error' %}
+                      <i class="fas fa-exclamation-circle text-red-600 mr-3"></i>
+                    {% else %}
+                      <i class="fas fa-info-circle text-blue-600 mr-3"></i>
+                    {% endif %}
+                    <span>{{ message }}</span>
+                  </div>
+                </div>
+              {% endfor %}
+            {% endif %}
+          {% endwith %}
+
+          <!-- Login Form -->
+          <form method="POST" class="space-y-6">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+            <!-- IC Number -->
+            <div>
+              <label for="ic" class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-id-card mr-2 text-blue-600"></i>IC Number
+              </label>
+              <div class="relative">
+                <input
+                  id="ic"
+                  name="ic"
+                  type="text"
+                  required
+                  maxlength="4"
+                  pattern="[0-9]{4}"
+                  inputmode="numeric"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  placeholder="Enter 4-digit IC number"
+                />
+                <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                  <button type="button" onclick="startBarcodeScan()" class="text-gray-400 hover:text-blue-600 transition-colors" aria-label="Scan IC">
+                    <i class="fas fa-barcode text-lg"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- PIN -->
+            <div>
+              <label for="pin" class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-lock mr-2 text-blue-600"></i>PIN
+              </label>
+              <input
+                id="pin"
+                name="pin"
+                type="password"
+                required
+                maxlength="4"
+                pattern="[0-9]{4}"
+                inputmode="numeric"
+                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                placeholder="Enter 4-digit PIN"
+              />
+            </div>
+
+            <!-- Password (optional) -->
+            <div>
+              <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-key mr-2 text-blue-600"></i>Password (Optional)
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                placeholder="Password (admin/staff only)"
+              />
+            </div>
+
+            <!-- Submit -->
+            <button type="submit" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
+              <i class="fas fa-sign-in-alt mr-2"></i>Login
+            </button>
 </form>
 
-<!-- Include Quagga.js for barcode scanning -->
+          <!-- Links -->
+          <div class="mt-6 text-center space-y-3">
+            <div class="text-sm text-gray-600">
+              <span>Don't have an account?</span>
+              <a href="{{ url_for('register') }}" class="text-blue-600 hover:text-blue-700 font-medium ml-1">Register here</a>
+            </div>
+            <div class="text-sm text-gray-600">
+              <span>Are you a parent?</span>
+              <a href="{{ url_for('parent_login') }}" class="text-blue-600 hover:text-blue-700 font-medium ml-1">Parent Login</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-8 text-white/80 text-sm">
+          <p>&copy; 2025 MyMurid. All rights reserved.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Barcode Scanner Modal -->
+  <div id="barcodeModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+      <div class="bg-white rounded-2xl p-6 max-w-md w-full">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-gray-900">Scan IC Card</h3>
+          <button onclick="closeBarcodeScan()" class="text-gray-400 hover:text-gray-600" aria-label="Close">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+
+        <div id="barcode-scanner" class="relative w-full h-64 bg-gray-100 rounded-xl mb-4 flex items-center justify-center">
+          <div class="text-center text-gray-500">
+            <i class="fas fa-qrcode text-4xl mb-2"></i>
+            <p>Position IC card in front of camera</p>
+            <p class="text-sm mt-2">Camera will start automatically</p>
+          </div>
+        </div>
+
+        <div class="flex space-x-3">
+          <button onclick="closeBarcodeScan()" class="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-xl font-medium transition-colors">Cancel</button>
+          <button onclick="manualInput()" class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-xl font-medium transition-colors">Manual Input</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
-
 <script>
-let scannerRunning = false;
+  let scannerRunning = false;
+  let quaggaInitialized = false;
 
-function startScan() {
-  if (scannerRunning) return;
+  async function getPreferredCameraDeviceId() {
+    try {
+      // Request minimal permission to get device labels on some browsers
+      await navigator.mediaDevices.getUserMedia({ video: true, audio: false }).then(stream => {
+        stream.getTracks().forEach(t => t.stop());
+      }).catch(() => {});
 
-  // Show scanner container and update buttons
-  document.getElementById('scanner-container').style.display = 'block';
-  document.getElementById('scanBtn').style.display = 'none';
-  document.getElementById('stopBtn').style.display = 'inline-block';
-  document.getElementById('scanner-status').textContent = '🔍 Checking camera permissions...';
-
-  // Check if camera is available
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    document.getElementById('scanner-status').textContent = '❌ Camera not supported in this browser. Please use Chrome, Firefox, or Safari.';
-    return;
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoInputs = devices.filter(d => d.kind === 'videoinput');
+      if (videoInputs.length === 0) return null;
+      // Prefer a camera with 'back' or 'rear' in label
+      const rear = videoInputs.find(d => /back|rear|environment/i.test(d.label));
+      return (rear || videoInputs[0]).deviceId || null;
+    } catch (_) {
+      return null;
+    }
   }
 
-  // Request camera permission first
-  navigator.mediaDevices.getUserMedia({ video: true })
-    .then(function(stream) {
-      // Camera permission granted, stop the test stream
-      stream.getTracks().forEach(track => track.stop());
-      
-      document.getElementById('scanner-status').textContent = '✅ Camera permission granted. Starting scanner...';
-      
-      // Start Quagga scanner
-      startQuaggaScanner();
-    })
-    .catch(function(err) {
-      console.error('Camera permission error:', err);
-      let errorMessage = '❌ Camera access denied. ';
-      
-      if (err.name === 'NotAllowedError') {
-        errorMessage += 'Please allow camera access in your browser and refresh the page.';
-      } else if (err.name === 'NotFoundError') {
-        errorMessage += 'No camera found on this device.';
-      } else if (err.name === 'NotReadableError') {
-        errorMessage += 'Camera is already in use by another application.';
-      } else {
-        errorMessage += 'Error: ' + err.message;
-      }
-      
-      document.getElementById('scanner-status').textContent = errorMessage;
-    });
-}
+  function isCameraUsableContext() {
+    // Must be https or localhost for camera access in most browsers
+    return window.isSecureContext || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+  }
 
-function startQuaggaScanner() {
-  document.getElementById('scanner-status').textContent = '🚀 Initializing scanner...';
+  async function startBarcodeScan() {
+    const modal = document.getElementById('barcodeModal');
+    const container = document.getElementById('barcode-scanner');
+    modal.classList.remove('hidden');
+    container.innerHTML = '';
 
-  // Clear previous input
-  document.getElementById('ic').value = '';
-  document.getElementById('submitBtn').disabled = true;
-
-  // Try different camera configurations
-  const cameraConfigs = [
-    {
-      constraints: {
-        facingMode: "environment", // Rear camera
-        width: { min: 640, ideal: 1280 },
-        height: { min: 480, ideal: 720 }
-      }
-    },
-    {
-      constraints: {
-        facingMode: "user", // Front camera as fallback
-        width: { min: 640, ideal: 1280 },
-        height: { min: 480, ideal: 720 }
-      }
-    },
-    {
-      constraints: {
-        width: { min: 640, ideal: 1280 },
-        height: { min: 480, ideal: 720 }
-      }
-    }
-  ];
-
-  function tryCameraConfig(configIndex) {
-    if (configIndex >= cameraConfigs.length) {
-      document.getElementById('scanner-status').textContent = '❌ Camera access failed. Please check permissions and try again.';
+    if (!isCameraUsableContext()) {
+      container.innerHTML = '<div class="text-center text-red-500"><i class="fas fa-lock text-4xl mb-2"></i><p>Camera requires HTTPS or localhost.</p><p class="text-sm mt-2">Open this site on https:// or run locally on http://localhost</p></div>';
       return;
     }
 
-    const config = cameraConfigs[configIndex];
-    console.log(`Trying camera config ${configIndex + 1}:`, config);
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      container.innerHTML = '<div class="text-center text-red-500"><i class="fas fa-exclamation-triangle text-4xl mb-2"></i><p>Camera not supported in this browser</p><p class="text-sm mt-2">Use Chrome, Firefox, or Safari (recent version)</p></div>';
+      return;
+    }
 
-  Quagga.init({
-    inputStream: {
-      name: "Live",
-      type: "LiveStream",
-        target: document.querySelector('#interactive'),
-        constraints: config.constraints
-    },
-    decoder: {
+    container.innerHTML = '<div class="text-center text-blue-500"><i class="fas fa-spinner fa-spin text-4xl mb-2"></i><p>Starting camera...</p><p class="text-sm mt-2">Please allow camera access</p></div>';
+
+    const preferredDeviceId = await getPreferredCameraDeviceId();
+
+    const constraints = preferredDeviceId
+      ? { deviceId: { exact: preferredDeviceId } }
+      : { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } };
+
+    const config = {
+      inputStream: {
+        name: 'Live',
+        type: 'LiveStream',
+        target: container,
+        constraints
+      },
+      locator: { patchSize: 'medium', halfSample: true },
+      numOfWorkers: navigator.hardwareConcurrency ? Math.min(4, navigator.hardwareConcurrency) : 2,
+      decoder: {
         readers: [
-          "code_128_reader",
-          "ean_reader",
-          "code_39_reader"
+          'code_128_reader',
+          'ean_reader',
+          'ean_8_reader',
+          'code_39_reader',
+          'upc_reader',
+          'upc_e_reader'
         ]
-    },
-    locate: true
-  }, function(err) {
-    if (err) {
-        console.error(`Camera config ${configIndex + 1} failed:`, err);
-        // Try next configuration
-        setTimeout(() => tryCameraConfig(configIndex + 1), 500);
-      return;
-    }
-      
-      // Success! Start scanning
-    Quagga.start();
-    scannerRunning = true;
-      document.getElementById('scanner-status').textContent = '✅ Scanner active - Point camera at barcode';
-  });
+      },
+      locate: true
+    };
+
+    Quagga.init(config, function(err) {
+      if (err) {
+        console.error('Quagga init error:', err);
+        const msg = (err && (err.message || err.name)) ? err.message || err.name : 'Unknown error';
+        container.innerHTML = '<div class="text-center text-red-500"><i class="fas fa-video-slash text-4xl mb-2"></i><p>Camera initialization failed</p><p class="text-sm mt-2">' + msg + '</p></div>';
+        return;
+      }
+      quaggaInitialized = true;
+      Quagga.start();
+      scannerRunning = true;
+    });
+
+    Quagga.offProcessed();
+    Quagga.onProcessed(function(result) {
+      const ctx = Quagga.canvas.ctx.overlay;
+      const canvas = Quagga.canvas.dom.overlay;
+      if (!ctx || !canvas) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (result && result.boxes) {
+        result.boxes.filter(b => b !== result.box).forEach(function(box) {
+          Quagga.ImageDebug.drawPath(box, { x: 0, y: 1 }, ctx, { color: 'rgba(255,255,255,0.5)', lineWidth: 2 });
+        });
+      }
+      if (result && result.box) {
+        Quagga.ImageDebug.drawPath(result.box, { x: 0, y: 1 }, ctx, { color: '#00FF00', lineWidth: 3 });
+      }
+    });
+
+    Quagga.offDetected();
+    Quagga.onDetected(function(data) {
+      if (!scannerRunning) return;
+      const code = (data && data.codeResult && data.codeResult.code) ? data.codeResult.code : '';
+      if (code) {
+        const icValue = code.replace(/\D/g, '').slice(-4);
+        if (icValue.length === 4) {
+          document.getElementById('ic').value = icValue;
+          closeBarcodeScan();
+        }
+      }
+    });
   }
 
-  // Start with first camera configuration
-  tryCameraConfig(0);
-
-  Quagga.onDetected(function(result) {
-    const code = result.codeResult.code;
-    console.log("Barcode detected:", code);
-    
-    // Extract last 4 digits if it's a longer code
-    const last4 = code.toString().slice(-4);
-    document.getElementById('ic').value = last4;
-    document.getElementById('submitBtn').disabled = false;
-    document.getElementById('scanner-status').textContent = 'Barcode detected: ' + last4;
-    
-    // Auto-stop scanner after successful scan
-    setTimeout(stopScan, 2000);
-  });
-
-  Quagga.onProcessed(function(result) {
-    if (result) {
-      if (result.codeResult && result.codeResult.code) {
-        document.getElementById('scanner-status').textContent = 'Processing barcode...';
-      }
-    }
-  });
-}
-
-function stopScan() {
-  if (scannerRunning) {
-    Quagga.stop();
+  function closeBarcodeScan() {
+    const modal = document.getElementById('barcodeModal');
+    modal.classList.add('hidden');
     scannerRunning = false;
 
-    // Hide scanner and reset buttons
-    document.getElementById('scanner-container').style.display = 'none';
-    document.getElementById('scanBtn').style.display = 'inline-block';
-    document.getElementById('stopBtn').style.display = 'none';
-    document.getElementById('scanner-status').textContent = '';
-  }
-}
+    try {
+      if (quaggaInitialized) {
+        Quagga.stop();
+        Quagga.offDetected();
+        Quagga.offProcessed();
+        quaggaInitialized = false;
+      }
+    } catch (e) {
+      console.warn('Quagga stop error:', e);
+    }
 
-// Auto-enable submit button when IC is entered
-document.getElementById('ic').addEventListener('input', function() {
-  const icValue = this.value.trim();
-  const submitBtn = document.getElementById('submitBtn');
-  submitBtn.disabled = icValue.length !== 4;
-});
+    const video = document.querySelector('#barcode-scanner video');
+    if (video && video.srcObject) {
+      video.srcObject.getTracks().forEach(t => t.stop());
+    }
+
+    const container = document.getElementById('barcode-scanner');
+    if (container) container.innerHTML = '';
+  }
+
+  function manualInput() {
+    closeBarcodeScan();
+    document.getElementById('ic').focus();
+  }
 </script>
-{% endblock %}
+</body>
+</html>

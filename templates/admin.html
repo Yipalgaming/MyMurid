@@ -1,24 +1,192 @@
 {% extends "base.html" %}
 {% block title %}Admin Dashboard{% endblock %}
 {% block content %}
-<div class="container mt-4">
-  <div class="card shadow p-4">
-    <h2 class="mb-3">Welcome, {{ user.name }}!</h2>
-    <p class="lead">You are logged in as <strong>{{ user.role|capitalize }}</strong>.</p>
+<div class="min-h-screen bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-500 relative overflow-hidden">
+  <!-- Animated background elements -->
+  <div class="absolute inset-0 overflow-hidden">
+    <div class="absolute -top-40 -right-40 w-80 h-80 bg-white rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
+    <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-2000"></div>
+    <div class="absolute top-40 left-40 w-80 h-80 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-4000"></div>
+  </div>
 
-    <hr>
+  <!-- Header -->
+  <div class="bg-white/90 backdrop-blur-sm shadow-lg border-b relative z-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-pink-600 bg-clip-text text-transparent">Admin Dashboard</h1>
+          <p class="text-gray-600 mt-1">Welcome back, {{ user.name }}!</p>
+        </div>
+        <div class="flex items-center space-x-4">
+          <div class="bg-gradient-to-r from-indigo-500 to-pink-500 rounded-full p-3 shadow-lg">
+            <i class="fas fa-user-shield text-white text-xl"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    <h4>Admin Tools</h4>
-    <div class="list-group">
-      <a href="{{ url_for('topup') }}" class="list-group-item list-group-item-action">💰 Top-Up Student Balance</a>
-      <a href="{{ url_for('student_balances') }}" class="list-group-item list-group-item-action">📋 View All Student Balances</a>
-      <a href="{{ url_for('transactions') }}" class="list-group-item list-group-item-action">📑 Transaction History</a>
-      <a href="{{ url_for('vote') }}" class="list-group-item list-group-item-action">📊 View Food Votes</a>
-      <a href="{{ url_for('feedback') }}" class="list-group-item list-group-item-action">🗣️ View Feedback</a>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6">
+        <div class="flex items-center">
+          <div class="bg-blue-100 rounded-full p-3 mr-4">
+            <i class="fas fa-users text-blue-600 text-xl"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-medium text-gray-600">Total Students</h3>
+            <p class="text-2xl font-bold text-blue-600">{{ stats.total_students if stats else '0' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6">
+        <div class="flex items-center">
+          <div class="bg-green-100 rounded-full p-3 mr-4">
+            <i class="fas fa-utensils text-green-600 text-xl"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-medium text-gray-600">Active Orders</h3>
+            <p class="text-2xl font-bold text-green-600">{{ stats.active_orders if stats else '0' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6">
+        <div class="flex items-center">
+          <div class="bg-purple-100 rounded-full p-3 mr-4">
+            <i class="fas fa-chart-line text-purple-600 text-xl"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-medium text-gray-600">Total Revenue</h3>
+            <p class="text-2xl font-bold text-purple-600">RM {{ "%.2f"|format(stats.total_revenue) if stats else '0.00' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6">
+        <div class="flex items-center">
+          <div class="bg-yellow-100 rounded-full p-3 mr-4">
+            <i class="fas fa-comments text-yellow-600 text-xl"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-medium text-gray-600">Pending Reviews</h3>
+            <p class="text-2xl font-bold text-yellow-600">{{ stats.pending_feedback if stats else '0' }}</p>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <hr>
-    <a href="{{ url_for('logout') }}" class="btn btn-danger mt-3">🚪 Logout</a>
+    <!-- Admin Tools -->
+    <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6">
+      <h2 class="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+        <i class="fas fa-tools text-indigo-600 mr-2"></i>Admin Tools
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Student Management -->
+        <div class="bg-white/70 rounded-xl p-6 border border-white/30">
+          <div class="flex items-center mb-4">
+            <div class="bg-blue-100 rounded-full w-12 h-12 flex items-center justify-center mr-4">
+              <i class="fas fa-users text-blue-600 text-xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900">Student Management</h3>
+          </div>
+          <div class="space-y-3">
+            <a href="{{ url_for('manage_students') }}" class="block w-full bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-xl transition-colors">
+              <i class="fas fa-user-edit mr-2"></i>Manage Students
+            </a>
+            <a href="{{ url_for('student_balances') }}" class="block w-full bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-xl transition-colors">
+              <i class="fas fa-wallet mr-2"></i>View Balances
+            </a>
+          </div>
+        </div>
+
+        <!-- Financial Management -->
+        <div class="bg-white/70 rounded-xl p-6 border border-white/30">
+          <div class="flex items-center mb-4">
+            <div class="bg-green-100 rounded-full w-12 h-12 flex items-center justify-center mr-4">
+              <i class="fas fa-money-bill-wave text-green-600 text-xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900">Financial</h3>
+          </div>
+          <div class="space-y-3">
+            <a href="{{ url_for('topup') }}" class="block w-full bg-green-50 hover:bg-green-100 text-green-700 px-4 py-2 rounded-xl transition-colors">
+              <i class="fas fa-plus-circle mr-2"></i>Top-Up Balance
+            </a>
+            <a href="{{ url_for('transactions') }}" class="block w-full bg-green-50 hover:bg-green-100 text-green-700 px-4 py-2 rounded-xl transition-colors">
+              <i class="fas fa-exchange-alt mr-2"></i>Transactions
+            </a>
+          </div>
+        </div>
+
+        <!-- Rewards System -->
+        <div class="bg-white/70 rounded-xl p-6 border border-white/30">
+          <div class="flex items-center mb-4">
+            <div class="bg-yellow-100 rounded-full w-12 h-12 flex items-center justify-center mr-4">
+              <i class="fas fa-trophy text-yellow-600 text-xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900">Rewards</h3>
+          </div>
+          <div class="space-y-3">
+            <a href="{{ url_for('award_points') }}" class="block w-full bg-yellow-50 hover:bg-yellow-100 text-yellow-700 px-4 py-2 rounded-xl transition-colors">
+              <i class="fas fa-star mr-2"></i>Award Points
+            </a>
+            <a href="{{ url_for('manage_rewards') }}" class="block w-full bg-yellow-50 hover:bg-yellow-100 text-yellow-700 px-4 py-2 rounded-xl transition-colors">
+              <i class="fas fa-gift mr-2"></i>Manage Rewards
+            </a>
+          </div>
+        </div>
+
+        <!-- Order Management -->
+        <div class="bg-white/70 rounded-xl p-6 border border-white/30">
+          <div class="flex items-center mb-4">
+            <div class="bg-purple-100 rounded-full w-12 h-12 flex items-center justify-center mr-4">
+              <i class="fas fa-utensils text-purple-600 text-xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900">Orders</h3>
+          </div>
+          <div class="space-y-3">
+            <a href="{{ url_for('paid_orders') }}" class="block w-full bg-purple-50 hover:bg-purple-100 text-purple-700 px-4 py-2 rounded-xl transition-colors">
+              <i class="fas fa-receipt mr-2"></i>Paid Orders
+            </a>
+          </div>
+        </div>
+
+        <!-- Feedback & Voting -->
+        <div class="bg-white/70 rounded-xl p-6 border border-white/30">
+          <div class="flex items-center mb-4">
+            <div class="bg-blue-100 rounded-full w-12 h-12 flex items-center justify-center mr-4">
+              <i class="fas fa-comment text-blue-600 text-xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900">Feedback</h3>
+          </div>
+          <div class="space-y-3">
+            <a href="{{ url_for('feedback') }}" class="block w-full bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-xl transition-colors">
+              <i class="fas fa-comment mr-2"></i>View Feedback
+            </a>
+            <a href="{{ url_for('vote') }}" class="block w-full bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-xl transition-colors">
+              <i class="fas fa-vote-yea mr-2"></i>Food Votes
+            </a>
+          </div>
+    </div>
+
+        <!-- System Settings -->
+        <div class="bg-white/70 rounded-xl p-6 border border-white/30">
+          <div class="flex items-center mb-4">
+            <div class="bg-gray-100 rounded-full w-12 h-12 flex items-center justify-center mr-4">
+              <i class="fas fa-cog text-gray-600 text-xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900">System</h3>
+          </div>
+          <div class="space-y-3">
+            <a href="{{ url_for('logout') }}" class="block w-full bg-red-50 hover:bg-red-100 text-red-700 px-4 py-2 rounded-xl transition-colors">
+              <i class="fas fa-sign-out-alt mr-2"></i>Logout
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}

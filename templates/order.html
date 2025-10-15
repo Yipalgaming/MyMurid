@@ -1,55 +1,107 @@
 {% extends "base.html" %}
-{% block title %}Menu{% endblock %}
+{% block title %}Order Food{% endblock %}
 {% block content %}
-<div class="flex">
-  <!--
-  <aside class="w-64 bg-light p-4 border-right">
-    <h2 class="text-xl font-bold mb-4">🍽 Categories</h2>
-    <ul class="list-unstyled">
-      <li><a href="#" class="text-primary">All</a></li>
-      {% for category in categories %}
-        <li><a href="#" class="text-secondary">{{ category }}</a></li>
-      {% endfor %}
-    </ul>
-  </aside>
-  -->
-
-  <main class="flex-grow p-4">
-    <h2 class="text-center mb-4">Menu</h2>
-    <div class="row">
-      {% for item in items %}
-      <div class="col-md-3 mb-4">
-        <div class="card h-100 text-center">
-          {% if item.image_path %}
-            <img src="{{ url_for('static', filename='images/' + item.image_path) }}" class="card-img-top" alt="{{ item.name }}">
-          {% else %}
-            <div class="p-4 text-muted">No image available</div>
-          {% endif %}
-          <div class="card-body">
-            <h5 class="card-title">{{ item.name }}</h5>
-            <p class="card-text">RM {{ "%.2f"|format(item.price) }}</p>
-            <button onclick="addToCart({{ item.id }}, '{{ item.name }}', {{ item.price }})" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2.5 rounded">Add to Cart</button>
+<div class="min-h-screen bg-gradient-to-br from-purple-400 via-pink-500 to-red-500 relative overflow-hidden">
+  <!-- Animated background elements -->
+  <div class="absolute inset-0 overflow-hidden">
+    <div class="absolute -top-40 -right-40 w-80 h-80 bg-white rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
+    <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-2000"></div>
+    <div class="absolute top-40 left-40 w-80 h-80 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-4000"></div>
+  </div>
+  <!-- Header -->
+  <div class="bg-white/90 backdrop-blur-sm shadow-lg border-b relative z-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Order Food</h1>
+          <p class="text-gray-600 mt-1">Choose from our delicious menu</p>
+        </div>
+        <div class="flex items-center space-x-4">
+          <div class="bg-gradient-to-r from-purple-500 to-pink-500 rounded-full p-3 shadow-lg">
+            <i class="fas fa-utensils text-white text-xl"></i>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Menu Grid -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10 min-h-screen">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 pb-24">
+      {% for item in items %}
+      <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group border border-white/20 transform hover:scale-105">
+        {% if item.image_path %}
+          <div class="relative overflow-hidden">
+            <img src="{{ url_for('static', filename='images/' + item.image_path) }}" 
+                 class="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300" 
+                 alt="{{ item.name }}">
+            <div class="absolute top-3 right-3 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full px-3 py-1 shadow-lg">
+              <span class="text-white font-semibold text-sm">RM {{ "%.2f"|format(item.price) }}</span>
+            </div>
+          </div>
+        {% else %}
+          <div class="h-48 bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
+            <div class="text-center text-purple-400">
+              <i class="fas fa-image text-3xl mb-2"></i>
+              <p class="text-xs">No image</p>
+            </div>
+          </div>
+        {% endif %}
+        
+        <div class="p-5">
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ item.name }}</h3>
+          <p class="text-gray-600 text-sm mb-4 line-clamp-2">{{ item.description or 'Delicious food item' }}</p>
+          
+          <button onclick="addToCart({{ item.id }}, '{{ item.name|e }}', {{ item.price }})" 
+                  class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white py-2.5 px-4 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center">
+            <i class="fas fa-plus mr-2 text-sm"></i>Add to Cart
+          </button>
         </div>
       </div>
       {% endfor %}
     </div>
-  </main>
+  </div>
 </div>
 
 <!-- Cart Bottom Bar -->
-<div id="cart-bar" class="fixed bottom-0 left-0 w-full bg-white shadow-lg border-t z-50 sticky-top">
-  <div class="container mx-auto p-4">
-    <ul id="cart-items" class="list-group mb-2"></ul>
-    <h3 class="text-xl font-bold mb-2">🛒 Your Order</h3>
-    <p id="cart-total" class="boldfont">Total: RM0.00</p>
-    <form id="order-form" action="{{ url_for('order') }}" method="POST">
-      <input type="hidden" name="cart_items" id="cart_items_input">
-      <button type="submit" onclick="return prepareOrderSubmission()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded object-left">
-        Submit Order
+<div id="cart-bar" class="fixed bottom-0 left-0 w-full bg-white shadow-2xl border-t border-gray-200 z-50 transform translate-y-full transition-transform duration-300">
+  <div class="max-w-7xl mx-auto p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-xl font-bold text-gray-900">
+        <i class="fas fa-shopping-cart mr-2 text-blue-600"></i>Your Order
+      </h3>
+      <button onclick="toggleCart()" class="text-gray-500 hover:text-gray-700 transition-colors">
+        <i class="fas fa-times text-xl"></i>
       </button>
-    </form>
+    </div>
+    
+    <div id="cart-items" class="max-h-64 overflow-y-auto mb-4 space-y-3"></div>
+    
+    <div class="border-t border-gray-200 pt-4">
+      <div class="flex justify-between items-center mb-4">
+        <span class="text-lg font-semibold text-gray-900">Total:</span>
+        <span id="cart-total" class="text-2xl font-bold text-blue-600">RM0.00</span>
+      </div>
+      
+      <form id="order-form" action="{{ url_for('order') }}" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <input type="hidden" name="cart_items" id="cart_items_input">
+        <button type="submit" onclick="return prepareOrderSubmission()" 
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-xl font-semibold text-lg transition-colors duration-200">
+          <i class="fas fa-check mr-2"></i>Submit Order
+        </button>
+      </form>
+    </div>
   </div>
+</div>
+
+<!-- Cart Toggle Button -->
+<div id="cart-toggle" class="fixed bottom-6 right-6 z-40">
+  <button onclick="toggleCart()" 
+          class="bg-blue-600 hover:bg-blue-700 text-white w-16 h-16 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110">
+    <i class="fas fa-shopping-cart text-xl"></i>
+    <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold">0</span>
+  </button>
 </div>
 
 <script>
@@ -71,20 +123,66 @@ function removeFromCart(id) {
 }
 
 function updateCartDisplay() {
-  const cartList = document.getElementById('cart-items');
-  const totalDisplay = document.getElementById('cart-total');
-  cartList.innerHTML = '';
+  const cartItems = document.getElementById('cart-items');
+  const cartTotal = document.getElementById('cart-total');
+  const cartCount = document.getElementById('cart-count');
+  
+  cartItems.innerHTML = '';
   let total = 0;
-
+  let itemCount = 0;
+  
   cart.forEach(item => {
-    const subtotal = item.price * item.quantity;
-    total += subtotal;
-    const li = document.createElement('li');
-    li.innerHTML = `${item.name} x${item.quantity} — RM${subtotal.toFixed(2)} <button onclick="removeFromCart(${item.id})" class="ml-2 text-red-500 hover:underline">Remove</button>`;
-    cartList.appendChild(li);
+    total += item.price * item.quantity;
+    itemCount += item.quantity;
+    
+    const cartItem = document.createElement('div');
+    cartItem.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-xl';
+    cartItem.innerHTML = `
+      <div class="flex-1">
+        <h4 class="font-medium text-gray-900">${item.name}</h4>
+        <p class="text-sm text-gray-600">RM ${item.price.toFixed(2)} each</p>
+      </div>
+      <div class="flex items-center space-x-3">
+        <button onclick="updateQuantity(${item.id}, -1)" class="bg-gray-200 text-gray-700 w-8 h-8 rounded-full hover:bg-gray-300 transition-colors">
+          <i class="fas fa-minus text-xs"></i>
+        </button>
+        <span class="font-semibold text-gray-900 w-8 text-center">${item.quantity}</span>
+        <button onclick="updateQuantity(${item.id}, 1)" class="bg-gray-200 text-gray-700 w-8 h-8 rounded-full hover:bg-gray-300 transition-colors">
+          <i class="fas fa-plus text-xs"></i>
+        </button>
+        <button onclick="removeFromCart(${item.id})" class="text-red-500 hover:text-red-700 ml-2">
+          <i class="fas fa-trash text-sm"></i>
+        </button>
+      </div>
+    `;
+    cartItems.appendChild(cartItem);
   });
+  
+  cartTotal.textContent = `RM${total.toFixed(2)}`;
+  cartCount.textContent = itemCount;
+  
+  if (cart.length > 0) {
+    cartCount.style.display = 'flex';
+  } else {
+    cartCount.style.display = 'none';
+  }
+}
 
-  totalDisplay.textContent = `Total: RM${total.toFixed(2)}`;
+function toggleCart() {
+  const cartBar = document.getElementById('cart-bar');
+  cartBar.classList.toggle('translate-y-full');
+}
+
+function updateQuantity(id, change) {
+  const item = cart.find(item => item.id === id);
+  if (item) {
+    item.quantity += change;
+    if (item.quantity <= 0) {
+      removeFromCart(id);
+    } else {
+      updateCartDisplay();
+    }
+  }
 }
 
 function prepareOrderSubmission() {

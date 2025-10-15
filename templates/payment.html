@@ -1,50 +1,147 @@
 {% extends "base.html" %}
 {% block title %}Payment{% endblock %}
 {% block content %}
+<div class="min-h-screen bg-gradient-to-br from-green-400 via-emerald-500 to-teal-500 relative overflow-hidden">
+  <!-- Animated background elements -->
+  <div class="absolute inset-0 overflow-hidden">
+    <div class="absolute -top-40 -right-40 w-80 h-80 bg-white rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
+    <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-green-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-2000"></div>
+    <div class="absolute top-40 left-40 w-80 h-80 bg-emerald-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-4000"></div>
+  </div>
 
-<h2>Unpaid Orders</h2>
+  <!-- Header -->
+  <div class="bg-white/90 backdrop-blur-sm shadow-lg border-b relative z-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">Payment</h1>
+          <p class="text-gray-600 mt-1">Complete your order payment</p>
+        </div>
+        <div class="flex items-center space-x-4">
+          <div class="bg-gradient-to-r from-green-500 to-emerald-500 rounded-full p-3 shadow-lg">
+            <i class="fas fa-credit-card text-white text-xl"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-{% if cart_items %}
-<table class="table table-striped">
-  <thead>
-    <tr>
-      <th>Item</th>
-      <th>Price (RM)</th>
-      <th>Qty</th>
-      <th>Subtotal (RM)</th>
-      <th>Action</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for item_id in cart_items %}
-    <tr>
-      <td>{{ item_id.item.name }}</td>
-      <td>{{ "%.2f"|format(item_id.item.price) }}</td>
-      <td>{{ item_id.quantity }}</td>
-      <td>{{ "%.2f"|format(item_id.item.price * item_id.quantity) }}</td>
-      <td>
-        <form method="POST" style="display:inline;">
-          <input type="hidden" name="delete" value="{{ item_id.id }}">
-          <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+    {% if cart_items %}
+      <!-- Order Summary Card -->
+      <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6 mb-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+          <i class="fas fa-shopping-cart text-green-600 mr-2"></i>Order Summary
+        </h2>
+        
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead>
+              <tr class="border-b border-gray-200">
+                <th class="text-left py-3 px-4 font-semibold text-gray-700">Item</th>
+                <th class="text-left py-3 px-4 font-semibold text-gray-700">Price</th>
+                <th class="text-left py-3 px-4 font-semibold text-gray-700">Qty</th>
+                <th class="text-left py-3 px-4 font-semibold text-gray-700">Subtotal</th>
+                <th class="text-left py-3 px-4 font-semibold text-gray-700">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item_id in cart_items %}
+              <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                <td class="py-3 px-4 font-medium">{{ item_id.item.name }}</td>
+                <td class="py-3 px-4 text-gray-600">RM {{ "%.2f"|format(item_id.item.price) }}</td>
+                <td class="py-3 px-4 text-gray-600">{{ item_id.quantity }}</td>
+                <td class="py-3 px-4 font-bold text-green-600">RM {{ "%.2f"|format(item_id.item.price * item_id.quantity) }}</td>
+                <td class="py-3 px-4">
+                  <form method="POST" style="display:inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <input type="hidden" name="delete" value="{{ item_id.id }}">
+                    <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg text-sm font-medium transition-colors">
+                      <i class="fas fa-trash mr-1"></i>Remove
+                    </button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Payment Summary Card -->
+      <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6 mb-8">
+        <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+          <i class="fas fa-receipt text-green-600 mr-2"></i>Payment Summary
+        </h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="bg-gray-50 rounded-xl p-4">
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-gray-600">Total Amount:</span>
+              <span class="text-2xl font-bold text-green-600">RM {{ "%.2f"|format(total) }}</span>
+            </div>
+          </div>
+          
+          <div class="bg-gray-50 rounded-xl p-4">
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-gray-600">Your Balance:</span>
+              <span class="text-2xl font-bold text-blue-600">RM {{ "%.2f"|format(user.balance) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment Status -->
+        <div class="mt-6 p-4 rounded-xl {% if user.balance >= total %}bg-green-50 border border-green-200{% else %}bg-red-50 border border-red-200{% endif %}">
+          <div class="flex items-center">
+            {% if user.balance >= total %}
+              <i class="fas fa-check-circle text-green-600 text-xl mr-3"></i>
+              <div>
+                <h4 class="font-semibold text-green-800">Payment Ready</h4>
+                <p class="text-green-700 text-sm">You have sufficient balance to complete this payment.</p>
+              </div>
+            {% else %}
+              <i class="fas fa-exclamation-triangle text-red-600 text-xl mr-3"></i>
+              <div>
+                <h4 class="font-semibold text-red-800">Insufficient Balance</h4>
+                <p class="text-red-700 text-sm">You need RM {{ "%.2f"|format(total - user.balance) }} more to complete this payment.</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-col sm:flex-row gap-4">
+        <form method="POST" action="{{ url_for('payment') }}" class="flex-1">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+          <input type="hidden" name="pay" value="true">
+          <button type="submit" 
+                  class="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl {% if user.balance < total %}opacity-50 cursor-not-allowed{% endif %}"
+                  {% if user.balance < total %}disabled{% endif %}>
+            <i class="fas fa-credit-card mr-2"></i>Pay Now
+          </button>
         </form>
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+        
+        <a href="{{ url_for('order') }}" 
+           class="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl text-center">
+          <i class="fas fa-plus mr-2"></i>Add More Orders
+        </a>
+      </div>
 
-<h4>Total: RM{{ "%.2f"|format(total) }}</h4>
-<h4>Balance: <strong>RM{{ "%.2f"|format(user.balance) }}</strong></h4>
-
-<form method="POST" action="{{ url_for('payment') }}">
-  <input type="hidden" name="pay" value="true">
-  <button type="submit" class="btn btn-success">✅ Pay Now</button>
-  <a href="{{ url_for('order') }}" class="btn btn-primary">➕ Add More Orders</a>
-</form>
-
-{% else %}
-<p>No unpaid orders found.</p>
-<a href="{{ url_for('order') }}" class="btn btn-primary">Make a New Order</a>
-{% endif %}
-
+    {% else %}
+      <!-- Empty Cart -->
+      <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8 text-center">
+        <div class="bg-gray-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+          <i class="fas fa-shopping-cart text-gray-400 text-2xl"></i>
+        </div>
+        <h3 class="text-xl font-semibold text-gray-900 mb-2">No Orders Found</h3>
+        <p class="text-gray-600 mb-6">You don't have any unpaid orders. Start by making a new order!</p>
+        <a href="{{ url_for('order') }}" 
+           class="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
+          <i class="fas fa-plus mr-2"></i>Make a New Order
+        </a>
+      </div>
+    {% endif %}
+  </div>
+</div>
 {% endblock %}

@@ -24,6 +24,7 @@
         <td>{{ 'Frozen' if s.frozen else 'Active' }}</td>
         <td>
           <form method="POST" action="{{ url_for('toggle_card_status') }}" class="d-inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <input type="hidden" name="ic" value="{{ s.ic_number }}">
             <input type="hidden" name="action" value="{{ 'unfreeze' if s.frozen else 'freeze' }}">
             <button type="submit" class="btn btn-sm {{ 'btn-success' if s.frozen else 'btn-danger' }}">

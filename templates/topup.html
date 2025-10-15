@@ -5,6 +5,7 @@
   <div class="card shadow p-4">
     <h2 class="mb-3">💰 Top-up Student Account</h2>
     <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
       <div class="form-group">
         <label for="ic">Student IC (Last 4 digits):</label>
         <input type="text" class="form-control" name="ic" id="ic" maxlength="4" required>
