@@ -76,11 +76,23 @@ def ensure_schema_safety():
                     ) THEN
                         ALTER TABLE student_info ADD COLUMN password_hash VARCHAR(255);
                     END IF;
+                    IF NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_name='student_info' AND column_name='total_points'
+                    ) THEN
+                        ALTER TABLE student_info ADD COLUMN total_points INTEGER DEFAULT 0;
+                    END IF;
+                    IF NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_name='student_info' AND column_name='available_points'
+                    ) THEN
+                        ALTER TABLE student_info ADD COLUMN available_points INTEGER DEFAULT 0;
+                    END IF;
                 END$$;
                 """
             ))
             db.session.commit()
-            print('[Startup] Schema safety check: ensured student_info.pin_hash and password_hash exist')
+            print('[Startup] Schema safety check: ensured student_info columns (pin_hash, password_hash, total_points, available_points) exist')
     except Exception as e:
         db.session.rollback()
         print(f"[Startup] Schema safety check failed: {e}")
