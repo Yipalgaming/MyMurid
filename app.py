@@ -10,6 +10,7 @@ from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
 from transactions import Transaction
 from sqlalchemy import func
+from sqlalchemy.engine import make_url
 from datetime import timedelta, datetime, timezone
 from config import config
 from error_handlers import register_error_handlers
@@ -33,6 +34,16 @@ login_manager.login_view = 'login'
 
 # Register error handlers
 register_error_handlers(app)
+# Log masked database URI details at startup (without secrets)
+try:
+    _uri = app.config.get('SQLALCHEMY_DATABASE_URI')
+    if _uri:
+        _url = make_url(_uri)
+        masked = f"{_url.drivername}://{_url.host}:{_url.port}/{_url.database}"
+        print(f"[Startup] Using database: {masked}")
+except Exception as _e:
+    print(f"[Startup] Could not parse DB URI: {_e}")
+
 
 # Constants for error messages
 STUDENT_NOT_FOUND = "Student not found."
@@ -207,6 +218,50 @@ def home():
 def rate_limit_exceeded():
     """Show rate limit exceeded page"""
     return render_template('rate_limit.html')
+
+# --- Diagnostics (temporary, can be removed after verification) ---
+@app.route('/_diag/db')
+def diag_db():
+    try:
+        uri = app.config.get('SQLALCHEMY_DATABASE_URI')
+        url = make_url(uri) if uri else None
+        masked = None
+        if url:
+            masked = f"{url.drivername}://{url.host}:{url.port}/{url.database}"
+        # Basic query
+        one = db.session.execute(db.text('SELECT 1')).scalar_one()
+        students = db.session.query(StudentInfo).count()
+        return jsonify({
+            'ok': True,
+            'db': masked,
+            'select_1': one,
+            'student_count': students
+        })
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
+@app.route('/_diag/seed', methods=['POST'])
+def diag_seed():
+    # Very basic shared secret to prevent abuse; set RENDER_SEED_SECRET in env
+    secret = request.headers.get('X-Seed-Secret')
+    expected = os.environ.get('RENDER_SEED_SECRET')
+    if not expected or secret != expected:
+        return jsonify({'ok': False, 'error': 'Unauthorized'}), 401
+    try:
+        ic = request.json.get('ic', '1234')
+        pin = request.json.get('pin', '1234')
+        name = request.json.get('name', 'Test Student')
+        existing = StudentInfo.query.filter_by(ic_number=ic).first()
+        if existing:
+            return jsonify({'ok': True, 'message': 'Student already exists'}), 200
+        student = StudentInfo(ic_number=ic, name=name, balance=50.0, role='student', frozen=False)
+        student.set_pin(pin)
+        db.session.add(student)
+        db.session.commit()
+        return jsonify({'ok': True, 'created': {'ic': ic, 'name': name}})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'ok': False, 'error': str(e)}), 500
 
 @app.route('/login', methods=['GET', 'POST'])
 @add_security_headers
