@@ -50,7 +50,7 @@ class ProductionConfig(Config):
 class TestingConfig(Config):
     """Testing configuration"""
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
+    SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or 'postgresql://mymurid_user:mymurid_password_2025@localhost:5432/mymurid_db'
     WTF_CSRF_ENABLED = False
 
 # Configuration dictionary
