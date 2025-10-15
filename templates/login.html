@@ -136,16 +136,7 @@
           <div class="mt-6 text-center space-y-3">
             <div class="text-sm text-gray-600">
               <span>Don't have an account?</span>
-              <a href="{{ url_for('register') }}" class="text-blue-600 hover:text-blue-700 font-medium ml-1">Register here</a>
-              <script>
-                // Redirect student register link to parent registration if clicked
-                (function(){
-                  var link = document.currentScript.previousElementSibling;
-                  if (link && link.tagName === 'A') {
-                    link.setAttribute('href', "{{ url_for('parent_register') }}");
-                  }
-                })();
-              </script>
+              <a href="{{ url_for('parent_register') }}" class="text-blue-600 hover:text-blue-700 font-medium ml-1">Register here</a>
             </div>
             <div class="text-sm text-gray-600">
               <span>Are you a parent?</span>
