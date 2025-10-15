@@ -7,6 +7,7 @@ import os, json
 from barcode import Code128
 from barcode.writer import ImageWriter
 from flask_migrate import Migrate
+from flask_migrate import upgrade as alembic_upgrade
 from werkzeug.security import generate_password_hash, check_password_hash
 from transactions import Transaction
 from sqlalchemy import func
@@ -43,6 +44,16 @@ try:
         print(f"[Startup] Using database: {masked}")
 except Exception as _e:
     print(f"[Startup] Could not parse DB URI: {_e}")
+
+# Optional: run DB migrations on startup if env flag is set (for platforms without shell/post-deploy)
+if os.environ.get('RUN_DB_UPGRADE') in ('1', 'true', 'True', 'yes', 'YES'):
+    try:
+        with app.app_context():
+            print('[Startup] RUN_DB_UPGRADE is set; running Alembic upgrade head...')
+            alembic_upgrade()
+            print('[Startup] Alembic upgrade completed successfully.')
+    except Exception as e:
+        print(f"[Startup] Alembic upgrade failed: {e}")
 
 
 # Constants for error messages
