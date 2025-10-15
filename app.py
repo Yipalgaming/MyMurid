@@ -55,6 +55,38 @@ if os.environ.get('RUN_DB_UPGRADE') in ('1', 'true', 'True', 'yes', 'YES'):
     except Exception as e:
         print(f"[Startup] Alembic upgrade failed: {e}")
 
+# Last-resort schema safety: ensure critical columns exist (idempotent for PostgreSQL)
+def ensure_schema_safety():
+    try:
+        with app.app_context():
+            # Add missing columns if they do not exist (PostgreSQL syntax)
+            db.session.execute(db.text(
+                """
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_name='student_info' AND column_name='pin_hash'
+                    ) THEN
+                        ALTER TABLE student_info ADD COLUMN pin_hash VARCHAR(255);
+                    END IF;
+                    IF NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_name='student_info' AND column_name='password_hash'
+                    ) THEN
+                        ALTER TABLE student_info ADD COLUMN password_hash VARCHAR(255);
+                    END IF;
+                END$$;
+                """
+            ))
+            db.session.commit()
+            print('[Startup] Schema safety check: ensured student_info.pin_hash and password_hash exist')
+    except Exception as e:
+        db.session.rollback()
+        print(f"[Startup] Schema safety check failed: {e}")
+
+ensure_schema_safety()
+
 
 # Constants for error messages
 STUDENT_NOT_FOUND = "Student not found."
