@@ -307,6 +307,48 @@ def test_login_process():
     except Exception as e:
         return jsonify({'error': str(e)})
 
+# Temporary test login with CSRF
+@app.route('/test-login-csrf', methods=['POST'])
+def test_login_csrf():
+    try:
+        # Get CSRF token from form
+        csrf_token = request.form.get('csrf_token', '')
+        if not csrf_token:
+            return jsonify({'error': 'CSRF token missing'})
+        
+        ic = request.form.get('ic', '').strip()
+        pin = request.form.get('pin', '').strip()
+        
+        # Test validation
+        if not validate_ic_number(ic) or not validate_pin(pin):
+            return jsonify({'error': 'Invalid IC or PIN format'})
+        
+        # Test student retrieval
+        user = safe_get_student(ic)
+        if not user:
+            return jsonify({'error': 'Student not found'})
+        
+        # Test PIN check
+        if not user.check_pin(pin):
+            return jsonify({'error': 'Invalid PIN'})
+        
+        # Test account status
+        if user.frozen:
+            return jsonify({'error': 'Account frozen'})
+        
+        # Test login_user function
+        login_user(user, remember=False)
+        
+        return jsonify({
+            'message': 'Login successful with CSRF',
+            'user_id': user.id,
+            'user_name': user.name,
+            'user_role': user.role,
+            'authenticated': current_user.is_authenticated
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
 # Temporary test dashboard endpoint
 @app.route('/test-dashboard')
 @login_required
