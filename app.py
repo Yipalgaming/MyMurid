@@ -307,6 +307,16 @@ def test_login_process():
     except Exception as e:
         return jsonify({'error': str(e)})
 
+# Temporary test dashboard endpoint
+@app.route('/test-dashboard')
+@login_required
+def test_dashboard():
+    try:
+        # Test if we can render the dashboard template
+        return render_template('dashboard.html', user=current_user)
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
 
 @app.route('/login', methods=['GET', 'POST'])
 @add_security_headers
