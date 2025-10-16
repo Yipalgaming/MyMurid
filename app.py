@@ -19,6 +19,16 @@ import re
 from functools import wraps
 import time
 
+# Load environment variables from .env file if it exists
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+    print("[Startup] Loaded environment variables from .env file")
+except ImportError:
+    print("[Startup] python-dotenv not installed, skipping .env file")
+except Exception as e:
+    print(f"[Startup] Error loading .env file: {e}")
+
 # Get configuration based on environment
 config_name = os.environ.get('FLASK_ENV', 'development')
 app = Flask(__name__)
