@@ -221,6 +221,35 @@ def rate_limit_exceeded():
     """Show rate limit exceeded page"""
     return render_template('rate_limit.html')
 
+# Temporary seed endpoint for Render (remove after testing)
+@app.route('/seed-test-student', methods=['POST'])
+def seed_test_student():
+    try:
+        # Create a test student
+        test_student = StudentInfo(
+            ic_number='1234',
+            name='Test Student',
+            balance=50.0,
+            role='student',
+            frozen=False,
+            total_points=0,
+            available_points=0
+        )
+        test_student.set_pin('1234')
+        
+        # Check if already exists
+        existing = StudentInfo.query.filter_by(ic_number='1234').first()
+        if existing:
+            return jsonify({'message': 'Student 1234 already exists', 'status': 'exists'})
+        
+        db.session.add(test_student)
+        db.session.commit()
+        
+        return jsonify({'message': 'Test student created: IC 1234, PIN 1234', 'status': 'created'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e), 'status': 'failed'}), 500
+
 
 @app.route('/login', methods=['GET', 'POST'])
 @add_security_headers
