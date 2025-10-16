@@ -39,7 +39,7 @@ def create_staff_user():
             staff_user.set_pin("9999")
             
             # Set password (for staff login)
-            staff_user.set_password("staff123")
+            staff_user.set_password("adminpass")
             
             # Add to database
             db.session.add(staff_user)
@@ -48,7 +48,7 @@ def create_staff_user():
             print("✅ Staff user created successfully!")
             print("IC: 9999")
             print("PIN: 9999")
-            print("Password: staff123")
+            print("Password: adminpass")
             print("Role: staff")
             
         except Exception as e:
