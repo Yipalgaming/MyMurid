@@ -448,7 +448,9 @@ def login():
                 print(f"Validation failed: IC={ic}, PIN={'*' * len(pin)}")
                 return jsonify({'error': 'Invalid IC or PIN format'})
             
+            print(f"Validation passed, looking up student: {ic}")
             user = safe_get_student(ic)
+            print(f"Student lookup result: {user}")
             if not user:
                 print(f"Student not found: {ic}")
                 return jsonify({'error': 'Student not found'})
