@@ -68,7 +68,7 @@
       
       {% if logs %}
         <div class="divide-y divide-gray-200">
-          {% for txn in logs %}
+        {% for txn in logs %}
           <div class="p-6 hover:bg-gray-50 transition-colors transaction-row">
             <div class="flex items-center justify-between">
               <div class="flex items-center space-x-4">
@@ -92,7 +92,7 @@
               </div>
             </div>
           </div>
-          {% endfor %}
+        {% endfor %}
         </div>
       {% else %}
         <div class="text-center py-12">

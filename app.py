@@ -313,7 +313,7 @@ def test_login_process():
 def test_dashboard():
     try:
         # Test if we can render the dashboard template
-        return render_template('dashboard.html', user=current_user)
+        return render_template('test_dashboard.html', user=current_user)
     except Exception as e:
         return jsonify({'error': str(e)})
 

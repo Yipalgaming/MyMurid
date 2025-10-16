@@ -182,7 +182,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
 <script>
-  let scannerRunning = false;
+let scannerRunning = false;
   let quaggaInitialized = false;
 
   async function getPreferredCameraDeviceId() {
@@ -233,7 +233,7 @@
       : { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } };
 
     const config = {
-      inputStream: {
+    inputStream: {
         name: 'Live',
         type: 'LiveStream',
         target: container,
@@ -241,7 +241,7 @@
       },
       locator: { patchSize: 'medium', halfSample: true },
       numOfWorkers: navigator.hardwareConcurrency ? Math.min(4, navigator.hardwareConcurrency) : 2,
-      decoder: {
+    decoder: {
         readers: [
           'code_128_reader',
           'ean_reader',
@@ -250,21 +250,21 @@
           'upc_reader',
           'upc_e_reader'
         ]
-      },
-      locate: true
+    },
+    locate: true
     };
 
     Quagga.init(config, function(err) {
-      if (err) {
+    if (err) {
         console.error('Quagga init error:', err);
         const msg = (err && (err.message || err.name)) ? err.message || err.name : 'Unknown error';
         container.innerHTML = '<div class="text-center text-red-500"><i class="fas fa-video-slash text-4xl mb-2"></i><p>Camera initialization failed</p><p class="text-sm mt-2">' + msg + '</p></div>';
-        return;
-      }
+      return;
+    }
       quaggaInitialized = true;
-      Quagga.start();
-      scannerRunning = true;
-    });
+    Quagga.start();
+    scannerRunning = true;
+  });
 
     Quagga.offProcessed();
     Quagga.onProcessed(function(result) {
@@ -324,7 +324,7 @@
   function manualInput() {
     closeBarcodeScan();
     document.getElementById('ic').focus();
-  }
+}
 </script>
 </body>
 </html>

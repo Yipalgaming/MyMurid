@@ -45,7 +45,7 @@
           </label>
         </div>
       </div>
-    </div>
+</div>
 
     <!-- Orders Table -->
     <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden">
@@ -57,11 +57,11 @@
               <th class="px-6 py-4 text-left font-semibold">Order Details</th>
               <th class="px-6 py-4 text-left font-semibold">Status</th>
               <th class="px-6 py-4 text-left font-semibold">Actions</th>
-            </tr>
-          </thead>
+    </tr>
+  </thead>
           <tbody class="divide-y divide-gray-200">
-            {% for student, orders in grouped_orders.items() %}
-              {% for order in orders %}
+    {% for student, orders in grouped_orders.items() %}
+      {% for order in orders %}
               <tr class="{% if order.status == 'completed' %}done-row bg-gray-50{% else %}hover:bg-gray-50{% endif %} transition-colors">
                 <td class="px-6 py-4">
                   <div class="flex items-center">
@@ -92,13 +92,13 @@
                       <i class="fas fa-check-circle mr-1"></i>
                       Completed
                     </span>
-                  {% else %}
+          {% else %}
                     <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
                       <i class="fas fa-clock mr-1"></i>
                       Pending
                     </span>
-                  {% endif %}
-                </td>
+          {% endif %}
+        </td>
                 <td class="px-6 py-4">
                   <div class="flex space-x-2">
                     {% if order.status != 'completed' %}
@@ -107,22 +107,22 @@
                       <i class="fas fa-check mr-1"></i>
                       Mark Done
                     </button>
-                    {% endif %}
+          {% endif %}
 
-                    {% if current_user.role == "admin" %}
+          {% if current_user.role == "admin" %}
                     <button class="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl" 
                             onclick="deleteOrder({{ order.id }}, this)">
                       <i class="fas fa-trash mr-1"></i>
                       Delete
                     </button>
-                    {% endif %}
+          {% endif %}
                   </div>
-                </td>
-              </tr>
-              {% endfor %}
-            {% endfor %}
-          </tbody>
-        </table>
+        </td>
+      </tr>
+      {% endfor %}
+    {% endfor %}
+  </tbody>
+</table>
       </div>
     </div>
 
