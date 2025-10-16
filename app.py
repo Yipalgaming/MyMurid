@@ -155,10 +155,16 @@ def add_security_headers(f):
 def safe_get_student(ic_number):
     """Safely get student with error handling"""
     try:
+        print(f"safe_get_student called with IC: {ic_number}")
         if not validate_ic_number(ic_number):
+            print(f"IC validation failed for: {ic_number}")
             return None
-        return StudentInfo.query.filter_by(ic_number=ic_number).first()
+        print(f"IC validation passed for: {ic_number}")
+        student = StudentInfo.query.filter_by(ic_number=ic_number).first()
+        print(f"Database query result: {student}")
+        return student
     except Exception as e:
+        print(f"Database error getting student {ic_number}: {str(e)}")
         app.logger.error(f"Database error getting student {ic_number}: {str(e)}")
         return None
 
