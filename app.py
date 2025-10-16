@@ -1423,6 +1423,46 @@ def add_student():
         flash('Error adding student. Please try again.', 'error')
         return redirect(url_for('manage_students'))
 
+# Temporary endpoint to remove pin and password columns from online database
+@app.route('/remove-pin-password-columns', methods=['POST'])
+def remove_pin_password_columns():
+    """Remove pin_hash and password_hash columns from student_info table"""
+    try:
+        from sqlalchemy import text
+        
+        # Check current columns
+        result = db.session.execute(text("SELECT column_name FROM information_schema.columns WHERE table_name='student_info' ORDER BY column_name"))
+        columns = [row[0] for row in result.fetchall()]
+        
+        removed_columns = []
+        
+        # Remove pin_hash column if it exists
+        if 'pin_hash' in columns:
+            db.session.execute(text("ALTER TABLE student_info DROP COLUMN pin_hash"))
+            removed_columns.append('pin_hash')
+        
+        # Remove password_hash column if it exists
+        if 'password_hash' in columns:
+            db.session.execute(text("ALTER TABLE student_info DROP COLUMN password_hash"))
+            removed_columns.append('password_hash')
+        
+        db.session.commit()
+        
+        # Get updated columns
+        result = db.session.execute(text("SELECT column_name FROM information_schema.columns WHERE table_name='student_info' ORDER BY column_name"))
+        updated_columns = [row[0] for row in result.fetchall()]
+        
+        return jsonify({
+            'message': 'Columns removed successfully',
+            'status': 'success',
+            'removed_columns': removed_columns,
+            'updated_columns': updated_columns
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e), 'status': 'error'})
+
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
