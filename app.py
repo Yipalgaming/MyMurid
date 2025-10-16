@@ -221,34 +221,24 @@ def rate_limit_exceeded():
     """Show rate limit exceeded page"""
     return render_template('rate_limit.html')
 
-# Temporary seed endpoint for Render (remove after testing)
-@app.route('/seed-test-student', methods=['POST'])
-def seed_test_student():
+# Temporary debug endpoint (remove after testing)
+@app.route('/debug-pin/<ic>')
+def debug_pin(ic):
     try:
-        # Create a test student
-        test_student = StudentInfo(
-            ic_number='1234',
-            name='Test Student',
-            balance=50.0,
-            role='student',
-            frozen=False,
-            total_points=0,
-            available_points=0
-        )
-        test_student.set_pin('1234')
+        student = StudentInfo.query.filter_by(ic_number=ic).first()
+        if not student:
+            return jsonify({'error': 'Student not found'})
         
-        # Check if already exists
-        existing = StudentInfo.query.filter_by(ic_number='1234').first()
-        if existing:
-            return jsonify({'message': 'Student 1234 already exists', 'status': 'exists'})
-        
-        db.session.add(test_student)
-        db.session.commit()
-        
-        return jsonify({'message': 'Test student created: IC 1234, PIN 1234', 'status': 'created'})
+        return jsonify({
+            'ic': student.ic_number,
+            'name': student.name,
+            'pin_hash': student.pin_hash,
+            'pin_hash_length': len(student.pin_hash) if student.pin_hash else 0,
+            'test_1234': student.check_pin('1234'),
+            'test_0000': student.check_pin('0000')
+        })
     except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e), 'status': 'failed'}), 500
+        return jsonify({'error': str(e)})
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -884,7 +874,7 @@ def admin_dashboard():
 @login_required
 def staff_dashboard():
     if current_user.role == 'staff':
-        return redirect(url_for('staff.html', user=current_user))
+        return render_template('staff.html', user=current_user)
     else:
         return redirect(url_for('home'))
 
