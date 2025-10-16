@@ -427,6 +427,7 @@ def test_dashboard():
 
 
 @app.route('/login', methods=['GET', 'POST'])
+@add_security_headers
 def login():
     print(f"Login route accessed, method: {request.method}")
     print(f"Current user authenticated: {current_user.is_authenticated}")
@@ -450,34 +451,41 @@ def login():
             # Input validation
             if not validate_ic_number(ic) or not validate_pin(pin):
                 print(f"Validation failed: IC={ic}, PIN={'*' * len(pin)}")
-                return jsonify({'error': 'Invalid IC or PIN format'})
+                flash(INVALID_IC_FORMAT, 'error')
+                return redirect(url_for('login'))
             
             print(f"Validation passed, looking up student: {ic}")
             user = safe_get_student(ic)
             print(f"Student lookup result: {user}")
             if not user:
                 print(f"Student not found: {ic}")
-                return jsonify({'error': 'Student not found'})
+                flash(INVALID_CREDENTIALS, 'error')
+                return redirect(url_for('login'))
 
             # Check PIN
             if not user.check_pin(pin):
                 print(f"Invalid PIN for student: {ic}")
-                return jsonify({'error': 'Invalid PIN'})
+                flash(INVALID_CREDENTIALS, 'error')
+                return redirect(url_for('login'))
             
             # Check password for admin/staff
             if user.role in ['admin', 'staff']:
                 if not password:
-                    return jsonify({'error': 'Password required for admin/staff'})
+                    flash('Password is required for admin/staff.', 'error')
+                    return redirect(url_for('login'))
                 if not user.check_password(password):
-                    return jsonify({'error': 'Invalid password for admin/staff'})
+                    flash('Invalid password for admin/staff.', 'error')
+                    return redirect(url_for('login'))
             
             # Check if account is frozen
             if user.frozen:
                 print(f"Account frozen for student: {ic}")
-                return jsonify({'error': 'Account frozen'})
+                flash(ACCOUNT_FROZEN, 'error')
+                return redirect(url_for('login'))
             
             print(f"Login successful for user: {user.name}, role: {user.role}")
             login_user(user, remember=False)
+            flash('Login successful!', 'success')
             
             # Clear rate limit on successful login
             client_ip = request.remote_addr
@@ -485,17 +493,20 @@ def login():
                 del app.rate_limit_storage[client_ip]
                 print(f"Cleared rate limit for {client_ip} after successful login")
             
-            return jsonify({
-                'message': 'Login successful',
-                'user_id': user.id,
-                'user_name': user.name,
-                'user_role': user.role,
-                'redirect_url': url_for('student_dashboard') if user.role == 'student' else url_for('admin_dashboard')
-            })
+            if user.role == 'admin':
+                print(f"Redirecting admin {user.name} to admin dashboard")
+                return redirect(url_for('admin_dashboard'))
+            elif user.role == 'staff':
+                print(f"Redirecting staff {user.name} to staff dashboard")
+                return redirect(url_for('staff_dashboard'))
+            else:
+                print(f"Redirecting student {user.name} to student dashboard")
+                return redirect(url_for('student_dashboard'))
                 
         except Exception as e:
             print(f"Login error: {str(e)}")
-            return jsonify({'error': str(e)})
+            flash('An error occurred during login. Please try again.', 'error')
+            return redirect(url_for('login'))
 
     return render_template('login.html')
 
