@@ -220,10 +220,10 @@ def home():
     if current_user.is_authenticated:
         # Check if it's a Parent user (no role attribute)
         if hasattr(current_user, 'role'):
-        if current_user.role == 'student':
-            return redirect(url_for('student_dashboard'))
-        elif current_user.role == 'admin':
-            return redirect(url_for('admin_dashboard'))
+            if current_user.role == 'student':
+                return redirect(url_for('student_dashboard'))
+            elif current_user.role == 'admin':
+                return redirect(url_for('admin_dashboard'))
             elif current_user.role == 'staff':
                 return redirect(url_for('staff_dashboard'))
         else:
@@ -433,11 +433,11 @@ def login():
     if current_user.is_authenticated:
         print(f"User already authenticated: {current_user.name}, role: {current_user.role}")
         if current_user.role == 'admin':
-                return redirect(url_for('admin_dashboard'))
+            return redirect(url_for('admin_dashboard'))
         elif current_user.role == 'staff':
             return redirect(url_for('staff_dashboard'))
-            else:
-                return redirect(url_for('student_dashboard'))
+        else:
+            return redirect(url_for('student_dashboard'))
     
     if request.method == 'POST':
         try:
@@ -1124,20 +1124,20 @@ def handle_order_submission():
         cart_items = validate_cart_data(request.form.get("cart_items"))
     except ValueError as e:
         flash(f"❌ {str(e)}", "error")
-            return redirect(url_for("order"))
+        return redirect(url_for("order"))
 
-        student = StudentInfo.query.get(current_user.id)
-        if not student:
-            flash("❌ Student not found.", "error")
-            return redirect(url_for("order"))
+    student = StudentInfo.query.get(current_user.id)
+    if not student:
+        flash("❌ Student not found.", "error")
+        return redirect(url_for("order"))
 
     try:
         orders_created = create_orders_from_cart(cart_items, student.id)
         db.session.commit()
         
         if orders_created > 0:
-        flash("✅ Order submitted! Proceed to payment.", "success")
-        return redirect(url_for("payment"))
+            flash("✅ Order submitted! Proceed to payment.", "success")
+            return redirect(url_for("payment"))
         else:
             flash("❌ No valid items in cart.", "error")
             return redirect(url_for("order"))
@@ -1212,18 +1212,18 @@ def handle_order_payment(student):
         total_amount = validate_payment_conditions(student, unpaid_orders)
         
         process_payment_transaction(student, unpaid_orders, total_amount)
-    db.session.commit()
+        db.session.commit()
         
-    flash("✅ Payment successful!", "success")
-    return redirect(url_for("student_dashboard"))
+        flash("✅ Payment successful!", "success")
+        return redirect(url_for("student_dashboard"))
         
     except ValueError as e:
-        flash(str(e), "error")
+        flash(f"❌ {str(e)}", "error")
         return redirect(url_for("payment"))
     except Exception as e:
         db.session.rollback()
         app.logger.error(f"Payment error for student {student.id}: {str(e)}")
-        flash("Payment failed. Please try again.", "error")
+        flash("❌ Payment failed. Please try again.", "error")
         return redirect(url_for("payment"))
 
 
@@ -1409,20 +1409,20 @@ def topup():
             flash(ACCOUNT_FROZEN, "error")
             return redirect(url_for("topup"))
 
-            try:
+        try:
             amount_int = int(amount)
             student.balance += amount_int
             
-                new_tx = Transaction(
-            type="Top-up",
-            amount=amount_int,  # Fixed: use int instead of string
-            description=f"Top-up for {student.name}"
-                )
-                db.session.add(new_tx)
-                db.session.commit()
+            new_tx = Transaction(
+                type="Top-up",
+                amount=amount_int,  # Fixed: use int instead of string
+                description=f"Top-up for {student.name}"
+            )
+            db.session.add(new_tx)
+            db.session.commit()
             flash(f"Successfully topped up RM{amount_int} for {student.name}.", "success")
         except Exception as e:
-                db.session.rollback()
+            db.session.rollback()
             app.logger.error(f"Top-up error: {str(e)}")
             flash("Error processing top-up. Please try again.", "error")
 
