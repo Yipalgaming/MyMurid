@@ -155,16 +155,10 @@ def add_security_headers(f):
 def safe_get_student(ic_number):
     """Safely get student with error handling"""
     try:
-        print(f"safe_get_student called with IC: {ic_number}")
         if not validate_ic_number(ic_number):
-            print(f"IC validation failed for: {ic_number}")
             return None
-        print(f"IC validation passed for: {ic_number}")
-        student = StudentInfo.query.filter_by(ic_number=ic_number).first()
-        print(f"Database query result: {student}")
-        return student
+        return StudentInfo.query.filter_by(ic_number=ic_number).first()
     except Exception as e:
-        print(f"Database error getting student {ic_number}: {str(e)}")
         app.logger.error(f"Database error getting student {ic_number}: {str(e)}")
         return None
 
@@ -177,27 +171,31 @@ def load_user(user_id):
     # Check if this is a parent or student based on session
     # For now, try parent first, then student
     print(f"Loading user with ID: {user_id}")
+    
+    # Try to load student first (since parent table doesn't exist)
     try:
-        # Try to load parent first (if parent table exists)
+        user = StudentInfo.query.get(int(user_id))
+        if user:
+            print(f"Loaded student user: {user.name}")
+            return user
+    except Exception as e:
+        print(f"Error loading student: {e}")
+        # Rollback the transaction to clear the failed state
+        db.session.rollback()
+    
+    # Try to load parent (if parent table exists)
+    try:
         user = Parent.query.get(int(user_id))
         if user:
             print(f"Loaded parent user: {user.name}")
             return user
     except Exception as e:
         print(f"Parent table not available: {e}")
-        # Parent table doesn't exist, skip to student
+        # Rollback the transaction to clear the failed state
+        db.session.rollback()
     
-    # Try to load student
-    try:
-        user = StudentInfo.query.get(int(user_id))
-        if user:
-            print(f"Loaded student user: {user.name}")
-        else:
-            print(f"No user found with ID: {user_id}")
-        return user
-    except Exception as e:
-        print(f"Error loading student: {e}")
-        return None
+    print(f"No user found with ID: {user_id}")
+    return None
 
 @app.context_processor
 def inject_user():
@@ -222,10 +220,10 @@ def home():
     if current_user.is_authenticated:
         # Check if it's a Parent user (no role attribute)
         if hasattr(current_user, 'role'):
-            if current_user.role == 'student':
-                return redirect(url_for('student_dashboard'))
-            elif current_user.role == 'admin':
-                return redirect(url_for('admin_dashboard'))
+        if current_user.role == 'student':
+            return redirect(url_for('student_dashboard'))
+        elif current_user.role == 'admin':
+            return redirect(url_for('admin_dashboard'))
             elif current_user.role == 'staff':
                 return redirect(url_for('staff_dashboard'))
         else:
@@ -312,7 +310,7 @@ def test_login_process():
             return jsonify({'error': 'Account frozen'})
         
         # Test login_user function
-        login_user(user, remember=False)
+            login_user(user, remember=False)
         
         return jsonify({
             'message': 'Login successful',
@@ -435,11 +433,11 @@ def login():
     if current_user.is_authenticated:
         print(f"User already authenticated: {current_user.name}, role: {current_user.role}")
         if current_user.role == 'admin':
-            return redirect(url_for('admin_dashboard'))
+                return redirect(url_for('admin_dashboard'))
         elif current_user.role == 'staff':
             return redirect(url_for('staff_dashboard'))
-        else:
-            return redirect(url_for('student_dashboard'))
+            else:
+                return redirect(url_for('student_dashboard'))
     
     if request.method == 'POST':
         try:
@@ -1126,20 +1124,20 @@ def handle_order_submission():
         cart_items = validate_cart_data(request.form.get("cart_items"))
     except ValueError as e:
         flash(f"❌ {str(e)}", "error")
-        return redirect(url_for("order"))
+            return redirect(url_for("order"))
 
-    student = StudentInfo.query.get(current_user.id)
-    if not student:
-        flash("❌ Student not found.", "error")
-        return redirect(url_for("order"))
+        student = StudentInfo.query.get(current_user.id)
+        if not student:
+            flash("❌ Student not found.", "error")
+            return redirect(url_for("order"))
 
     try:
         orders_created = create_orders_from_cart(cart_items, student.id)
         db.session.commit()
         
         if orders_created > 0:
-            flash("✅ Order submitted! Proceed to payment.", "success")
-            return redirect(url_for("payment"))
+        flash("✅ Order submitted! Proceed to payment.", "success")
+        return redirect(url_for("payment"))
         else:
             flash("❌ No valid items in cart.", "error")
             return redirect(url_for("order"))
@@ -1187,7 +1185,7 @@ def validate_payment_conditions(student, unpaid_orders):
     total_amount = sum(float(order.total_price) for order in unpaid_orders)
     if student.balance < total_amount:
         raise ValueError(INSUFFICIENT_BALANCE)
-    
+
     return total_amount
 
 def process_payment_transaction(student, unpaid_orders, total_amount):
@@ -1214,10 +1212,10 @@ def handle_order_payment(student):
         total_amount = validate_payment_conditions(student, unpaid_orders)
         
         process_payment_transaction(student, unpaid_orders, total_amount)
-        db.session.commit()
+    db.session.commit()
         
-        flash("✅ Payment successful!", "success")
-        return redirect(url_for("student_dashboard"))
+    flash("✅ Payment successful!", "success")
+    return redirect(url_for("student_dashboard"))
         
     except ValueError as e:
         flash(str(e), "error")
@@ -1411,20 +1409,20 @@ def topup():
             flash(ACCOUNT_FROZEN, "error")
             return redirect(url_for("topup"))
 
-        try:
+            try:
             amount_int = int(amount)
             student.balance += amount_int
             
-            new_tx = Transaction(
+                new_tx = Transaction(
             type="Top-up",
             amount=amount_int,  # Fixed: use int instead of string
             description=f"Top-up for {student.name}"
-            )
-            db.session.add(new_tx)
-            db.session.commit()
+                )
+                db.session.add(new_tx)
+                db.session.commit()
             flash(f"Successfully topped up RM{amount_int} for {student.name}.", "success")
         except Exception as e:
-            db.session.rollback()
+                db.session.rollback()
             app.logger.error(f"Top-up error: {str(e)}")
             flash("Error processing top-up. Please try again.", "error")
 
