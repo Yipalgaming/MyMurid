@@ -375,58 +375,70 @@ def login():
             return redirect(url_for('student_dashboard'))
     
     if request.method == 'POST':
-        ic = request.form.get('ic', '').strip()
-        pin = request.form.get('pin', '').strip()
-        password = request.form.get('password', '').strip()
-        
-        # Input validation
-        if not validate_ic_number(ic) or not validate_pin(pin):
-            flash(INVALID_IC_FORMAT, 'error')
-            return redirect(url_for('login'))
-        
-        user = safe_get_student(ic)
-        if not user:
-            flash(INVALID_CREDENTIALS, 'error')
-            return redirect(url_for('login'))
+        try:
+            ic = request.form.get('ic', '').strip()
+            pin = request.form.get('pin', '').strip()
+            password = request.form.get('password', '').strip()
+            
+            print(f"Login attempt: IC={ic}, PIN={'*' * len(pin)}")
+            
+            # Input validation
+            if not validate_ic_number(ic) or not validate_pin(pin):
+                print(f"Validation failed: IC={ic}, PIN={'*' * len(pin)}")
+                flash(INVALID_IC_FORMAT, 'error')
+                return redirect(url_for('login'))
+            
+            user = safe_get_student(ic)
+            if not user:
+                print(f"Student not found: {ic}")
+                flash(INVALID_CREDENTIALS, 'error')
+                return redirect(url_for('login'))
 
-        # Check PIN
-        if not user.check_pin(pin):
-            flash(INVALID_CREDENTIALS, 'error')
-            return redirect(url_for('login'))
-        
-        # Check password for admin/staff
-        if user.role in ['admin', 'staff']:
-            if not password:
-                flash('Password is required for admin/staff.', 'error')
+            # Check PIN
+            if not user.check_pin(pin):
+                print(f"Invalid PIN for student: {ic}")
+                flash(INVALID_CREDENTIALS, 'error')
                 return redirect(url_for('login'))
-            if not user.check_password(password):
-                flash('Invalid password for admin/staff.', 'error')
+            
+            # Check password for admin/staff
+            if user.role in ['admin', 'staff']:
+                if not password:
+                    flash('Password is required for admin/staff.', 'error')
+                    return redirect(url_for('login'))
+                if not user.check_password(password):
+                    flash('Invalid password for admin/staff.', 'error')
+                    return redirect(url_for('login'))
+            
+            # Check if account is frozen
+            if user.frozen:
+                print(f"Account frozen for student: {ic}")
+                flash(ACCOUNT_FROZEN, 'error')
                 return redirect(url_for('login'))
-        
-        # Check if account is frozen
-        if user.frozen:
-            flash(ACCOUNT_FROZEN, 'error')
+            
+            print(f"Login successful for user: {user.name}, role: {user.role}")
+            login_user(user, remember=False)
+            flash('Login successful!', 'success')
+            
+            # Clear rate limit on successful login
+            client_ip = request.remote_addr
+            if hasattr(app, 'rate_limit_storage') and client_ip in app.rate_limit_storage:
+                del app.rate_limit_storage[client_ip]
+                print(f"Cleared rate limit for {client_ip} after successful login")
+            
+            if user.role == 'admin':
+                print(f"Redirecting admin {user.name} to admin dashboard")
+                return redirect(url_for('admin_dashboard'))
+            elif user.role == 'staff':
+                print(f"Redirecting staff {user.name} to staff dashboard")
+                return redirect(url_for('staff_dashboard'))
+            else:
+                print(f"Redirecting student {user.name} to student dashboard")
+                return redirect(url_for('student_dashboard'))
+                
+        except Exception as e:
+            print(f"Login error: {str(e)}")
+            flash('An error occurred during login. Please try again.', 'error')
             return redirect(url_for('login'))
-        
-        login_user(user, remember=False)
-        flash('Login successful!', 'success')
-        print(f"User {user.name} logged in successfully with role: {user.role}")
-        
-        # Clear rate limit on successful login
-        client_ip = request.remote_addr
-        if hasattr(app, 'rate_limit_storage') and client_ip in app.rate_limit_storage:
-            del app.rate_limit_storage[client_ip]
-            print(f"Cleared rate limit for {client_ip} after successful login")
-        
-        if user.role == 'admin':
-            print(f"Redirecting admin {user.name} to admin dashboard")
-            return redirect(url_for('admin_dashboard'))
-        elif user.role == 'staff':
-            print(f"Redirecting staff {user.name} to staff dashboard")
-            return redirect(url_for('staff_dashboard'))
-        else:
-            print(f"Redirecting student {user.name} to student dashboard")
-            return redirect(url_for('student_dashboard'))
 
     return render_template('login.html')
 
