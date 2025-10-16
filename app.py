@@ -412,7 +412,6 @@ def test_dashboard():
 
 
 @app.route('/login', methods=['GET', 'POST'])
-@add_security_headers
 def login():
     print(f"Login route accessed, method: {request.method}")
     print(f"Current user authenticated: {current_user.is_authenticated}")
