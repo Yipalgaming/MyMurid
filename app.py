@@ -1423,6 +1423,44 @@ def add_student():
         flash('Error adding student. Please try again.', 'error')
         return redirect(url_for('manage_students'))
 
+# Temporary endpoint to add role column to online database
+@app.route('/add-role-column', methods=['POST'])
+def add_role_column():
+    """Add role column to student_info table if it doesn't exist"""
+    try:
+        from sqlalchemy import text
+        
+        # Check if role column exists
+        result = db.session.execute(text("SELECT 1 FROM information_schema.columns WHERE table_name='student_info' AND column_name='role'"))
+        if result.fetchone():
+            return jsonify({'message': 'Role column already exists', 'status': 'exists'})
+        
+        # Add role column
+        db.session.execute(text("ALTER TABLE student_info ADD COLUMN role VARCHAR(50) DEFAULT 'student'"))
+        db.session.commit()
+        
+        # Update existing students with roles
+        role_updates = [
+            ("1234", "staff"),   # Ahmad Ali - staff
+            ("0415", "student"), # Sean Chuah Shang En - student  
+            ("9999", "admin")    # Admin/Teacher - admin
+        ]
+        
+        for ic_number, role in role_updates:
+            db.session.execute(text(f"UPDATE student_info SET role = '{role}' WHERE ic_number = '{ic_number}'"))
+        
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Role column added successfully and existing students updated',
+            'status': 'success',
+            'updates': role_updates
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e), 'status': 'error'})
+
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
