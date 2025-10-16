@@ -242,6 +242,34 @@ def fix_pin(ic):
         db.session.rollback()
         return jsonify({'error': str(e)})
 
+# Temporary test endpoint to debug login issues
+@app.route('/test-login/<ic>')
+def test_login(ic):
+    try:
+        student = StudentInfo.query.filter_by(ic_number=ic).first()
+        if not student:
+            return jsonify({'error': 'Student not found'})
+        
+        # Test all student attributes that might be accessed in templates
+        student_data = {
+            'ic': student.ic_number,
+            'name': student.name,
+            'role': student.role,
+            'balance': student.balance,
+            'frozen': student.frozen,
+            'total_points': getattr(student, 'total_points', None),
+            'available_points': getattr(student, 'available_points', None),
+            'pin_hash': student.pin_hash,
+            'password_hash': getattr(student, 'password_hash', None)
+        }
+        
+        return jsonify({
+            'message': f'Student {ic} data retrieved successfully',
+            'student': student_data
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
 
 @app.route('/login', methods=['GET', 'POST'])
 @add_security_headers
