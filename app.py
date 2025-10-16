@@ -1423,6 +1423,56 @@ def add_student():
         flash('Error adding student. Please try again.', 'error')
         return redirect(url_for('manage_students'))
 
+# Temporary endpoint to fix column removal - add back hash columns and remove pin/password
+@app.route('/fix-column-removal', methods=['POST'])
+def fix_column_removal():
+    """Add back pin_hash and password_hash columns, remove pin and password columns"""
+    try:
+        from sqlalchemy import text
+        
+        # Check current columns
+        result = db.session.execute(text("SELECT column_name FROM information_schema.columns WHERE table_name='student_info' ORDER BY column_name"))
+        columns = [row[0] for row in result.fetchall()]
+        
+        changes = []
+        
+        # Add back pin_hash column if it doesn't exist
+        if 'pin_hash' not in columns:
+            db.session.execute(text("ALTER TABLE student_info ADD COLUMN pin_hash VARCHAR(128)"))
+            changes.append("Added pin_hash column")
+        
+        # Add back password_hash column if it doesn't exist
+        if 'password_hash' not in columns:
+            db.session.execute(text("ALTER TABLE student_info ADD COLUMN password_hash VARCHAR(128)"))
+            changes.append("Added password_hash column")
+        
+        # Remove pin column if it exists
+        if 'pin' in columns:
+            db.session.execute(text("ALTER TABLE student_info DROP COLUMN pin"))
+            changes.append("Removed pin column")
+        
+        # Remove password column if it exists
+        if 'password' in columns:
+            db.session.execute(text("ALTER TABLE student_info DROP COLUMN password"))
+            changes.append("Removed password column")
+        
+        db.session.commit()
+        
+        # Get updated columns
+        result = db.session.execute(text("SELECT column_name FROM information_schema.columns WHERE table_name='student_info' ORDER BY column_name"))
+        updated_columns = [row[0] for row in result.fetchall()]
+        
+        return jsonify({
+            'message': 'Column fixes applied successfully',
+            'status': 'success',
+            'changes': changes,
+            'updated_columns': updated_columns
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e), 'status': 'error'})
+
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
