@@ -874,7 +874,7 @@ def admin_dashboard():
 @login_required
 def staff_dashboard():
     if current_user.role == 'staff':
-        return render_template('staff.html', user=current_user)
+        return render_template('admin.html', user=current_user)
     else:
         return redirect(url_for('home'))
 
