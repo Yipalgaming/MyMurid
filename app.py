@@ -349,6 +349,57 @@ def test_login_csrf():
     except Exception as e:
         return jsonify({'error': str(e)})
 
+# Temporary test to simulate exact login form submission
+@app.route('/test-exact-login', methods=['POST'])
+def test_exact_login():
+    try:
+        print(f"Test exact login - Method: {request.method}")
+        print(f"Form data: {dict(request.form)}")
+        
+        ic = request.form.get('ic', '').strip()
+        pin = request.form.get('pin', '').strip()
+        password = request.form.get('password', '').strip()
+        csrf_token = request.form.get('csrf_token', '')
+        
+        print(f"Extracted - IC: {ic}, PIN: {'*' * len(pin)}, Password: {'*' * len(password)}, CSRF: {csrf_token[:20]}...")
+        
+        # Input validation
+        if not validate_ic_number(ic) or not validate_pin(pin):
+            return jsonify({'error': 'Invalid IC or PIN format'})
+        
+        user = safe_get_student(ic)
+        if not user:
+            return jsonify({'error': 'Student not found'})
+
+        # Check PIN
+        if not user.check_pin(pin):
+            return jsonify({'error': 'Invalid PIN'})
+        
+        # Check password for admin/staff
+        if user.role in ['admin', 'staff']:
+            if not password:
+                return jsonify({'error': 'Password required for admin/staff'})
+            if not user.check_password(password):
+                return jsonify({'error': 'Invalid password for admin/staff'})
+        
+        # Check if account is frozen
+        if user.frozen:
+            return jsonify({'error': 'Account frozen'})
+        
+        print(f"All checks passed for user: {user.name}")
+        login_user(user, remember=False)
+        
+        return jsonify({
+            'message': 'Exact login simulation successful',
+            'user_id': user.id,
+            'user_name': user.name,
+            'user_role': user.role,
+            'authenticated': current_user.is_authenticated
+        })
+    except Exception as e:
+        print(f"Test exact login error: {str(e)}")
+        return jsonify({'error': str(e)})
+
 # Temporary test dashboard endpoint
 @app.route('/test-dashboard')
 @login_required
@@ -1005,7 +1056,7 @@ def admin_dashboard():
 @login_required
 def staff_dashboard():
     if current_user.role == 'staff':
-        return render_template('admin.html', user=current_user)
+        return render_template('staff.html', user=current_user)
     else:
         return redirect(url_for('home'))
 
