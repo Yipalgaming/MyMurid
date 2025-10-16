@@ -171,16 +171,27 @@ def load_user(user_id):
     # Check if this is a parent or student based on session
     # For now, try parent first, then student
     print(f"Loading user with ID: {user_id}")
-    user = Parent.query.get(int(user_id))
-    if user:
-        print(f"Loaded parent user: {user.name}")
+    try:
+        # Try to load parent first (if parent table exists)
+        user = Parent.query.get(int(user_id))
+        if user:
+            print(f"Loaded parent user: {user.name}")
+            return user
+    except Exception as e:
+        print(f"Parent table not available: {e}")
+        # Parent table doesn't exist, skip to student
+    
+    # Try to load student
+    try:
+        user = StudentInfo.query.get(int(user_id))
+        if user:
+            print(f"Loaded student user: {user.name}")
+        else:
+            print(f"No user found with ID: {user_id}")
         return user
-    user = StudentInfo.query.get(int(user_id))
-    if user:
-        print(f"Loaded student user: {user.name}")
-    else:
-        print(f"No user found with ID: {user_id}")
-    return user
+    except Exception as e:
+        print(f"Error loading student: {e}")
+        return None
 
 @app.context_processor
 def inject_user():
@@ -1046,7 +1057,7 @@ def student_dashboard():
 def admin_dashboard():
     print(f"Admin dashboard accessed by user: {current_user.name}, role: {current_user.role}")
     if current_user.role == 'admin':
-        return render_template('admin.html', user=current_user)
+        return render_template('staff.html', user=current_user)
     else:
         print(f"User {current_user.name} with role {current_user.role} redirected to home")
         return redirect(url_for('home'))
