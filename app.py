@@ -1433,60 +1433,6 @@ def add_student():
         flash('Error adding student. Please try again.', 'error')
         return redirect(url_for('manage_students'))
 
-# Temporary endpoint to hash PINs and passwords for online database
-@app.route('/hash-credentials', methods=['POST'])
-def hash_credentials():
-    """Hash PINs and passwords for existing users in online database"""
-    try:
-        # Get all users
-        users = StudentInfo.query.all()
-        
-        if not users:
-            return jsonify({'message': 'No users found', 'status': 'empty'})
-        
-        processed_users = []
-        
-        for user in users:
-            user_info = {
-                'name': user.name,
-                'ic': user.ic_number,
-                'role': user.role,
-                'pin_hashed': bool(user.pin_hash),
-                'password_hashed': bool(user.password_hash)
-            }
-            
-            # Set default PIN if not already hashed
-            if not user.pin_hash:
-                user.set_pin("1234")  # Default PIN
-                user_info['pin_action'] = 'hashed'
-            else:
-                user_info['pin_action'] = 'already_hashed'
-            
-            # Set default password for admin/staff if not already hashed
-            if user.role in ['admin', 'staff'] and not user.password_hash:
-                user.set_password("adminpass")  # Default password
-                user_info['password_action'] = 'hashed'
-            elif user.role in ['admin', 'staff'] and user.password_hash:
-                user_info['password_action'] = 'already_hashed'
-            else:
-                user_info['password_action'] = 'not_needed'
-            
-            processed_users.append(user_info)
-        
-        # Commit all changes
-        db.session.commit()
-        
-        return jsonify({
-            'message': 'Credentials hashed successfully',
-            'status': 'success',
-            'users_processed': len(processed_users),
-            'users': processed_users
-        })
-        
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e), 'status': 'error'})
-
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
