@@ -45,59 +45,6 @@ try:
 except Exception as _e:
     print(f"[Startup] Could not parse DB URI: {_e}")
 
-# Optional: run DB migrations on startup if env flag is set (for platforms without shell/post-deploy)
-if os.environ.get('RUN_DB_UPGRADE') in ('1', 'true', 'True', 'yes', 'YES'):
-    try:
-        with app.app_context():
-            print('[Startup] RUN_DB_UPGRADE is set; running Alembic upgrade head...')
-            alembic_upgrade()
-            print('[Startup] Alembic upgrade completed successfully.')
-    except Exception as e:
-        print(f"[Startup] Alembic upgrade failed: {e}")
-
-# Last-resort schema safety: ensure critical columns exist (idempotent for PostgreSQL)
-def ensure_schema_safety():
-    try:
-        with app.app_context():
-            # Add missing columns if they do not exist (PostgreSQL syntax)
-            db.session.execute(db.text(
-                """
-                DO $$
-                BEGIN
-                    IF NOT EXISTS (
-                        SELECT 1 FROM information_schema.columns
-                        WHERE table_name='student_info' AND column_name='pin_hash'
-                    ) THEN
-                        ALTER TABLE student_info ADD COLUMN pin_hash VARCHAR(255);
-                    END IF;
-                    IF NOT EXISTS (
-                        SELECT 1 FROM information_schema.columns
-                        WHERE table_name='student_info' AND column_name='password_hash'
-                    ) THEN
-                        ALTER TABLE student_info ADD COLUMN password_hash VARCHAR(255);
-                    END IF;
-                    IF NOT EXISTS (
-                        SELECT 1 FROM information_schema.columns
-                        WHERE table_name='student_info' AND column_name='total_points'
-                    ) THEN
-                        ALTER TABLE student_info ADD COLUMN total_points INTEGER DEFAULT 0;
-                    END IF;
-                    IF NOT EXISTS (
-                        SELECT 1 FROM information_schema.columns
-                        WHERE table_name='student_info' AND column_name='available_points'
-                    ) THEN
-                        ALTER TABLE student_info ADD COLUMN available_points INTEGER DEFAULT 0;
-                    END IF;
-                END$$;
-                """
-            ))
-            db.session.commit()
-            print('[Startup] Schema safety check: ensured student_info columns (pin_hash, password_hash, total_points, available_points) exist')
-    except Exception as e:
-        db.session.rollback()
-        print(f"[Startup] Schema safety check failed: {e}")
-
-ensure_schema_safety()
 
 
 # Constants for error messages
@@ -274,49 +221,6 @@ def rate_limit_exceeded():
     """Show rate limit exceeded page"""
     return render_template('rate_limit.html')
 
-# --- Diagnostics (temporary, can be removed after verification) ---
-@app.route('/_diag/db')
-def diag_db():
-    try:
-        uri = app.config.get('SQLALCHEMY_DATABASE_URI')
-        url = make_url(uri) if uri else None
-        masked = None
-        if url:
-            masked = f"{url.drivername}://{url.host}:{url.port}/{url.database}"
-        # Basic query
-        one = db.session.execute(db.text('SELECT 1')).scalar_one()
-        students = db.session.query(StudentInfo).count()
-        return jsonify({
-            'ok': True,
-            'db': masked,
-            'select_1': one,
-            'student_count': students
-        })
-    except Exception as e:
-        return jsonify({'ok': False, 'error': str(e)}), 500
-
-@app.route('/_diag/seed', methods=['POST'])
-def diag_seed():
-    # Very basic shared secret to prevent abuse; set RENDER_SEED_SECRET in env
-    secret = request.headers.get('X-Seed-Secret')
-    expected = os.environ.get('RENDER_SEED_SECRET')
-    if not expected or secret != expected:
-        return jsonify({'ok': False, 'error': 'Unauthorized'}), 401
-    try:
-        ic = request.json.get('ic', '1234')
-        pin = request.json.get('pin', '1234')
-        name = request.json.get('name', 'Test Student')
-        existing = StudentInfo.query.filter_by(ic_number=ic).first()
-        if existing:
-            return jsonify({'ok': True, 'message': 'Student already exists'}), 200
-        student = StudentInfo(ic_number=ic, name=name, balance=50.0, role='student', frozen=False)
-        student.set_pin(pin)
-        db.session.add(student)
-        db.session.commit()
-        return jsonify({'ok': True, 'created': {'ic': ic, 'name': name}})
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'ok': False, 'error': str(e)}), 500
 
 @app.route('/login', methods=['GET', 'POST'])
 @add_security_headers
@@ -951,7 +855,7 @@ def admin_dashboard():
 @login_required
 def staff_dashboard():
     if current_user.role == 'staff':
-        return redirect(url_for('paid_orders'))
+        return redirect(url_for('staff.html', user=current_user))
     else:
         return redirect(url_for('home'))
 
