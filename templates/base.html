@@ -269,11 +269,11 @@
               </a>
               <a href="{{ url_for('vote') }}" class="nav-item-modern">
                 <i class="fas fa-vote-yea"></i>
-                <span>Vote</span>
+                <span>Food Suggestion</span>
               </a>
               <a href="{{ url_for('feedback') }}" class="nav-item-modern">
                 <i class="fas fa-comment"></i>
-                <span>Feedback</span>
+                <span>Your Feedback</span>
               </a>
             {% elif user.role == 'admin' %}
               <a href="{{ url_for('admin_dashboard') }}" class="nav-item-modern">
@@ -306,11 +306,11 @@
               </a>
               <a href="{{ url_for('vote') }}" class="nav-item-modern">
                 <i class="fas fa-vote-yea"></i>
-                <span>Votes</span>
+                <span>Food Suggestions</span>
               </a>
               <a href="{{ url_for('feedback') }}" class="nav-item-modern">
                 <i class="fas fa-comment"></i>
-                <span>Feedbacks</span>
+                <span>Student Feedbacks</span>
               </a>
             {% elif user.role == 'staff' %}
               <a href="{{ url_for('staff_dashboard') }}" class="nav-item-modern">
