@@ -228,7 +228,7 @@
     }
   </style>
 
-<!--
+
   {% if user.is_authenticated %}
     {% if user.role != 'staff' %}
   <script>
@@ -237,20 +237,20 @@
     function resetLogoutTimer() {
       clearTimeout(logoutTimer);
       logoutTimer = setTimeout(() => {
-      window.location.href = "{{ url_for('logout') }}";
+          globalThis.location.href = "{{ url_for('logout') }}";
       }, 2 * 60 * 1000);  // 2 minutes inactivity
     }
 
     // Events that reset timer
-    ['click', 'mousemove', 'keypress', 'scroll'].forEach(evt =>
-      window.addEventListener(evt, resetLogoutTimer)
-    );
+         for (const evt of ['click', 'mousemove', 'keypress', 'scroll']) {
+           globalThis.addEventListener(evt, resetLogoutTimer);
+         }
 
     resetLogoutTimer(); // Start timer on load
   </script>
-    {% endif %}
   {% endif %}
--->
+  {% endif %}
+
   
   <title>{% block title %}Nav Bar{% endblock %}</title>
 </head>
@@ -271,7 +271,7 @@
             </div>
           </div>
           
-          <nav class="space-y-2">
+          <nav class="space-y-2" aria-label="Main navigation">
             {% if user.role == 'student' %}
               <a href="{{ url_for('student_dashboard') }}" class="nav-item-modern">
                 <i class="fas fa-home"></i>
@@ -405,7 +405,7 @@
 
 <!-- Bottom Navigation - visible only on mobile (< 768px) -->
 {% if user.is_authenticated %}
-<nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 md:hidden z-50" id="bottom-nav">
+<nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 md:hidden z-50" id="bottom-nav" aria-label="Mobile navigation">
   <div class="flex justify-around items-center h-16">
     {% if user.role == 'student' %}
       <a href="{{ url_for('student_dashboard') }}" class="flex flex-col items-center justify-center flex-1 text-gray-600 hover:text-indigo-600 transition-colors">
@@ -499,15 +499,15 @@ document.addEventListener('click', function(event) {
   const sidebar = document.getElementById('sidebar');
   const toggleButton = event.target.closest('[onclick="toggleSidebar()"]');
   
-  if (window.innerWidth <= 768 && !sidebar.contains(event.target) && !toggleButton) {
+  if (globalThis.innerWidth <= 768 && !sidebar.contains(event.target) && !toggleButton) {
     sidebar.classList.add('-translate-x-full');
   }
 });
 
 // Responsive sidebar behavior
-window.addEventListener('resize', function() {
+globalThis.addEventListener('resize', function() {
   const sidebar = document.getElementById('sidebar');
-  if (window.innerWidth > 768) {
+  if (globalThis.innerWidth > 768) {
     sidebar.classList.remove('-translate-x-full');
   } else {
     sidebar.classList.add('-translate-x-full');
@@ -517,7 +517,7 @@ window.addEventListener('resize', function() {
 // Initialize sidebar state
 document.addEventListener('DOMContentLoaded', function() {
   const sidebar = document.getElementById('sidebar');
-  if (window.innerWidth <= 768) {
+  if (globalThis.innerWidth <= 768) {
     sidebar.classList.add('-translate-x-full');
   }
 });

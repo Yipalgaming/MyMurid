@@ -163,7 +163,7 @@ class _WebViewAppState extends State<WebViewApp> {
               setState(() {
                 isLoading = false;
                 hasError = true;
-                errorMessage = message ?? 'Failed to load page';
+                errorMessage = message;
               });
             },
             onUpdateVisitedHistory: (controller, url, isReload) {

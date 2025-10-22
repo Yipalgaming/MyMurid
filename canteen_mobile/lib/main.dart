@@ -66,15 +66,6 @@ class _WebViewAppState extends State<WebViewApp> {
     await Permission.microphone.request();
   }
 
-  void _onTabTapped(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
-    webViewController?.loadUrl(
-      urlRequest: URLRequest(url: WebUri(_navItems[index]['url'])),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -110,7 +101,7 @@ class _WebViewAppState extends State<WebViewApp> {
               setState(() {
                 isLoading = false;
                 hasError = true;
-                errorMessage = message ?? 'Failed to load page';
+                errorMessage = message;
               });
             },
             androidOnPermissionRequest: (controller, origin, resources) async {

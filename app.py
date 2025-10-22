@@ -37,7 +37,6 @@ app.config.from_object(config[config_name])
 # Initialize extensions
 db.init_app(app)
 migrate = Migrate(app, db)
-# csrf = CSRFProtect(app)  # Temporarily disabled for testing
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -111,7 +110,7 @@ def sanitize_input(text):
     return html.escape(text.strip())
 
 # Rate limiting decorator
-def rate_limit(max_requests=99, window=60):
+def rate_limit(max_requests=5, window=300):
     """Rate limiting decorator"""
     def decorator(f):
         @wraps(f)
@@ -424,7 +423,7 @@ def parent_register():
     return render_template('parent_register.html')
 
 @app.route('/parent/login', methods=['GET', 'POST'])
-@rate_limit(max_requests=99, window=300)
+@rate_limit(max_requests=5, window=300)
 @add_security_headers
 def parent_login():
     print(f"Parent login route accessed, method: {request.method}")
@@ -986,10 +985,10 @@ def handle_order_submission():
         flash(f"❌ {str(e)}", "error")
         return redirect(url_for("order"))
 
-        student = StudentInfo.query.get(current_user.id)
-        if not student:
-            flash("❌ Student not found.", "error")
-            return redirect(url_for("order"))
+    student = StudentInfo.query.get(current_user.id)
+    if not student:
+        flash("❌ Student not found.", "error")
+        return redirect(url_for("order"))
 
     try:
         orders_created = create_orders_from_cart(cart_items, student.id)
@@ -1269,22 +1268,22 @@ def topup():
             flash(ACCOUNT_FROZEN, "error")
             return redirect(url_for("topup"))
 
-            try:
-                amount_int = int(amount)
-                student.balance += amount_int
-            
-                new_tx = Transaction(
-                type="Top-up",
-                amount=amount_int,  # Fixed: use int instead of string
-                description=f"Top-up for {student.name}"
-                )
-                db.session.add(new_tx)
-                db.session.commit()
-                flash(f"Successfully topped up RM{amount_int} for {student.name}.", "success")
-            except Exception as e:
-                db.session.rollback()
-                app.logger.error(f"Top-up error: {str(e)}")
-                flash("Error processing top-up. Please try again.", "error")
+        try:
+            amount_int = int(amount)
+            student.balance += amount_int
+        
+            new_tx = Transaction(
+            type="Top-up",
+            amount=amount_int,  # Fixed: use int instead of string
+            description=f"Top-up for {student.name}"
+            )
+            db.session.add(new_tx)
+            db.session.commit()
+            flash(f"Successfully topped up RM{amount_int} for {student.name}.", "success")
+        except Exception as e:
+            db.session.rollback()
+            app.logger.error(f"Top-up error: {str(e)}")
+            flash("Error processing top-up. Please try again.", "error")
 
     return render_template("topup.html")
 
