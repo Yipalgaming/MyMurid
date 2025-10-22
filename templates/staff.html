@@ -14,12 +14,16 @@
           <div class="bg-gradient-to-r from-indigo-500 to-pink-500 rounded-full p-3 shadow-lg">
             <i class="fas fa-user-shield text-white text-xl"></i>
           </div>
+          <a href="{{ url_for('logout') }}" class="hidden md:flex items-center bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg">
+            <i class="fas fa-sign-out-alt mr-2"></i>
+            <span>Logout</span>
+          </a>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 md:pb-8 relative z-10">
     <!-- Quick Stats -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6">
@@ -87,7 +91,7 @@
           </div>
           <div class="space-y-3">
             <a href="{{ url_for('transactions') }}" class="block w-full bg-green-50 hover:bg-green-100 text-green-700 px-4 py-2 rounded-xl transition-colors">
-              <i class="fas fa-exchange-alt mr-2"></i>View Cash Flow
+              <i class="fas fa-exchange-alt mr-2"></i>Transactions
             </a>
           </div>
         </div>
@@ -101,11 +105,26 @@
             <h3 class="text-lg font-semibold text-gray-900">Orders</h3>
           </div>
           <div class="space-y-3">
-            <a href="{{ url_for('order') }}" class="block w-full bg-purple-50 hover:bg-purple-100 text-purple-700 px-4 py-2 rounded-xl transition-colors">
-              <i class="fas fa-list mr-2"></i>View Food Demands
-            </a>
             <a href="{{ url_for('paid_orders') }}" class="block w-full bg-purple-50 hover:bg-purple-100 text-purple-700 px-4 py-2 rounded-xl transition-colors">
               <i class="fas fa-receipt mr-2"></i>Paid Orders
+            </a>
+          </div>
+        </div>
+
+        <!-- Analytics -->
+        <div class="bg-white/70 rounded-xl p-6 border border-white/30">
+          <div class="flex items-center mb-4">
+            <div class="bg-pink-100 rounded-full w-12 h-12 flex items-center justify-center mr-4">
+              <i class="fas fa-chart-pie text-pink-600 text-xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900">Analytics</h3>
+          </div>
+          <div class="space-y-3">
+            <a href="{{ url_for('food_demand_analytics') }}" class="block w-full bg-pink-50 hover:bg-pink-100 text-pink-700 px-4 py-2 rounded-xl transition-colors">
+              <i class="fas fa-chart-pie mr-2"></i>Food Demand
+            </a>
+            <a href="{{ url_for('cash_flow_analytics') }}" class="block w-full bg-pink-50 hover:bg-pink-100 text-pink-700 px-4 py-2 rounded-xl transition-colors">
+              <i class="fas fa-money-bill-wave mr-2"></i>Cash Flow
             </a>
           </div>
         </div>

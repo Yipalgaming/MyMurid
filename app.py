@@ -1460,6 +1460,113 @@ def add_student():
         flash('Error adding student. Please try again.', 'error')
         return redirect(url_for('manage_students'))
 
+@app.route('/food-demand-analytics')
+@login_required
+def food_demand_analytics():
+    """Show food demand analytics with pie chart"""
+    if current_user.role not in ['admin', 'staff']:
+        flash(ACCESS_DENIED, "error")
+        return redirect(url_for('home'))
+    
+    # Get food demand data from paid orders
+    food_stats = db.session.query(
+        MenuItem.name,
+        func.sum(Order.quantity).label('total_quantity')
+    ).join(MenuItem).filter(
+        Order.payment_status == 'paid'
+    ).group_by(MenuItem.name).order_by(
+        func.sum(Order.quantity).desc()
+    ).all()
+    
+    # Prepare data for template
+    food_data = []
+    total_orders = 0
+    for item_name, quantity in food_stats:
+        total_orders += quantity
+        food_data.append({
+            'name': item_name,
+            'total_quantity': quantity
+        })
+    
+    # Calculate percentages
+    for item in food_data:
+        item['percentage'] = (item['total_quantity'] / total_orders * 100) if total_orders > 0 else 0
+    
+    # Prepare chart data
+    food_labels = [item['name'] for item in food_data]
+    food_values = [item['total_quantity'] for item in food_data]
+    
+    # Calculate stats
+    top_item = food_data[0]['name'] if food_data else None
+    avg_orders = total_orders / len(food_data) if food_data else 0
+    
+    return render_template(
+        'food_demand_analytics.html',
+        food_data=food_data,
+        food_labels=food_labels,
+        food_values=food_values,
+        total_orders=total_orders,
+        top_item=top_item,
+        avg_orders=avg_orders
+    )
+
+@app.route('/cash-flow-analytics')
+@login_required
+def cash_flow_analytics():
+    """Show cash flow analytics with pie chart"""
+    if current_user.role not in ['admin', 'staff']:
+        flash(ACCESS_DENIED, "error")
+        return redirect(url_for('home'))
+    
+    # Get revenue data from paid orders
+    revenue_stats = db.session.query(
+        MenuItem.name,
+        MenuItem.price,
+        func.sum(Order.quantity).label('total_quantity'),
+        func.sum(Order.total_price).label('revenue')
+    ).join(MenuItem).filter(
+        Order.payment_status == 'paid'
+    ).group_by(MenuItem.name, MenuItem.price).order_by(
+        func.sum(Order.total_price).desc()
+    ).all()
+    
+    # Prepare data for template
+    revenue_data = []
+    total_revenue = 0
+    total_transactions = 0
+    for item_name, price, quantity, revenue in revenue_stats:
+        total_revenue += float(revenue)
+        total_transactions += quantity
+        revenue_data.append({
+            'name': item_name,
+            'price': float(price),
+            'total_quantity': quantity,
+            'revenue': float(revenue)
+        })
+    
+    # Calculate percentages
+    for item in revenue_data:
+        item['percentage'] = (item['revenue'] / total_revenue * 100) if total_revenue > 0 else 0
+    
+    # Prepare chart data
+    revenue_labels = [item['name'] for item in revenue_data]
+    revenue_values = [item['revenue'] for item in revenue_data]
+    
+    # Calculate stats
+    top_earner = revenue_data[0]['name'] if revenue_data else None
+    avg_revenue = total_revenue / len(revenue_data) if revenue_data else 0
+    
+    return render_template(
+        'cash_flow_analytics.html',
+        revenue_data=revenue_data,
+        revenue_labels=revenue_labels,
+        revenue_values=revenue_values,
+        total_revenue=total_revenue,
+        total_transactions=total_transactions,
+        top_earner=top_earner,
+        avg_revenue=avg_revenue
+    )
+
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
