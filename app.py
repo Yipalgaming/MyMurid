@@ -1346,7 +1346,7 @@ def student_balances():
 @app.route('/transactions')
 @login_required
 def transactions():
-    if current_user.role != 'admin':
+    if current_user.role not in ['admin', 'staff']:
         return redirect(url_for('home'))
     logs = Transaction.query.order_by(Transaction.transaction_time.desc()).all()
     total_in = sum(t.amount for t in logs if t.amount > 0)
