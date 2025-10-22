@@ -12,7 +12,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'MyMurid Canteen',
       theme: ThemeData(
-        primarySwatch: Colors.green,
+        primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       home: WebViewApp(),
@@ -30,6 +30,30 @@ class _WebViewAppState extends State<WebViewApp> {
   bool isLoading = true;
   bool hasError = false;
   String errorMessage = '';
+  int _currentIndex = 0;
+
+  final List<Map<String, dynamic>> _navItems = [
+    {
+      'title': 'Home',
+      'icon': Icons.home,
+      'url': 'https://mymurid.onrender.com',
+    },
+    {
+      'title': 'Order',
+      'icon': Icons.restaurant_menu,
+      'url': 'https://mymurid.onrender.com/order',
+    },
+    {
+      'title': 'Rewards',
+      'icon': Icons.card_giftcard,
+      'url': 'https://mymurid.onrender.com/rewards',
+    },
+    {
+      'title': 'Profile',
+      'icon': Icons.person,
+      'url': 'https://mymurid.onrender.com/student',
+    },
+  ];
 
   @override
   void initState() {
@@ -42,37 +66,23 @@ class _WebViewAppState extends State<WebViewApp> {
     await Permission.microphone.request();
   }
 
+  void _onTabTapped(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+    webViewController?.loadUrl(
+      urlRequest: URLRequest(url: WebUri(_navItems[index]['url'])),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('MyMurid Canteen'),
-        backgroundColor: Colors.green[600],
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.refresh),
-            onPressed: () {
-              webViewController?.reload();
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.home),
-            onPressed: () {
-              webViewController?.loadUrl(
-                urlRequest: URLRequest(
-                  url: WebUri("https://mymurid.onrender.com"),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
       body: Stack(
         children: [
           InAppWebView(
             initialUrlRequest: URLRequest(
-              url: WebUri("https://mymurid.onrender.com"),
+              url: WebUri(_navItems[_currentIndex]['url']),
             ),
             initialSettings: InAppWebViewSettings(
               javaScriptEnabled: true,
@@ -119,7 +129,7 @@ class _WebViewAppState extends State<WebViewApp> {
                   children: [
                     CircularProgressIndicator(
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        Colors.green[600]!,
+                        Colors.blue[600]!,
                       ),
                     ),
                     SizedBox(height: 16),
@@ -164,7 +174,7 @@ class _WebViewAppState extends State<WebViewApp> {
                       },
                       child: Text('Retry'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green[600],
+                        backgroundColor: Colors.blue[600],
                         foregroundColor: Colors.white,
                       ),
                     ),

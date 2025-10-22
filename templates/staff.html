@@ -2,13 +2,6 @@
 {% block title %}Staff Dashboard{% endblock %}
 {% block content %}
 <div class="min-h-screen bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-500 relative overflow-hidden">
-  <!-- Animated background elements -->
-  <div class="absolute inset-0 overflow-hidden">
-    <div class="absolute -top-40 -right-40 w-80 h-80 bg-white rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
-    <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-2000"></div>
-    <div class="absolute top-40 left-40 w-80 h-80 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-4000"></div>
-  </div>
-
   <!-- Header -->
   <div class="bg-white/90 backdrop-blur-sm shadow-lg border-b relative z-10">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -52,6 +45,30 @@
           </div>
         </div>
       </div>
+
+      <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6">
+        <div class="flex items-center">
+          <div class="bg-blue-100 rounded-full p-3 mr-4">
+            <i class="fas fa-receipt text-blue-600 text-xl"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-medium text-gray-600">Paid Orders</h3>
+            <p class="text-2xl font-bold text-blue-600">{{ stats.paid_orders if stats else '0' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6">
+        <div class="flex items-center">
+          <div class="bg-yellow-100 rounded-full p-3 mr-4">
+            <i class="fas fa-comments text-yellow-600 text-xl"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-medium text-gray-600">Pending Reviews</h3>
+            <p class="text-2xl font-bold text-yellow-600">{{ stats.pending_feedback if stats else '0' }}</p>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Staff Tools -->
@@ -60,68 +77,19 @@
         <i class="fas fa-tools text-indigo-600 mr-2"></i>Staff Tools
       </h2>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <!-- Cash Flow -->
+        <!-- Financial Management -->
         <div class="bg-white/70 rounded-xl p-6 border border-white/30">
           <div class="flex items-center mb-4">
-            <div class="bg-blue-100 rounded-full w-12 h-12 flex items-center justify-center mr-4">
+            <div class="bg-green-100 rounded-full w-12 h-12 flex items-center justify-center mr-4">
               <i class="fas fa-money-bill-wave text-green-600 text-xl"></i>
-              </div>
-              <h3 class="text-lg font-semibold text-gray-900">Cash Flow</h3>
             </div>
-            <div class="space-y-3">
-              <a href="{{ url_for('transactions') }}" class="block w-full bg-green-50 hover:bg-green-100 text-green-700 px-4 py-2 rounded-xl transition-colors">
-                <i class="fas fa-exchange-alt mr-2"></i>View Cash Flow
-              </a>
-            </div>
-          </div>
-        </div>
-
-        <!-- Feedback & Voting -->
-        <div class="bg-white/70 rounded-xl p-6 border border-white/30">
-          <div class="flex items-center mb-4">
-            <div class="bg-blue-100 rounded-full w-12 h-12 flex items-center justify-center mr-4">
-              <i class="fas fa-comment text-blue-600 text-xl"></i>
-            </div>
-            <h3 class="text-lg font-semibold text-gray-900">Feedbacks</h3>
+            <h3 class="text-lg font-semibold text-gray-900">Financial</h3>
           </div>
           <div class="space-y-3">
-            <a href="{{ url_for('feedback') }}" class="block w-full bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-xl transition-colors">
-              <i class="fas fa-comment mr-2"></i>View Students Feedback
-            </a>
-            <a href="{{ url_for('vote') }}" class="block w-full bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-xl transition-colors">
-              <i class="fas fa-vote-yea mr-2"></i>View Food Votes
+            <a href="{{ url_for('transactions') }}" class="block w-full bg-green-50 hover:bg-green-100 text-green-700 px-4 py-2 rounded-xl transition-colors">
+              <i class="fas fa-exchange-alt mr-2"></i>View Cash Flow
             </a>
           </div>
-        </div>
-
-        <!-- Food Demands-->
-        <div class="bg-white/70 rounded-xl p-6 border border-white/30">
-          <div class="flex items-center mb-4">
-            <div class="bg-purple-100 rounded-full w-12 h-12 flex items-center justify-center mr-4">
-              <i class="fas fa-utensils text-purple-600 text-xl"></i>
-            </div>
-            <h3 class="text-lg font-semibold text-gray-900">Food Demands</h3>
-          </div>
-        </div>
-        <div class="space-y-3">
-          <a href="{{ url_for('order') }}" class="block w-full bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-xl transition-colors">
-            <i class="fas fa-vote-yea mr-2"></i>View Food Demands
-          </a>
-        </div>
-
-        <!-- View Sales -->
-        <div class="bg-white/70 rounded-xl p-6 border border-white/30">
-          <div class="flex items-center mb-4">
-            <div class="bg-purple-100 rounded-full w-12 h-12 flex items-center justify-center mr-4">
-              <i class="fas fa-utensils text-purple-600 text-xl"></i>
-            </div>
-            <h3 class="text-lg font-semibold text-gray-900">Sales</h3>
-          </div>
-        </div>
-        <div class="space-y-3">
-          <a href="{{ url_for('paid_orders') }}" class="block w-full bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-xl transition-colors">
-            <i class="fas fa-receipt mr-2"></i>View Sales
-          </a>
         </div>
 
         <!-- Order Management -->
@@ -133,8 +101,29 @@
             <h3 class="text-lg font-semibold text-gray-900">Orders</h3>
           </div>
           <div class="space-y-3">
+            <a href="{{ url_for('order') }}" class="block w-full bg-purple-50 hover:bg-purple-100 text-purple-700 px-4 py-2 rounded-xl transition-colors">
+              <i class="fas fa-list mr-2"></i>View Food Demands
+            </a>
             <a href="{{ url_for('paid_orders') }}" class="block w-full bg-purple-50 hover:bg-purple-100 text-purple-700 px-4 py-2 rounded-xl transition-colors">
               <i class="fas fa-receipt mr-2"></i>Paid Orders
+            </a>
+          </div>
+        </div>
+
+        <!-- Feedback & Voting -->
+        <div class="bg-white/70 rounded-xl p-6 border border-white/30">
+          <div class="flex items-center mb-4">
+            <div class="bg-blue-100 rounded-full w-12 h-12 flex items-center justify-center mr-4">
+              <i class="fas fa-comment text-blue-600 text-xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900">Feedback</h3>
+          </div>
+          <div class="space-y-3">
+            <a href="{{ url_for('feedback') }}" class="block w-full bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-xl transition-colors">
+              <i class="fas fa-comment mr-2"></i>View Feedback
+            </a>
+            <a href="{{ url_for('vote') }}" class="block w-full bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-xl transition-colors">
+              <i class="fas fa-vote-yea mr-2"></i>Food Votes
             </a>
           </div>
         </div>

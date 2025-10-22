@@ -178,31 +178,51 @@ def make_session_non_permanent():
 
 @login_manager.user_loader
 def load_user(user_id):
-    # Check if this is a parent or student based on session
-    # For now, try parent first, then student
+    # Use session to determine user type to avoid ID conflicts
     print(f"Loading user with ID: {user_id}")
+    user_type = session.get('user_type', 'student')  # Default to student for backward compatibility
+    print(f"User type from session: {user_type}")
     
-    # Try to load student first (since parent table doesn't exist)
-    try:
-        user = StudentInfo.query.get(int(user_id))
-        if user:
-            print(f"Loaded student user: {user.name}")
-            return user
-    except Exception as e:
-        print(f"Error loading student: {e}")
-        # Rollback the transaction to clear the failed state
-        db.session.rollback()
+    if user_type == 'parent':
+        # Try to load parent first
+        try:
+            user = Parent.query.get(int(user_id))
+            if user:
+                print(f"Loaded parent user: {user.name}")
+                return user
+        except Exception as e:
+            print(f"Error loading parent: {e}")
+            db.session.rollback()
+    else:
+        # Try to load student (default behavior)
+        try:
+            user = StudentInfo.query.get(int(user_id))
+            if user:
+                print(f"Loaded student user: {user.name}")
+                return user
+        except Exception as e:
+            print(f"Error loading student: {e}")
+            db.session.rollback()
     
-    # Try to load parent (if parent table exists)
-    try:
-        user = Parent.query.get(int(user_id))
-        if user:
-            print(f"Loaded parent user: {user.name}")
-            return user
-    except Exception as e:
-        print(f"Parent table not available: {e}")
-        # Rollback the transaction to clear the failed state
-        db.session.rollback()
+    # Fallback: try the other type if the primary type failed
+    if user_type == 'parent':
+        try:
+            user = StudentInfo.query.get(int(user_id))
+            if user:
+                print(f"Fallback: Loaded student user: {user.name}")
+                return user
+        except Exception as e:
+            print(f"Fallback error loading student: {e}")
+            db.session.rollback()
+    else:
+        try:
+            user = Parent.query.get(int(user_id))
+            if user:
+                print(f"Fallback: Loaded parent user: {user.name}")
+                return user
+        except Exception as e:
+            print(f"Fallback error loading parent: {e}")
+            db.session.rollback()
     
     print(f"No user found with ID: {user_id}")
     return None
@@ -307,6 +327,8 @@ def login():
             
             print(f"Login successful for user: {user.name}, role: {user.role}")
             login_user(user, remember=False)
+            # Store user type in session to help load_user function
+            session['user_type'] = 'student'
             flash('Login successful!', 'success')
             
             # Clear rate limit on successful login
@@ -336,9 +358,12 @@ def login():
 @login_required
 def logout():
     if current_user.is_authenticated:
-        logout_user()
-        flash('Logged out successfully!', 'success')
-        return redirect(url_for('login'))
+        print(f"User {current_user.name} logging out")
+    # Clear user type from session
+    session.pop('user_type', None)
+    logout_user()
+    flash('Logged out successfully!', 'success')
+    return redirect(url_for('login'))
 
 # Parent Authentication Routes
 @app.route('/parent/register', methods=['GET', 'POST'])
@@ -399,7 +424,7 @@ def parent_register():
     return render_template('parent_register.html')
 
 @app.route('/parent/login', methods=['GET', 'POST'])
-@rate_limit(max_requests=5, window=300)
+@rate_limit(max_requests=99, window=300)
 @add_security_headers
 def parent_login():
     print(f"Parent login route accessed, method: {request.method}")
@@ -421,6 +446,8 @@ def parent_login():
             return redirect(url_for('parent_login'))
         
         login_user(parent, remember=False)
+        # Store user type in session to help load_user function
+        session['user_type'] = 'parent'
         flash('Login successful!', 'success')
         print(f"Parent {email} logged in successfully, redirecting to parent_dashboard")
         return redirect(url_for('parent_dashboard'))
@@ -959,10 +986,10 @@ def handle_order_submission():
         flash(f"❌ {str(e)}", "error")
         return redirect(url_for("order"))
 
-    student = StudentInfo.query.get(current_user.id)
-    if not student:
-        flash("❌ Student not found.", "error")
-        return redirect(url_for("order"))
+        student = StudentInfo.query.get(current_user.id)
+        if not student:
+            flash("❌ Student not found.", "error")
+            return redirect(url_for("order"))
 
     try:
         orders_created = create_orders_from_cart(cart_items, student.id)
@@ -1242,22 +1269,22 @@ def topup():
             flash(ACCOUNT_FROZEN, "error")
             return redirect(url_for("topup"))
 
-        try:
-            amount_int = int(amount)
-            student.balance += amount_int
+            try:
+                amount_int = int(amount)
+                student.balance += amount_int
             
-            new_tx = Transaction(
+                new_tx = Transaction(
                 type="Top-up",
                 amount=amount_int,  # Fixed: use int instead of string
                 description=f"Top-up for {student.name}"
-            )
-            db.session.add(new_tx)
-            db.session.commit()
-            flash(f"Successfully topped up RM{amount_int} for {student.name}.", "success")
-        except Exception as e:
-            db.session.rollback()
-            app.logger.error(f"Top-up error: {str(e)}")
-            flash("Error processing top-up. Please try again.", "error")
+                )
+                db.session.add(new_tx)
+                db.session.commit()
+                flash(f"Successfully topped up RM{amount_int} for {student.name}.", "success")
+            except Exception as e:
+                db.session.rollback()
+                app.logger.error(f"Top-up error: {str(e)}")
+                flash("Error processing top-up. Please try again.", "error")
 
     return render_template("topup.html")
 

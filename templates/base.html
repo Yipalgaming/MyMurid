@@ -4,7 +4,26 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="/static/style.css" />
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          backdropBlur: {
+            'sm': '4px',
+          },
+          colors: {
+            'white-90': 'rgba(255, 255, 255, 0.9)',
+            'white-80': 'rgba(255, 255, 255, 0.8)',
+          }
+        }
+      },
+      corePlugins: {
+        backgroundOpacity: true,
+        borderOpacity: true,
+      }
+    }
+  </script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -68,7 +87,25 @@
     .glass-effect {
       background: rgba(255, 255, 255, 0.1);
       backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    /* Ensure backdrop-blur works with Tailwind classes and force transparency */
+    .backdrop-blur-sm {
+      backdrop-filter: blur(4px) !important;
+      -webkit-backdrop-filter: blur(4px) !important;
+    }
+    
+    /* Transparent white backgrounds with opacity - override any solid backgrounds */
+    div[class*="bg-white/90"],
+    div[class*="bg-white/80"] {
+      background-color: rgba(255, 255, 255, 0.9) !important;
+    }
+    
+    div[class*="border-white/20"],
+    div[class*="border-white/"] {
+      border-color: rgba(255, 255, 255, 0.2) !important;
     }
     
     /* Modern button styles */
@@ -219,25 +256,10 @@
 </head>
 <body>
 
-  {% if request.endpoint != 'login' %}
-    <nav class="glass-effect fixed top-0 left-0 right-0 z-50 px-6 py-4">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center space-x-3">
-          <div class="bg-white rounded-full w-10 h-10 flex items-center justify-center">
-            <i class="fas fa-graduation-cap text-xl gradient-text"></i>
-          </div>
-          <h1 class="text-2xl font-bold text-white">MyMurid</h1>
-        </div>
-        <button onclick="toggleSidebar()" class="text-white hover:text-gray-200 transition-colors">
-          <i class="fas fa-bars text-xl"></i>
-        </button>
-    </div>
-    </nav>
-  {% endif %}
-
   {% if user.is_authenticated %}
     <div class="flex min-h-screen">
-      <div class="sidebar-modern fixed left-0 top-0 h-full w-64 transform transition-transform duration-300 ease-in-out z-50 -translate-x-full lg:translate-x-0" id="sidebar">
+      <!-- Sidebar - hidden on mobile (< 768px) where bottom nav shows -->
+      <div class="sidebar-modern fixed left-0 top-0 h-full w-64 transform transition-transform duration-300 ease-in-out z-50 -translate-x-full md:translate-x-0" id="sidebar">
         <div class="p-6">
           <div class="flex items-center space-x-3 mb-8">
             <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full w-12 h-12 flex items-center justify-center">
@@ -278,39 +300,23 @@
             {% elif user.role == 'admin' %}
               <a href="{{ url_for('admin_dashboard') }}" class="nav-item-modern">
                 <i class="fas fa-tachometer-alt"></i>
-                <span>Admin Home</span>
+                <span>Dashboard</span>
               </a>
               <a href="{{ url_for('manage_students') }}" class="nav-item-modern">
                 <i class="fas fa-users"></i>
-                <span>Manage Students</span>
+                <span>Students</span>
               </a>
               <a href="{{ url_for('topup') }}" class="nav-item-modern">
                 <i class="fas fa-plus-circle"></i>
                 <span>Top-up</span>
               </a>
-              <a href="{{ url_for('transactions') }}" class="nav-item-modern">
-                <i class="fas fa-exchange-alt"></i>
-                <span>Transactions</span>
-              </a>
               <a href="{{ url_for('paid_orders') }}" class="nav-item-modern">
                 <i class="fas fa-receipt"></i>
-                <span>Paid Orders</span>
+                <span>Orders</span>
               </a>
               <a href="{{ url_for('award_points') }}" class="nav-item-modern">
                 <i class="fas fa-star"></i>
-                <span>Award Points</span>
-              </a>
-              <a href="{{ url_for('manage_rewards') }}" class="nav-item-modern">
-                <i class="fas fa-gift"></i>
-                <span>Manage Rewards</span>
-              </a>
-              <a href="{{ url_for('vote') }}" class="nav-item-modern">
-                <i class="fas fa-vote-yea"></i>
-                <span>Food Suggestions</span>
-              </a>
-              <a href="{{ url_for('feedback') }}" class="nav-item-modern">
-                <i class="fas fa-comment"></i>
-                <span>Student Feedbacks</span>
+                <span>Rewards</span>
               </a>
             {% elif user.role == 'staff' %}
               <a href="{{ url_for('staff_dashboard') }}" class="nav-item-modern">
@@ -345,7 +351,7 @@
     </div>
   {% endif %}
 
-  <div class="main-content {% if user.is_authenticated and request.endpoint not in ['login', 'parent_login', 'parent_register'] %}ml-0 lg:ml-64 pt-20{% endif %} {% if request.endpoint not in ['login', 'parent_login', 'parent_register'] %}px-4 sm:px-6 pb-6{% endif %} {% if request.endpoint in ['login', 'parent_login', 'parent_register'] %}flex justify-center{% endif %}">
+  <div class="main-content {% if user.is_authenticated and request.endpoint not in ['login', 'parent_login', 'parent_register'] %}ml-0 md:ml-64{% endif %} {% if request.endpoint not in ['login', 'parent_login', 'parent_register'] %}px-4 sm:px-6 pb-20 md:pb-6{% endif %} {% if request.endpoint in ['login', 'parent_login', 'parent_register'] %}flex justify-center{% endif %}">
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         <div class="max-w-4xl mx-auto">
@@ -376,6 +382,80 @@
 
   {% block content %}{% endblock %}
 </div>
+
+<!-- Bottom Navigation - visible only on mobile (< 768px) -->
+{% if user.is_authenticated %}
+<nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 md:hidden z-50" id="bottom-nav">
+  <div class="flex justify-around items-center h-16">
+    {% if user.role == 'student' %}
+      <a href="{{ url_for('student_dashboard') }}" class="flex flex-col items-center justify-center flex-1 text-gray-600 hover:text-indigo-600 transition-colors">
+        <i class="fas fa-home text-xl mb-1"></i>
+        <span class="text-xs">Home</span>
+      </a>
+      <a href="{{ url_for('order') }}" class="flex flex-col items-center justify-center flex-1 text-gray-600 hover:text-indigo-600 transition-colors">
+        <i class="fas fa-utensils text-xl mb-1"></i>
+        <span class="text-xs">Order</span>
+      </a>
+      <a href="{{ url_for('rewards_dashboard') }}" class="flex flex-col items-center justify-center flex-1 text-gray-600 hover:text-indigo-600 transition-colors">
+        <i class="fas fa-trophy text-xl mb-1"></i>
+        <span class="text-xs">Rewards</span>
+      </a>
+      <a href="{{ url_for('payment') }}" class="flex flex-col items-center justify-center flex-1 text-gray-600 hover:text-indigo-600 transition-colors">
+        <i class="fas fa-credit-card text-xl mb-1"></i>
+        <span class="text-xs">Payment</span>
+      </a>
+    {% elif user.role == 'admin' %}
+      <a href="{{ url_for('admin_dashboard') }}" class="flex flex-col items-center justify-center flex-1 text-gray-600 hover:text-indigo-600 transition-colors">
+        <i class="fas fa-tachometer-alt text-xl mb-1"></i>
+        <span class="text-xs">Dashboard</span>
+      </a>
+      <a href="{{ url_for('manage_students') }}" class="flex flex-col items-center justify-center flex-1 text-gray-600 hover:text-indigo-600 transition-colors">
+        <i class="fas fa-users text-xl mb-1"></i>
+        <span class="text-xs">Students</span>
+      </a>
+      <a href="{{ url_for('paid_orders') }}" class="flex flex-col items-center justify-center flex-1 text-gray-600 hover:text-indigo-600 transition-colors">
+        <i class="fas fa-receipt text-xl mb-1"></i>
+        <span class="text-xs">Orders</span>
+      </a>
+      <a href="{{ url_for('topup') }}" class="flex flex-col items-center justify-center flex-1 text-gray-600 hover:text-indigo-600 transition-colors">
+        <i class="fas fa-plus-circle text-xl mb-1"></i>
+        <span class="text-xs">Top-up</span>
+      </a>
+    {% elif user.role == 'staff' %}
+      <a href="{{ url_for('staff_dashboard') }}" class="flex flex-col items-center justify-center flex-1 text-gray-600 hover:text-indigo-600 transition-colors">
+        <i class="fas fa-tachometer-alt text-xl mb-1"></i>
+        <span class="text-xs">Home</span>
+      </a>
+      <a href="{{ url_for('paid_orders') }}" class="flex flex-col items-center justify-center flex-1 text-gray-600 hover:text-indigo-600 transition-colors">
+        <i class="fas fa-receipt text-xl mb-1"></i>
+        <span class="text-xs">Orders</span>
+      </a>
+      <a href="{{ url_for('topup') }}" class="flex flex-col items-center justify-center flex-1 text-gray-600 hover:text-indigo-600 transition-colors">
+        <i class="fas fa-plus-circle text-xl mb-1"></i>
+        <span class="text-xs">Top-up</span>
+      </a>
+      <a href="{{ url_for('logout') }}" class="flex flex-col items-center justify-center flex-1 text-red-600 hover:text-red-700 transition-colors">
+        <i class="fas fa-sign-out-alt text-xl mb-1"></i>
+        <span class="text-xs">Logout</span>
+      </a>
+    {% elif not user.role %}
+      <!-- Parent navigation -->
+      <a href="{{ url_for('parent_dashboard') }}" class="flex flex-col items-center justify-center flex-1 text-gray-600 hover:text-indigo-600 transition-colors">
+        <i class="fas fa-home text-xl mb-1"></i>
+        <span class="text-xs">Home</span>
+      </a>
+      <a href="{{ url_for('add_child') }}" class="flex flex-col items-center justify-center flex-1 text-gray-600 hover:text-indigo-600 transition-colors">
+        <i class="fas fa-user-plus text-xl mb-1"></i>
+        <span class="text-xs">Add Child</span>
+      </a>
+      <a href="{{ url_for('logout') }}" class="flex flex-col items-center justify-center flex-1 text-red-600 hover:text-red-700 transition-colors">
+        <i class="fas fa-sign-out-alt text-xl mb-1"></i>
+        <span class="text-xs">Logout</span>
+      </a>
+    {% endif %}
+  </div>
+</nav>
+{% endif %}
 
 <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
         integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"

@@ -1,16 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Payment{% endblock %}
 {% block content %}
-<div class="min-h-screen bg-gradient-to-br from-green-400 via-emerald-500 to-teal-500 relative overflow-hidden">
-  <!-- Animated background elements -->
-  <div class="absolute inset-0 overflow-hidden">
-    <div class="absolute -top-40 -right-40 w-80 h-80 bg-white rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
-    <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-green-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-2000"></div>
-    <div class="absolute top-40 left-40 w-80 h-80 bg-emerald-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-4000"></div>
-  </div>
-
+<div class="fixed inset-y-0 left-0 md:left-64 right-0 bg-gradient-to-br from-green-400 via-emerald-500 to-teal-500 overflow-hidden">
   <!-- Header -->
-  <div class="bg-white/90 backdrop-blur-sm shadow-lg border-b relative z-10">
+  <div class="absolute top-0 left-0 right-0 bg-white shadow-lg border-b z-10">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <div class="flex items-center justify-between">
         <div>
@@ -26,45 +19,52 @@
     </div>
   </div>
 
-  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
-    {% if cart_items %}
+  <!-- Content Area -->
+  <div class="absolute top-24 left-0 right-0 bottom-0 overflow-y-auto">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+{% if cart_items %}
       <!-- Order Summary Card -->
-      <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6 mb-8">
-        <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-          <i class="fas fa-shopping-cart text-green-600 mr-2"></i>Order Summary
+      <div class="bg-white rounded-2xl shadow-xl border border-black/20 p-6 mb-8">
+        <h2 class="text-2xl font-bold mb-6 flex items-center">
+          <div class="bg-gradient-to-r from-green-500 to-emerald-500 rounded-full p-2 mr-3 shadow-lg">
+            <i class="fas fa-shopping-cart text-white text-lg"></i>
+          </div>
+          <span class="bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">Your Order</span>
         </h2>
         
-        <div class="overflow-x-auto">
-          <table class="w-full">
-            <thead>
-              <tr class="border-b border-gray-200">
-                <th class="text-left py-3 px-4 font-semibold text-gray-700">Item</th>
-                <th class="text-left py-3 px-4 font-semibold text-gray-700">Price</th>
-                <th class="text-left py-3 px-4 font-semibold text-gray-700">Qty</th>
-                <th class="text-left py-3 px-4 font-semibold text-gray-700">Subtotal</th>
-                <th class="text-left py-3 px-4 font-semibold text-gray-700">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for item_id in cart_items %}
-              <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                <td class="py-3 px-4 font-medium">{{ item_id.item.name }}</td>
-                <td class="py-3 px-4 text-gray-600">RM {{ "%.2f"|format(item_id.item.price) }}</td>
-                <td class="py-3 px-4 text-gray-600">{{ item_id.quantity }}</td>
-                <td class="py-3 px-4 font-bold text-green-600">RM {{ "%.2f"|format(item_id.item.price * item_id.quantity) }}</td>
-                <td class="py-3 px-4">
-                  <form method="POST" style="display:inline;">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                    <input type="hidden" name="delete" value="{{ item_id.id }}">
-                    <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg text-sm font-medium transition-colors">
-                      <i class="fas fa-trash mr-1"></i>Remove
-                    </button>
-                  </form>
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+        <div class="space-y-4">
+          {% for item_id in cart_items %}
+          <div class="bg-gradient-to-br from-gray-50 to-white rounded-xl p-5 border border-gray-200 hover:border-green-300 hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]">
+            <div class="flex items-center justify-between flex-wrap gap-4">
+              <div class="flex-1 min-w-[200px]">
+                <h3 class="font-bold text-gray-900 text-lg mb-2">{{ item_id.item.name }}</h3>
+                <div class="flex items-center gap-6 text-sm flex-wrap">
+                  <span class="bg-green-50 px-3 py-1 rounded-lg text-green-700 font-medium">
+                    <i class="fas fa-tag mr-1"></i>
+                    RM {{ "%.2f"|format(item_id.item.price) }}
+                  </span>
+                  <span class="bg-gray-100 px-3 py-1 rounded-lg text-gray-700 font-medium">
+                    <i class="fas fa-shopping-basket mr-1"></i>
+                    Qty: {{ item_id.quantity }}
+                  </span>
+                  <span class="bg-emerald-50 px-3 py-1 rounded-lg font-bold text-emerald-700">
+                    <i class="fas fa-coins mr-1"></i>
+                    RM {{ "%.2f"|format(item_id.item.price * item_id.quantity) }}
+                  </span>
+                </div>
+              </div>
+              <div>
+                <form method="POST" style="display:inline;">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                  <input type="hidden" name="delete" value="{{ item_id.id }}">
+                  <button type="submit" class="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
+                    <i class="fas fa-trash mr-1"></i>Remove
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
         </div>
       </div>
 
@@ -111,24 +111,26 @@
       </div>
 
       <!-- Action Buttons -->
-      <div class="flex flex-col sm:flex-row gap-4">
+      <div class="flex flex-col sm:flex-row gap-4 items-stretch">
         <form method="POST" action="{{ url_for('payment') }}" class="flex-1">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
           <input type="hidden" name="pay" value="true">
           <button type="submit" 
-                  class="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl {% if user.balance < total %}opacity-50 cursor-not-allowed{% endif %}"
+                  class="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl {% if user.balance < total %}opacity-50 cursor-not-allowed{% endif %}"
                   {% if user.balance < total %}disabled{% endif %}>
             <i class="fas fa-credit-card mr-2"></i>Pay Now
           </button>
         </form>
         
-        <a href="{{ url_for('order') }}" 
-           class="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl text-center">
-          <i class="fas fa-plus mr-2"></i>Add More Orders
-        </a>
+        <form action="{{ url_for('order') }}" method="GET" class="flex-1">
+          <button type="submit" 
+                  class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl">
+            <i class="fas fa-plus mr-2"></i>Add More Orders
+          </button>
+        </form>
       </div>
 
-    {% else %}
+{% else %}
       <!-- Empty Cart -->
       <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8 text-center">
         <div class="bg-gray-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
@@ -137,11 +139,11 @@
         <h3 class="text-xl font-semibold text-gray-900 mb-2">No Orders Found</h3>
         <p class="text-gray-600 mb-6">You don't have any unpaid orders. Start by making a new order!</p>
         <a href="{{ url_for('order') }}" 
-           class="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
+           class="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl">
           <i class="fas fa-plus mr-2"></i>Make a New Order
         </a>
       </div>
-    {% endif %}
+{% endif %}
   </div>
 </div>
 {% endblock %}

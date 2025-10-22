@@ -2,14 +2,8 @@
 {% block title %}Rewards & Achievements{% endblock %}
 {% block content %}
 <div class="min-h-screen bg-gradient-to-br from-yellow-400 via-orange-500 to-red-500 relative overflow-hidden">
-  <!-- Animated background elements -->
-  <div class="absolute inset-0 overflow-hidden">
-    <div class="absolute -top-40 -right-40 w-80 h-80 bg-white rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
-    <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-2000"></div>
-    <div class="absolute top-40 left-40 w-80 h-80 bg-orange-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-4000"></div>
-  </div>
   <!-- Header -->
-  <div class="bg-white/90 backdrop-blur-sm shadow-lg border-b relative z-10">
+  <div class="bg-white/90 backdrop-blur-sm shadow-xl border-b relative z-10">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <div class="flex items-center justify-between">
         <div>
@@ -28,7 +22,7 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Points Summary -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-      <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
+      <div class="bg-white rounded-2xl shadow-xl border border-black/20 p-6">
         <div class="flex items-center">
           <div class="bg-yellow-100 rounded-full p-3 mr-4">
             <i class="fas fa-star text-yellow-600 text-xl"></i>
@@ -40,7 +34,7 @@
         </div>
       </div>
 
-      <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
+      <div class="bg-white rounded-2xl shadow-xl border border-black/20 p-6">
         <div class="flex items-center">
           <div class="bg-purple-100 rounded-full p-3 mr-4">
             <i class="fas fa-gift text-purple-600 text-xl"></i>
@@ -54,7 +48,7 @@
     </div>
 
     <!-- Available Rewards -->
-    <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-6 mb-8">
+    <div class="bg-white rounded-2xl shadow-xl border border-black/20 p-6 mb-8">
       <h2 class="text-xl font-semibold text-gray-900 mb-6 flex items-center">
         <i class="fas fa-gift text-blue-600 mr-2"></i>Available Rewards
       </h2>
@@ -62,7 +56,7 @@
       {% if available_rewards %}
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {% for reward in available_rewards %}
-            <div class="bg-gray-50 rounded-xl p-6 border border-gray-100 hover:shadow-md transition-all duration-300">
+            <div class="bg-gray-50 rounded-xl p-6 border border-black/20 shadow-xl hover:shadow-2xl transition-all duration-300">
               <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-semibold text-gray-900">{{ reward.name }}</h3>
                 <span class="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
@@ -129,7 +123,7 @@
 
     <!-- Achievements by Category -->
     {% for category in categories %}
-    <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-6 mb-8">
+    <div class="bg-white rounded-2xl shadow-xl border border-black/20 p-6 mb-8">
       <h2 class="text-xl font-semibold text-gray-900 mb-6 flex items-center">
         <i class="{{ category.icon }} mr-2" style="color: {{ category.color }}"></i>{{ category.name.title() }} Achievements
       </h2>
@@ -137,7 +131,7 @@
       {% if achievements_by_category[category.name] %}
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {% for achievement in achievements_by_category[category.name] %}
-            <div class="bg-gray-50 rounded-xl p-6 border border-gray-100 hover:shadow-md transition-all duration-300">
+            <div class="bg-gray-50 rounded-xl p-6 border border-black/20 shadow-xl hover:shadow-2xl transition-all duration-300">
               <div class="flex items-center mb-4">
                 <div class="p-3 rounded-lg" style="background-color: {{ achievement.badge_color }}20;">
                   <i class="{{ achievement.icon }} text-xl" style="color: {{ achievement.badge_color }};"></i>
@@ -165,7 +159,7 @@
 
     <!-- Recent Points History -->
     {% if student_points %}
-    <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-6 mb-8">
+    <div class="bg-white rounded-2xl shadow-xl border border-black/20 p-6 mb-8">
       <h2 class="text-xl font-semibold text-gray-900 mb-6 flex items-center">
         <i class="fas fa-history text-blue-600 mr-2"></i>Recent Points History
       </h2>
@@ -202,7 +196,7 @@
 
     <!-- Recent Redemptions -->
     {% if recent_redemptions %}
-    <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
+    <div class="bg-white rounded-2xl shadow-xl border border-black/20 p-6">
       <h2 class="text-xl font-semibold text-gray-900 mb-6 flex items-center">
         <i class="fas fa-receipt text-blue-600 mr-2"></i>Recent Redemptions
       </h2>
