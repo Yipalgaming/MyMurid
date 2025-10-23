@@ -270,8 +270,8 @@
   {% if user.is_authenticated %}
     <div class="flex min-h-screen" id="app-container">
       <!-- Sidebar -->
-      <div class="sidebar-modern fixed left-0 top-0 h-full w-64 transform transition-transform duration-300 ease-in-out z-40 -translate-x-full md:translate-x-0" id="sidebar">
-        <div class="p-6">
+      <div class="sidebar-modern fixed left-0 top-0 h-full w-64 transform transition-transform duration-300 ease-in-out z-40 -translate-x-full md:translate-x-0 flex flex-col" id="sidebar">
+        <div class="p-6 flex-shrink-0">
           <div class="flex items-center space-x-3 mb-8">
             <div class="w-12 h-12 flex items-center justify-center">
               <img src="{{ url_for('static', filename='favicon.png') }}" alt="MyMurid Logo" class="w-full h-full object-cover rounded-full shadow-lg">
@@ -281,102 +281,104 @@
               <p class="text-sm text-gray-600">{{ user.role|capitalize if user.role else 'Parent' }}</p>
             </div>
           </div>
+        </div>
           
-          <nav class="space-y-2" aria-label="Main navigation">
-            {% if user.role == 'student' %}
-              <a href="{{ url_for('student_dashboard') }}" class="nav-item-modern">
-                <i class="fas fa-home"></i>
-                <span>Dashboard</span>
-              </a>
-              <a href="{{ url_for('order') }}" class="nav-item-modern">
-                <i class="fas fa-utensils"></i>
-                <span>Order Food</span>
-              </a>
-              <a href="{{ url_for('payment') }}" class="nav-item-modern">
-                <i class="fas fa-credit-card"></i>
-                <span>Payment</span>
-              </a>
-              <a href="{{ url_for('rewards_dashboard') }}" class="nav-item-modern">
-                <i class="fas fa-trophy"></i>
-                <span>Rewards</span>
-              </a>
-              <a href="{{ url_for('vote') }}" class="nav-item-modern">
-                <i class="fas fa-vote-yea"></i>
-                <span>Food Suggestion</span>
-              </a>
-              <a href="{{ url_for('feedback') }}" class="nav-item-modern">
-                <i class="fas fa-comment"></i>
-                <span>Your Feedback</span>
-              </a>
-            {% elif user.role == 'admin' %}
-              <a href="{{ url_for('admin_dashboard') }}" class="nav-item-modern">
-                <i class="fas fa-tachometer-alt"></i>
-                <span>Dashboard</span>
-              </a>
-              <a href="{{ url_for('manage_students') }}" class="nav-item-modern">
-                <i class="fas fa-users"></i>
-                <span>Students</span>
-              </a>
-              <a href="{{ url_for('topup') }}" class="nav-item-modern">
-                <i class="fas fa-plus-circle"></i>
-                <span>Top-up</span>
-              </a>
-              <a href="{{ url_for('paid_orders') }}" class="nav-item-modern">
-                <i class="fas fa-receipt"></i>
-                <span>Orders</span>
-              </a>
-              <a href="{{ url_for('award_points') }}" class="nav-item-modern">
-                <i class="fas fa-star"></i>
-                <span>Rewards</span>
-              </a>
-            {% elif user.role == 'staff' %}
-              <a href="{{ url_for('staff_dashboard') }}" class="nav-item-modern">
-                <i class="fas fa-tachometer-alt"></i>
-                <span>Staff Home</span>
-              </a>
-              <a href="{{ url_for('paid_orders') }}" class="nav-item-modern">
-                <i class="fas fa-receipt"></i>
-                <span>Orders</span>
-              </a>
-              <a href="{{ url_for('transactions') }}" class="nav-item-modern">
-                <i class="fas fa-exchange-alt"></i>
-                <span>Transactions</span>
-              </a>
-              <a href="{{ url_for('food_demand_analytics') }}" class="nav-item-modern">
-                <i class="fas fa-chart-pie"></i>
-                <span>Food Demand</span>
-              </a>
-              <a href="{{ url_for('cash_flow_analytics') }}" class="nav-item-modern">
-                <i class="fas fa-money-bill-wave"></i>
-                <span>Cash Flow</span>
-              </a>
-              <a href="{{ url_for('feedback') }}" class="nav-item-modern">
-                <i class="fas fa-comment"></i>
-                <span>Feedback</span>
-              </a>
-              <a href="{{ url_for('vote') }}" class="nav-item-modern">
-                <i class="fas fa-vote-yea"></i>
-                <span>Food Votes</span>
-              </a>
-            {% elif not user.role %}
-              <!-- Parent navigation -->
-              <a href="{{ url_for('parent_dashboard') }}" class="nav-item-modern">
-                <i class="fas fa-home"></i>
-                <span>Dashboard</span>
-              </a>
-              <a href="{{ url_for('add_child') }}" class="nav-item-modern">
-                <i class="fas fa-user-plus"></i>
-                <span>Add Child</span>
-              </a>
-          {% endif %}
-            
-            <div class="border-t border-gray-200 my-4"></div>
-            
-            <a href="{{ url_for('logout') }}" class="nav-item-modern text-red-600 hover:bg-red-50 hover:text-red-700">
-              <i class="fas fa-sign-out-alt"></i>
-              <span>Logout</span>
+        <!-- Scrollable Navigation Items -->
+        <nav class="flex-1 overflow-y-auto px-6 space-y-2" aria-label="Main navigation">
+          {% if user.role == 'student' %}
+            <a href="{{ url_for('student_dashboard') }}" class="nav-item-modern">
+              <i class="fas fa-home"></i>
+              <span>Dashboard</span>
             </a>
-          </nav>
+            <a href="{{ url_for('order') }}" class="nav-item-modern">
+              <i class="fas fa-utensils"></i>
+              <span>Order Food</span>
+            </a>
+            <a href="{{ url_for('payment') }}" class="nav-item-modern">
+              <i class="fas fa-credit-card"></i>
+              <span>Payment</span>
+            </a>
+            <a href="{{ url_for('rewards_dashboard') }}" class="nav-item-modern">
+              <i class="fas fa-trophy"></i>
+              <span>Rewards</span>
+            </a>
+            <a href="{{ url_for('vote') }}" class="nav-item-modern">
+              <i class="fas fa-vote-yea"></i>
+              <span>Food Suggestion</span>
+            </a>
+            <a href="{{ url_for('feedback') }}" class="nav-item-modern">
+              <i class="fas fa-comment"></i>
+              <span>Your Feedback</span>
+            </a>
+          {% elif user.role == 'admin' %}
+            <a href="{{ url_for('admin_dashboard') }}" class="nav-item-modern">
+              <i class="fas fa-tachometer-alt"></i>
+              <span>Dashboard</span>
+            </a>
+            <a href="{{ url_for('manage_students') }}" class="nav-item-modern">
+              <i class="fas fa-users"></i>
+              <span>Students</span>
+            </a>
+            <a href="{{ url_for('topup') }}" class="nav-item-modern">
+              <i class="fas fa-plus-circle"></i>
+              <span>Top-up</span>
+            </a>
+            <a href="{{ url_for('paid_orders') }}" class="nav-item-modern">
+              <i class="fas fa-receipt"></i>
+              <span>Orders</span>
+            </a>
+            <a href="{{ url_for('award_points') }}" class="nav-item-modern">
+              <i class="fas fa-star"></i>
+              <span>Rewards</span>
+            </a>
+          {% elif user.role == 'staff' %}
+            <a href="{{ url_for('staff_dashboard') }}" class="nav-item-modern">
+              <i class="fas fa-tachometer-alt"></i>
+              <span>Staff Home</span>
+            </a>
+            <a href="{{ url_for('paid_orders') }}" class="nav-item-modern">
+              <i class="fas fa-receipt"></i>
+              <span>Orders</span>
+            </a>
+            <a href="{{ url_for('transactions') }}" class="nav-item-modern">
+              <i class="fas fa-exchange-alt"></i>
+              <span>Transactions</span>
+            </a>
+            <a href="{{ url_for('food_demand_analytics') }}" class="nav-item-modern">
+              <i class="fas fa-chart-pie"></i>
+              <span>Food Demand</span>
+            </a>
+            <a href="{{ url_for('cash_flow_analytics') }}" class="nav-item-modern">
+              <i class="fas fa-money-bill-wave"></i>
+              <span>Cash Flow</span>
+            </a>
+            <a href="{{ url_for('feedback') }}" class="nav-item-modern">
+              <i class="fas fa-comment"></i>
+              <span>Feedback</span>
+            </a>
+            <a href="{{ url_for('vote') }}" class="nav-item-modern">
+              <i class="fas fa-vote-yea"></i>
+              <span>Food Votes</span>
+            </a>
+          {% elif not user.role %}
+            <!-- Parent navigation -->
+            <a href="{{ url_for('parent_dashboard') }}" class="nav-item-modern">
+              <i class="fas fa-home"></i>
+              <span>Dashboard</span>
+            </a>
+            <a href="{{ url_for('add_child') }}" class="nav-item-modern">
+              <i class="fas fa-user-plus"></i>
+              <span>Add Child</span>
+            </a>
+          {% endif %}
+        </nav>
+        
+        <!-- Logout Button - Fixed at Bottom -->
+        <div class="flex-shrink-0 p-6 border-t border-gray-200">
+          <a href="{{ url_for('logout') }}" class="nav-item-modern text-red-600 hover:bg-red-50 hover:text-red-700">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Logout</span>
+          </a>
         </div>
       </div>
     </div>
@@ -411,7 +413,7 @@
       {% endif %}
     {% endwith %}
 
-  <div class="main-content transition-all duration-300 {% if user.is_authenticated and request.endpoint not in ['login', 'parent_login', 'parent_register'] %}pt-20 md:pt-0 ml-0 md:ml-64{% endif %} {% if request.endpoint in ['login', 'parent_login', 'parent_register'] %}flex justify-center{% endif %}" id="main-content">
+  <div class="main-content transition-all duration-300 {% if user.is_authenticated and request.endpoint not in ['login', 'parent_login', 'parent_register'] %}pt-24 md:pt-0 ml-0 md:ml-64{% endif %} {% if request.endpoint in ['login', 'parent_login', 'parent_register'] %}flex justify-center{% endif %}" id="main-content">
 
   {% block content %}{% endblock %}
 </div>
@@ -481,8 +483,8 @@ function handleSwipe() {
   const swipeDistance = touchEndX - touchStartX;
   const isMobile = globalThis.innerWidth < 768;
   
-  // Swipe right to open (from anywhere on screen)
-  if (swipeDistance > 100) {
+  // Swipe right to open (easier threshold - just 50px)
+  if (swipeDistance > 50) {
     sidebar.classList.remove('-translate-x-full');
     if (isMobile) {
       mainContent.style.marginLeft = '16rem';
