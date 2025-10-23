@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, jsonify, flash, url_for, session
+from flask import Flask, render_template, request, redirect, jsonify, flash, url_for, session, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from flask_wtf.csrf import CSRFProtect
@@ -174,6 +174,15 @@ def safe_get_student(ic_number):
 @app.before_request
 def make_session_non_permanent():
     session.permanent = False
+
+@app.route('/favicon.ico')
+def favicon():
+    """Serve favicon"""
+    return send_from_directory(
+        os.path.join(app.root_path, 'static'),
+        'favicon.png',
+        mimetype='image/png'
+    )
 
 @login_manager.user_loader
 def load_user(user_id):

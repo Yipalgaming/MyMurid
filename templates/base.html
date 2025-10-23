@@ -3,6 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon.png') }}" />
+  <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='favicon.png') }}" />
+  <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.png') }}" />
+  <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='favicon.png') }}" />
   <link rel="stylesheet" href="/static/style.css" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -257,13 +261,13 @@
 <body>
 
   {% if user.is_authenticated %}
-    <div class="flex min-h-screen">
-      <!-- Sidebar - hidden on mobile (< 768px) where bottom nav shows -->
-      <div class="sidebar-modern fixed left-0 top-0 h-full w-64 transform transition-transform duration-300 ease-in-out z-50 -translate-x-full md:translate-x-0" id="sidebar">
+    <div class="flex min-h-screen" id="app-container">
+      <!-- Sidebar -->
+      <div class="sidebar-modern fixed left-0 top-0 h-full w-64 transform transition-transform duration-300 ease-in-out z-40 -translate-x-full md:translate-x-0" id="sidebar">
         <div class="p-6">
           <div class="flex items-center space-x-3 mb-8">
-            <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full w-12 h-12 flex items-center justify-center">
-              <i class="fas fa-user text-white text-lg"></i>
+            <div class="w-12 h-12 flex items-center justify-center">
+              <img src="{{ url_for('static', filename='favicon.png') }}" alt="MyMurid Logo" class="w-full h-full object-cover rounded-full shadow-lg">
             </div>
             <div>
               <h3 class="font-semibold text-gray-800">{{ user.name }}</h3>
@@ -371,46 +375,48 @@
     </div>
   {% endif %}
 
-  <div class="main-content {% if user.is_authenticated and request.endpoint not in ['login', 'parent_login', 'parent_register'] %}pt-16 ml-0 md:ml-64{% endif %} {% if request.endpoint in ['login', 'parent_login', 'parent_register'] %}flex justify-center{% endif %}">
+  <!-- Flash Messages - Fixed at top -->
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
-        <div class="max-w-4xl mx-auto">
+      <div id="flash-container" class="fixed top-20 md:top-4 left-1/2 transform -translate-x-1/2 z-50 w-11/12 md:w-full md:max-w-2xl px-4">
         {% for category, message in messages %}
-            <div class="alert-modern alert-{{ 'danger' if category == 'error' else category }} mb-4" role="alert">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center">
-                  {% if category == 'success' %}
-                    <i class="fas fa-check-circle text-green-600 mr-3"></i>
-                  {% elif category == 'error' %}
-                    <i class="fas fa-exclamation-circle text-red-600 mr-3"></i>
-                  {% elif category == 'warning' %}
-                    <i class="fas fa-exclamation-triangle text-orange-600 mr-3"></i>
-                  {% else %}
-                    <i class="fas fa-info-circle text-blue-600 mr-3"></i>
-                  {% endif %}
-                  <span>{{ message }}</span>
-                </div>
-                <button type="button" class="text-gray-500 hover:text-gray-700" onclick="this.parentElement.parentElement.remove()">
-                  <i class="fas fa-times"></i>
-                </button>
+          <div class="flash-message {% if category == 'success' %}bg-green-500{% elif category == 'error' %}bg-red-500{% elif category == 'warning' %}bg-orange-500{% else %}bg-blue-500{% endif %} text-white mb-4 shadow-2xl rounded-xl" role="alert">
+            <div class="flex items-center justify-between p-4">
+              <div class="flex items-center">
+                {% if category == 'success' %}
+                  <i class="fas fa-check-circle text-white mr-3 text-xl"></i>
+                {% elif category == 'error' %}
+                  <i class="fas fa-exclamation-circle text-white mr-3 text-xl"></i>
+                {% elif category == 'warning' %}
+                  <i class="fas fa-exclamation-triangle text-white mr-3 text-xl"></i>
+                {% else %}
+                  <i class="fas fa-info-circle text-white mr-3 text-xl"></i>
+                {% endif %}
+                <span class="font-medium">{{ message }}</span>
               </div>
+              <button type="button" class="text-white hover:text-gray-200 transition-colors" onclick="this.parentElement.parentElement.remove()">
+                <i class="fas fa-times text-lg"></i>
+              </button>
+            </div>
           </div>
         {% endfor %}
-        </div>
+      </div>
       {% endif %}
     {% endwith %}
+
+  <div class="main-content transition-all duration-300 {% if user.is_authenticated and request.endpoint not in ['login', 'parent_login', 'parent_register'] %}pt-16 md:pt-0 ml-0 md:ml-64{% endif %} {% if request.endpoint in ['login', 'parent_login', 'parent_register'] %}flex justify-center{% endif %}" id="main-content">
 
   {% block content %}{% endblock %}
 </div>
 
-<!-- Top Navigation Bar - visible on all screens -->
+<!-- Top Navigation Bar - visible only on mobile -->
 {% if user.is_authenticated %}
-<nav class="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-50 shadow-md" id="top-nav" aria-label="Top navigation">
+<nav class="md:hidden fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-50 shadow-md" id="top-nav" aria-label="Top navigation">
   <div class="flex items-center justify-between h-16 px-4">
     <button onclick="toggleSidebar()" class="text-gray-600 hover:text-indigo-600 transition-colors p-2">
       <i class="fas fa-bars text-2xl"></i>
     </button>
-    <h1 class="text-lg font-semibold text-gray-800">MyMurid Canteen</h1>
+    <h1 class="text-lg font-semibold text-gray-800">MyMurid</h1>
     <div class="w-10"></div> <!-- Spacer for centering -->
   </div>
 </nav>
@@ -430,7 +436,19 @@
 <script>
 function toggleSidebar() {
   const sidebar = document.getElementById('sidebar');
+  const mainContent = document.getElementById('main-content');
+  const isMobile = globalThis.innerWidth < 768;
+  
   sidebar.classList.toggle('-translate-x-full');
+  
+  // Push content on mobile when sidebar is open
+  if (isMobile) {
+    if (sidebar.classList.contains('-translate-x-full')) {
+      mainContent.style.marginLeft = '0';
+    } else {
+      mainContent.style.marginLeft = '16rem'; // 64 * 4px = 256px = 16rem
+    }
+  }
 }
 
 // Swipe gesture support
@@ -448,42 +466,78 @@ document.addEventListener('touchend', function(event) {
 
 function handleSwipe() {
   const sidebar = document.getElementById('sidebar');
+  const mainContent = document.getElementById('main-content');
   const swipeDistance = touchEndX - touchStartX;
+  const isMobile = globalThis.innerWidth < 768;
   
   // Swipe right to open (from left edge)
   if (touchStartX < 50 && swipeDistance > 50) {
     sidebar.classList.remove('-translate-x-full');
+    if (isMobile) {
+      mainContent.style.marginLeft = '16rem';
+    }
   }
   // Swipe left to close
   else if (swipeDistance < -50) {
     sidebar.classList.add('-translate-x-full');
+    if (isMobile) {
+      mainContent.style.marginLeft = '0';
+    }
   }
 }
 
 // Close sidebar when clicking outside
 document.addEventListener('click', function(event) {
   const sidebar = document.getElementById('sidebar');
+  const mainContent = document.getElementById('main-content');
   const toggleButton = event.target.closest('[onclick="toggleSidebar()"]');
+  const isMobile = globalThis.innerWidth < 768;
   
   if (!sidebar.contains(event.target) && !toggleButton) {
     sidebar.classList.add('-translate-x-full');
+    if (isMobile) {
+      mainContent.style.marginLeft = '0';
+    }
   }
 });
 
 // Responsive sidebar behavior
 globalThis.addEventListener('resize', function() {
   const sidebar = document.getElementById('sidebar');
+  const mainContent = document.getElementById('main-content');
+  
   if (globalThis.innerWidth > 768) {
     sidebar.classList.remove('-translate-x-full');
+    mainContent.style.marginLeft = '';
   } else {
     sidebar.classList.add('-translate-x-full');
+    mainContent.style.marginLeft = '0';
   }
 });
 
 // Initialize sidebar state
 document.addEventListener('DOMContentLoaded', function() {
   const sidebar = document.getElementById('sidebar');
+  const mainContent = document.getElementById('main-content');
+  
   sidebar.classList.add('-translate-x-full');
+  if (globalThis.innerWidth < 768) {
+    mainContent.style.marginLeft = '0';
+  }
+  
+  // Auto-fade flash messages
+  const flashMessages = document.querySelectorAll('.flash-message');
+  flashMessages.forEach(function(message) {
+    // Fade out after 5 seconds
+    setTimeout(function() {
+      message.style.transition = 'opacity 0.5s ease-out';
+      message.style.opacity = '0';
+      // Remove from DOM after fade
+      setTimeout(function() {
+        message.remove();
+      }, 500);
+    }, 5000);
+  });
 });
 </script>
 

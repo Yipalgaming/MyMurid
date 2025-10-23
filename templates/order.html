@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Order Food{% endblock %}
 {% block content %}
-<div class="fixed inset-y-0 left-0 md:left-64 right-0 bg-gradient-to-br from-purple-400 via-pink-500 to-red-500 overflow-hidden">
+<div class="min-h-screen bg-gradient-to-br from-purple-400 via-pink-500 to-red-500 relative overflow-hidden pb-24">
   <!-- Header -->
-  <div class="absolute top-0 left-0 right-0 bg-white shadow-lg border-b z-10">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+  <div class="bg-white shadow-lg border-b relative z-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6">
       <div class="flex items-center justify-between">
         <div>
           <h1 class="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Order Food</h1>
@@ -19,10 +19,8 @@
     </div>
   </div>
 
-  <!-- Content Area -->
-  <div class="absolute top-28 md:top-24 left-0 right-0 bottom-0 md:bottom-0 overflow-y-auto pb-20 md:pb-0">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-8">
-    <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6 pb-24">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
       {% for item in items %}
       <div class="bg-white rounded-xl md:rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group border border-gray-200 transform hover:scale-105">
         {% if item.image_path %}
@@ -54,7 +52,6 @@
         </div>
       </div>
       {% endfor %}
-    </div>
   </div>
 </div>
 

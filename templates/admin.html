@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Admin Dashboard{% endblock %}
 {% block content %}
-<div class="fixed inset-y-0 left-0 md:left-64 right-0 bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-500 overflow-hidden">
+<div class="min-h-screen bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-500 relative overflow-hidden">
   <!-- Header -->
-  <div class="absolute top-0 left-0 right-0 bg-white shadow-lg border-b z-10">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+  <div class="bg-white shadow-lg border-b relative z-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6">
       <div class="flex items-center justify-between">
         <div>
           <h1 class="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-pink-600 bg-clip-text text-transparent">Admin Dashboard</h1>
@@ -23,9 +23,7 @@
     </div>
   </div>
 
-  <!-- Content Area -->
-  <div class="absolute top-28 md:top-24 left-0 right-0 bottom-0 md:bottom-0 overflow-y-auto pb-20 md:pb-0">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-8">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Quick Stats -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6">
@@ -200,7 +198,6 @@
           </div>
         </div>
       </div>
-    </div>
   </div>
 </div>
 {% endblock %}
