@@ -371,7 +371,7 @@
     </div>
   {% endif %}
 
-  <div class="main-content {% if user.is_authenticated and request.endpoint not in ['login', 'parent_login', 'parent_register'] %}ml-0 md:ml-64{% endif %} {% if request.endpoint not in ['login', 'parent_login', 'parent_register'] %}px-4 sm:px-6 pb-20 md:pb-6{% endif %} {% if request.endpoint in ['login', 'parent_login', 'parent_register'] %}flex justify-center{% endif %}">
+  <div class="main-content {% if user.is_authenticated and request.endpoint not in ['login', 'parent_login', 'parent_register'] %}mt-16 ml-0 md:ml-64{% endif %} {% if request.endpoint not in ['login', 'parent_login', 'parent_register'] %}px-4 sm:px-6{% endif %} {% if request.endpoint in ['login', 'parent_login', 'parent_register'] %}flex justify-center{% endif %}">
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         <div class="max-w-4xl mx-auto">
@@ -403,76 +403,15 @@
   {% block content %}{% endblock %}
 </div>
 
-<!-- Bottom Navigation - visible only on mobile (< 768px) -->
+<!-- Top Navigation Bar - visible on all screens -->
 {% if user.is_authenticated %}
-<nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 md:hidden z-50" id="bottom-nav" aria-label="Mobile navigation">
-  <div class="flex justify-around items-center h-16">
-    {% if user.role == 'student' %}
-      <a href="{{ url_for('student_dashboard') }}" class="flex flex-col items-center justify-center flex-1 text-gray-600 hover:text-indigo-600 transition-colors">
-        <i class="fas fa-home text-xl mb-1"></i>
-        <span class="text-xs">Home</span>
-      </a>
-      <a href="{{ url_for('order') }}" class="flex flex-col items-center justify-center flex-1 text-gray-600 hover:text-indigo-600 transition-colors">
-        <i class="fas fa-utensils text-xl mb-1"></i>
-        <span class="text-xs">Order</span>
-      </a>
-      <a href="{{ url_for('rewards_dashboard') }}" class="flex flex-col items-center justify-center flex-1 text-gray-600 hover:text-indigo-600 transition-colors">
-        <i class="fas fa-trophy text-xl mb-1"></i>
-        <span class="text-xs">Rewards</span>
-      </a>
-      <a href="{{ url_for('payment') }}" class="flex flex-col items-center justify-center flex-1 text-gray-600 hover:text-indigo-600 transition-colors">
-        <i class="fas fa-credit-card text-xl mb-1"></i>
-        <span class="text-xs">Payment</span>
-      </a>
-    {% elif user.role == 'admin' %}
-      <a href="{{ url_for('admin_dashboard') }}" class="flex flex-col items-center justify-center flex-1 text-gray-600 hover:text-indigo-600 transition-colors">
-        <i class="fas fa-tachometer-alt text-xl mb-1"></i>
-        <span class="text-xs">Dashboard</span>
-      </a>
-      <a href="{{ url_for('manage_students') }}" class="flex flex-col items-center justify-center flex-1 text-gray-600 hover:text-indigo-600 transition-colors">
-        <i class="fas fa-users text-xl mb-1"></i>
-        <span class="text-xs">Students</span>
-      </a>
-      <a href="{{ url_for('paid_orders') }}" class="flex flex-col items-center justify-center flex-1 text-gray-600 hover:text-indigo-600 transition-colors">
-        <i class="fas fa-receipt text-xl mb-1"></i>
-        <span class="text-xs">Orders</span>
-      </a>
-      <a href="{{ url_for('topup') }}" class="flex flex-col items-center justify-center flex-1 text-gray-600 hover:text-indigo-600 transition-colors">
-        <i class="fas fa-plus-circle text-xl mb-1"></i>
-        <span class="text-xs">Top-up</span>
-      </a>
-    {% elif user.role == 'staff' %}
-      <a href="{{ url_for('staff_dashboard') }}" class="flex flex-col items-center justify-center flex-1 text-gray-600 hover:text-indigo-600 transition-colors">
-        <i class="fas fa-tachometer-alt text-xl mb-1"></i>
-        <span class="text-xs">Home</span>
-      </a>
-      <a href="{{ url_for('paid_orders') }}" class="flex flex-col items-center justify-center flex-1 text-gray-600 hover:text-indigo-600 transition-colors">
-        <i class="fas fa-receipt text-xl mb-1"></i>
-        <span class="text-xs">Orders</span>
-      </a>
-      <a href="{{ url_for('food_demand_analytics') }}" class="flex flex-col items-center justify-center flex-1 text-gray-600 hover:text-indigo-600 transition-colors">
-        <i class="fas fa-chart-pie text-xl mb-1"></i>
-        <span class="text-xs">Analytics</span>
-      </a>
-      <a href="{{ url_for('transactions') }}" class="flex flex-col items-center justify-center flex-1 text-gray-600 hover:text-indigo-600 transition-colors">
-        <i class="fas fa-exchange-alt text-xl mb-1"></i>
-        <span class="text-xs">Transactions</span>
-      </a>
-    {% elif not user.role %}
-      <!-- Parent navigation -->
-      <a href="{{ url_for('parent_dashboard') }}" class="flex flex-col items-center justify-center flex-1 text-gray-600 hover:text-indigo-600 transition-colors">
-        <i class="fas fa-home text-xl mb-1"></i>
-        <span class="text-xs">Home</span>
-      </a>
-      <a href="{{ url_for('add_child') }}" class="flex flex-col items-center justify-center flex-1 text-gray-600 hover:text-indigo-600 transition-colors">
-        <i class="fas fa-user-plus text-xl mb-1"></i>
-        <span class="text-xs">Add Child</span>
-      </a>
-      <a href="{{ url_for('logout') }}" class="flex flex-col items-center justify-center flex-1 text-red-600 hover:text-red-700 transition-colors">
-        <i class="fas fa-sign-out-alt text-xl mb-1"></i>
-        <span class="text-xs">Logout</span>
-      </a>
-    {% endif %}
+<nav class="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-50 shadow-md" id="top-nav" aria-label="Top navigation">
+  <div class="flex items-center justify-between h-16 px-4">
+    <button onclick="toggleSidebar()" class="text-gray-600 hover:text-indigo-600 transition-colors p-2">
+      <i class="fas fa-bars text-2xl"></i>
+    </button>
+    <h1 class="text-lg font-semibold text-gray-800">MyMurid Canteen</h1>
+    <div class="w-10"></div> <!-- Spacer for centering -->
   </div>
 </nav>
 {% endif %}
@@ -494,12 +433,39 @@ function toggleSidebar() {
   sidebar.classList.toggle('-translate-x-full');
 }
 
-// Close sidebar when clicking outside on mobile
+// Swipe gesture support
+let touchStartX = 0;
+let touchEndX = 0;
+
+document.addEventListener('touchstart', function(event) {
+  touchStartX = event.changedTouches[0].screenX;
+}, false);
+
+document.addEventListener('touchend', function(event) {
+  touchEndX = event.changedTouches[0].screenX;
+  handleSwipe();
+}, false);
+
+function handleSwipe() {
+  const sidebar = document.getElementById('sidebar');
+  const swipeDistance = touchEndX - touchStartX;
+  
+  // Swipe right to open (from left edge)
+  if (touchStartX < 50 && swipeDistance > 50) {
+    sidebar.classList.remove('-translate-x-full');
+  }
+  // Swipe left to close
+  else if (swipeDistance < -50) {
+    sidebar.classList.add('-translate-x-full');
+  }
+}
+
+// Close sidebar when clicking outside
 document.addEventListener('click', function(event) {
   const sidebar = document.getElementById('sidebar');
   const toggleButton = event.target.closest('[onclick="toggleSidebar()"]');
   
-  if (globalThis.innerWidth <= 768 && !sidebar.contains(event.target) && !toggleButton) {
+  if (!sidebar.contains(event.target) && !toggleButton) {
     sidebar.classList.add('-translate-x-full');
   }
 });
@@ -517,9 +483,7 @@ globalThis.addEventListener('resize', function() {
 // Initialize sidebar state
 document.addEventListener('DOMContentLoaded', function() {
   const sidebar = document.getElementById('sidebar');
-  if (globalThis.innerWidth <= 768) {
-    sidebar.classList.add('-translate-x-full');
-  }
+  sidebar.classList.add('-translate-x-full');
 });
 </script>
 
