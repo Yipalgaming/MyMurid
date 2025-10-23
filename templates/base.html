@@ -371,7 +371,7 @@
     </div>
   {% endif %}
 
-  <div class="main-content {% if user.is_authenticated and request.endpoint not in ['login', 'parent_login', 'parent_register'] %}mt-16 ml-0 md:ml-64{% endif %} {% if request.endpoint not in ['login', 'parent_login', 'parent_register'] %}px-4 sm:px-6{% endif %} {% if request.endpoint in ['login', 'parent_login', 'parent_register'] %}flex justify-center{% endif %}">
+  <div class="main-content {% if user.is_authenticated and request.endpoint not in ['login', 'parent_login', 'parent_register'] %}pt-16 ml-0 md:ml-64{% endif %} {% if request.endpoint in ['login', 'parent_login', 'parent_register'] %}flex justify-center{% endif %}">
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         <div class="max-w-4xl mx-auto">
