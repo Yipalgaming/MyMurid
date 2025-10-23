@@ -375,7 +375,7 @@
         
         <!-- Logout Button - Fixed at Bottom -->
         <div class="flex-shrink-0 p-6 border-t border-gray-200">
-          <a href="{{ url_for('logout') }}" class="nav-item-modern text-red-600 hover:bg-red-50 hover:text-red-700">
+          <a href="{{ url_for('logout') }}" class="nav-item-modern text-red-600 hover:bg-red-500 hover:text-red-900">
             <i class="fas fa-sign-out-alt"></i>
             <span>Logout</span>
           </a>
@@ -447,6 +447,7 @@ function toggleSidebar() {
   const sidebar = document.getElementById('sidebar');
   const mainContent = document.getElementById('main-content');
   const topNav = document.getElementById('top-nav');
+  const pageContent = mainContent.querySelector('.fixed.inset-y-0');
   const isMobile = globalThis.innerWidth < 768;
   
   sidebar.classList.toggle('-translate-x-full');
@@ -456,9 +457,11 @@ function toggleSidebar() {
     if (sidebar.classList.contains('-translate-x-full')) {
       mainContent.style.marginLeft = '0';
       if (topNav) topNav.style.marginLeft = '0';
+      if (pageContent) pageContent.style.left = '0';
     } else {
       mainContent.style.marginLeft = '16rem'; // 64 * 4px = 256px = 16rem
       if (topNav) topNav.style.marginLeft = '16rem';
+      if (pageContent) pageContent.style.left = '16rem';
     }
   }
 }
@@ -480,6 +483,7 @@ function handleSwipe() {
   const sidebar = document.getElementById('sidebar');
   const mainContent = document.getElementById('main-content');
   const topNav = document.getElementById('top-nav');
+  const pageContent = mainContent.querySelector('.fixed.inset-y-0');
   const swipeDistance = touchEndX - touchStartX;
   const isMobile = globalThis.innerWidth < 768;
   
@@ -489,6 +493,7 @@ function handleSwipe() {
     if (isMobile) {
       mainContent.style.marginLeft = '16rem';
       if (topNav) topNav.style.marginLeft = '16rem';
+      if (pageContent) pageContent.style.left = '16rem';
     }
   }
   // Swipe left to close
@@ -497,6 +502,7 @@ function handleSwipe() {
     if (isMobile) {
       mainContent.style.marginLeft = '0';
       if (topNav) topNav.style.marginLeft = '0';
+      if (pageContent) pageContent.style.left = '0';
     }
   }
 }
@@ -506,6 +512,7 @@ document.addEventListener('click', function(event) {
   const sidebar = document.getElementById('sidebar');
   const mainContent = document.getElementById('main-content');
   const topNav = document.getElementById('top-nav');
+  const pageContent = mainContent.querySelector('.fixed.inset-y-0');
   const toggleButton = event.target.closest('[onclick="toggleSidebar()"]');
   const isMobile = globalThis.innerWidth < 768;
   
@@ -514,6 +521,7 @@ document.addEventListener('click', function(event) {
     if (isMobile) {
       mainContent.style.marginLeft = '0';
       if (topNav) topNav.style.marginLeft = '0';
+      if (pageContent) pageContent.style.left = '0';
     }
   }
 });
@@ -523,15 +531,18 @@ globalThis.addEventListener('resize', function() {
   const sidebar = document.getElementById('sidebar');
   const mainContent = document.getElementById('main-content');
   const topNav = document.getElementById('top-nav');
+  const pageContent = mainContent.querySelector('.fixed.inset-y-0');
   
   if (globalThis.innerWidth > 768) {
     sidebar.classList.remove('-translate-x-full');
     mainContent.style.marginLeft = '';
     if (topNav) topNav.style.marginLeft = '';
+    if (pageContent) pageContent.style.left = '';
   } else {
     sidebar.classList.add('-translate-x-full');
     mainContent.style.marginLeft = '0';
     if (topNav) topNav.style.marginLeft = '0';
+    if (pageContent) pageContent.style.left = '0';
   }
 });
 
@@ -540,11 +551,13 @@ document.addEventListener('DOMContentLoaded', function() {
   const sidebar = document.getElementById('sidebar');
   const mainContent = document.getElementById('main-content');
   const topNav = document.getElementById('top-nav');
+  const pageContent = mainContent.querySelector('.fixed.inset-y-0');
   
   sidebar.classList.add('-translate-x-full');
   if (globalThis.innerWidth < 768) {
     mainContent.style.marginLeft = '0';
     if (topNav) topNav.style.marginLeft = '0';
+    if (pageContent) pageContent.style.left = '0';
   }
   
   // Auto-fade flash messages
