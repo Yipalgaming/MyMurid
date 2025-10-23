@@ -1,4 +1,4 @@
-# Create a simple app icon for MyMurid Canteen
+# Create a simple app icon for MyMurid
 # This is a placeholder - you should replace this with a proper 1024x1024 PNG icon
 
 # For now, you can use any food/canteen related icon

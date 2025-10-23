@@ -24,7 +24,7 @@ class BankQRPayment:
         self.callback_url = config.get('callback_url')
         
     def generate_qr_payment(self, amount: float, transaction_id: str, 
-                          description: str = "MyMurid Canteen Payment") -> Dict:
+                          description: str = "MyMurid Payment") -> Dict:
         """Generate QR payment request"""
         
         # Prepare payment data
@@ -136,7 +136,7 @@ class MaybankQRPayment(BankQRPayment):
         self.base_url = "https://api.maybank2u.com.my"
         
     def generate_qr_payment(self, amount: float, transaction_id: str, 
-                          description: str = "MyMurid Canteen Payment") -> Dict:
+                          description: str = "MyMurid Payment") -> Dict:
         """Generate Maybank QR payment"""
         return super().generate_qr_payment(amount, transaction_id, description)
 
@@ -148,7 +148,7 @@ class CIMBQRPayment(BankQRPayment):
         self.base_url = "https://api.cimb.com.my"
         
     def generate_qr_payment(self, amount: float, transaction_id: str, 
-                          description: str = "MyMurid Canteen Payment") -> Dict:
+                          description: str = "MyMurid Payment") -> Dict:
         """Generate CIMB QR payment"""
         return super().generate_qr_payment(amount, transaction_id, description)
 
@@ -160,7 +160,7 @@ class TouchNGoQRPayment(BankQRPayment):
         self.base_url = "https://api.touchngo.com.my"
         
     def generate_qr_payment(self, amount: float, transaction_id: str, 
-                          description: str = "MyMurid Canteen Payment") -> Dict:
+                          description: str = "MyMurid Payment") -> Dict:
         """Generate Touch 'n Go QR payment"""
         return super().generate_qr_payment(amount, transaction_id, description)
 
@@ -172,7 +172,7 @@ class GrabPayQRPayment(BankQRPayment):
         self.base_url = "https://api.grab.com"
         
     def generate_qr_payment(self, amount: float, transaction_id: str, 
-                          description: str = "MyMurid Canteen Payment") -> Dict:
+                          description: str = "MyMurid Payment") -> Dict:
         """Generate GrabPay QR payment"""
         return super().generate_qr_payment(amount, transaction_id, description)
 
@@ -183,7 +183,7 @@ class MockQRPayment:
         self.config = config or {}
         
     def generate_qr_payment(self, amount: float, transaction_id: str, 
-                          description: str = "MyMurid Canteen Payment") -> Dict:
+                          description: str = "MyMurid Payment") -> Dict:
         """Generate mock QR payment"""
         return {
             'success': True,

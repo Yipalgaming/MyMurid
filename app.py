@@ -676,7 +676,7 @@ def generate_bank_qr_code(amount, transaction_id):
         result = provider.generate_qr_payment(
             amount=float(amount),
             transaction_id=transaction_id,
-            description="MyMurid Canteen Top-up"
+            description="MyMurid Top-up"
         )
         
         if result['success']:

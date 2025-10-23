@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Award Points{% endblock %}
 {% block content %}
-<div class="fixed inset-y-0 left-0 md:left-64 right-0 bg-gradient-to-br from-yellow-400 via-orange-500 to-red-500 overflow-hidden">
+<div class="min-h-screen bg-gradient-to-br from-yellow-400 via-orange-500 to-red-500 relative overflow-hidden">
   <!-- Header -->
-  <div class="absolute top-0 left-0 right-0 bg-white shadow-lg border-b z-10">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+  <div class="bg-white shadow-lg border-b relative z-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6">
       <div class="flex items-center justify-between">
         <div>
           <h1 class="text-3xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">Award Points</h1>
@@ -19,9 +19,7 @@
     </div>
   </div>
 
-  <!-- Content Area -->
-  <div class="absolute top-28 md:top-24 left-0 right-0 bottom-0 md:bottom-0 overflow-y-auto pb-20 md:pb-0">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-8">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Flash Messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -95,7 +93,7 @@
 
             <!-- Submit Button -->
             <button type="submit" 
-                    class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-xl font-semibold transition-colors duration-200">
+                    class="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl">
                 <i class="fas fa-star mr-2"></i>Award Points
             </button>
         </form>
@@ -147,4 +145,6 @@
         }
     });
 </script>
+  </div>
+</div>
 {% endblock %}

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Production WSGI entry point for MyMurid Canteen Kiosk
+Production WSGI entry point for MyMurid Kiosk
 """
 
 from app import app

@@ -1,6 +1,6 @@
 # 🐘 PostgreSQL Setup Guide for MyMurid
 
-This guide will help you set up PostgreSQL for your MyMurid canteen kiosk system.
+This guide will help you set up PostgreSQL for your MyMurid kiosk system.
 
 ## 📋 Prerequisites
 

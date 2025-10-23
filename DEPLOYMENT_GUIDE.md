@@ -1,4 +1,4 @@
-# 🚀 MyMurid Canteen Kiosk - Online Deployment Guide
+# 🚀 MyMurid Kiosk - Online Deployment Guide
 
 ## **🌐 Quick Deploy Options:**
 

@@ -1,6 +1,6 @@
-# MyMurid Canteen Mobile App
+# MyMurid Mobile App
 
-A Flutter mobile application that wraps the MyMurid Canteen web application for a native mobile experience.
+A Flutter mobile application that wraps the MyMurid web application for a native mobile experience.
 
 ## Features
 
