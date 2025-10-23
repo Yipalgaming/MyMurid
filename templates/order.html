@@ -22,34 +22,34 @@
   <!-- Content Area -->
   <div class="absolute top-28 md:top-24 left-0 right-0 bottom-0 md:bottom-0 overflow-y-auto pb-20 md:pb-0">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-8">
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 pb-24">
+    <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6 pb-24">
       {% for item in items %}
-      <div class="bg-white rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group border border-gray-200 transform hover:scale-105">
+      <div class="bg-white rounded-xl md:rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group border border-gray-200 transform hover:scale-105">
         {% if item.image_path %}
           <div class="relative overflow-hidden">
             <img src="{{ url_for('static', filename='images/' + item.image_path) }}" 
-                 class="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300" 
+                 class="w-full h-32 sm:h-48 object-cover group-hover:scale-110 transition-transform duration-300" 
                  alt="{{ item.name }}">
-            <div class="absolute top-3 right-3 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full px-3 py-1 shadow-lg">
-              <span class="text-white font-semibold text-sm">RM {{ "%.2f"|format(item.price) }}</span>
+            <div class="absolute top-2 right-2 sm:top-3 sm:right-3 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full px-2 py-0.5 sm:px-3 sm:py-1 shadow-lg">
+              <span class="text-white font-semibold text-xs sm:text-sm">RM {{ "%.2f"|format(item.price) }}</span>
             </div>
           </div>
         {% else %}
-          <div class="h-48 bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
+          <div class="h-32 sm:h-48 bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
             <div class="text-center text-purple-400">
-              <i class="fas fa-image text-3xl mb-2"></i>
-              <p class="text-xs">No image</p>
+              <i class="fas fa-image text-xl sm:text-3xl mb-1 sm:mb-2"></i>
+              <p class="text-xs hidden sm:block">No image</p>
             </div>
           </div>
         {% endif %}
         
-        <div class="p-5">
-          <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ item.name }}</h3>
-          <p class="text-gray-600 text-sm mb-4 line-clamp-2">{{ item.description or 'Delicious food item' }}</p>
+        <div class="p-3 sm:p-5">
+          <h3 class="text-sm sm:text-lg font-semibold text-gray-900 mb-1 sm:mb-2 line-clamp-1 sm:line-clamp-none">{{ item.name }}</h3>
+          <p class="text-gray-600 text-xs sm:text-sm mb-2 sm:mb-4 line-clamp-1 sm:line-clamp-2 hidden sm:block">{{ item.description or 'Delicious food item' }}</p>
           
           <button onclick="addToCart({{ item.id }}, '{{ item.name|e }}', {{ item.price }})" 
-                  class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white py-2.5 px-4 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center">
-            <i class="fas fa-plus mr-2 text-sm"></i>Add to Cart
+                  class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white py-1.5 sm:py-2.5 px-2 sm:px-4 rounded-lg sm:rounded-xl text-xs sm:text-base font-medium transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center">
+            <i class="fas fa-plus mr-1 sm:mr-2 text-xs sm:text-sm"></i><span class="hidden sm:inline">Add to Cart</span><span class="sm:hidden">Add</span>
           </button>
         </div>
       </div>
