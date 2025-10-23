@@ -454,7 +454,6 @@ function toggleSidebar() {
   const sidebar = document.getElementById('sidebar');
   const mainContent = document.getElementById('main-content');
   const topNav = document.getElementById('top-nav');
-  const pageContent = mainContent.querySelector('.fixed.inset-y-0');
   const isMobile = globalThis.innerWidth < 768;
   
   sidebar.classList.toggle('-translate-x-full');
@@ -466,13 +465,11 @@ function toggleSidebar() {
       document.body.classList.remove('sidebar-open');
       mainContent.style.transform = 'translateX(0)';
       if (topNav) topNav.style.transform = 'translateX(0)';
-      if (pageContent) pageContent.style.transform = 'translateX(0)';
     } else {
       document.documentElement.classList.add('sidebar-open');
       document.body.classList.add('sidebar-open');
       mainContent.style.transform = 'translateX(16rem)'; // Slide 256px to the right
       if (topNav) topNav.style.transform = 'translateX(16rem)';
-      if (pageContent) pageContent.style.transform = 'translateX(16rem)';
     }
   }
 }
@@ -494,7 +491,6 @@ function handleSwipe() {
   const sidebar = document.getElementById('sidebar');
   const mainContent = document.getElementById('main-content');
   const topNav = document.getElementById('top-nav');
-  const pageContent = mainContent.querySelector('.fixed.inset-y-0');
   const swipeDistance = touchEndX - touchStartX;
   const isMobile = globalThis.innerWidth < 768;
   
@@ -506,7 +502,6 @@ function handleSwipe() {
       document.body.classList.add('sidebar-open');
       mainContent.style.transform = 'translateX(16rem)';
       if (topNav) topNav.style.transform = 'translateX(16rem)';
-      if (pageContent) pageContent.style.transform = 'translateX(16rem)';
     }
   }
   // Swipe left to close
@@ -517,7 +512,6 @@ function handleSwipe() {
       document.body.classList.remove('sidebar-open');
       mainContent.style.transform = 'translateX(0)';
       if (topNav) topNav.style.transform = 'translateX(0)';
-      if (pageContent) pageContent.style.transform = 'translateX(0)';
     }
   }
 }
@@ -527,7 +521,6 @@ document.addEventListener('click', function(event) {
   const sidebar = document.getElementById('sidebar');
   const mainContent = document.getElementById('main-content');
   const topNav = document.getElementById('top-nav');
-  const pageContent = mainContent.querySelector('.fixed.inset-y-0');
   const toggleButton = event.target.closest('[onclick="toggleSidebar()"]');
   const isMobile = globalThis.innerWidth < 768;
   
@@ -538,7 +531,6 @@ document.addEventListener('click', function(event) {
       document.body.classList.remove('sidebar-open');
       mainContent.style.transform = 'translateX(0)';
       if (topNav) topNav.style.transform = 'translateX(0)';
-      if (pageContent) pageContent.style.transform = 'translateX(0)';
     }
   }
 });
@@ -548,7 +540,6 @@ globalThis.addEventListener('resize', function() {
   const sidebar = document.getElementById('sidebar');
   const mainContent = document.getElementById('main-content');
   const topNav = document.getElementById('top-nav');
-  const pageContent = mainContent.querySelector('.fixed.inset-y-0');
   
   if (globalThis.innerWidth > 768) {
     sidebar.classList.remove('-translate-x-full');
@@ -556,14 +547,12 @@ globalThis.addEventListener('resize', function() {
     document.body.classList.remove('sidebar-open');
     mainContent.style.transform = '';
     if (topNav) topNav.style.transform = '';
-    if (pageContent) pageContent.style.transform = '';
   } else {
     sidebar.classList.add('-translate-x-full');
     document.documentElement.classList.remove('sidebar-open');
     document.body.classList.remove('sidebar-open');
     mainContent.style.transform = 'translateX(0)';
     if (topNav) topNav.style.transform = 'translateX(0)';
-    if (pageContent) pageContent.style.transform = 'translateX(0)';
   }
 });
 
