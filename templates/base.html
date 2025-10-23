@@ -231,11 +231,16 @@
       border-left: 4px solid #4299e1;
     }
   
-    /* Prevent horizontal overflow */
+    /* Prevent horizontal overflow by default, but allow when sidebar is open on mobile */
     html, body {
       overflow-x: hidden;
       width: 100%;
       max-width: 100vw;
+    }
+    
+    /* Allow overflow when sidebar is open on mobile */
+    body.sidebar-open {
+      overflow-x: visible;
     }
   </style>
 
@@ -455,10 +460,12 @@ function toggleSidebar() {
   // Push content and top nav on mobile when sidebar is open (slide off-screen)
   if (isMobile) {
     if (sidebar.classList.contains('-translate-x-full')) {
+      document.body.classList.remove('sidebar-open');
       mainContent.style.transform = 'translateX(0)';
       if (topNav) topNav.style.transform = 'translateX(0)';
       if (pageContent) pageContent.style.transform = 'translateX(0)';
     } else {
+      document.body.classList.add('sidebar-open');
       mainContent.style.transform = 'translateX(16rem)'; // Slide 256px to the right
       if (topNav) topNav.style.transform = 'translateX(16rem)';
       if (pageContent) pageContent.style.transform = 'translateX(16rem)';
@@ -491,6 +498,7 @@ function handleSwipe() {
   if (swipeDistance > 50) {
     sidebar.classList.remove('-translate-x-full');
     if (isMobile) {
+      document.body.classList.add('sidebar-open');
       mainContent.style.transform = 'translateX(16rem)';
       if (topNav) topNav.style.transform = 'translateX(16rem)';
       if (pageContent) pageContent.style.transform = 'translateX(16rem)';
@@ -500,6 +508,7 @@ function handleSwipe() {
   else if (swipeDistance < -100) {
     sidebar.classList.add('-translate-x-full');
     if (isMobile) {
+      document.body.classList.remove('sidebar-open');
       mainContent.style.transform = 'translateX(0)';
       if (topNav) topNav.style.transform = 'translateX(0)';
       if (pageContent) pageContent.style.transform = 'translateX(0)';
@@ -519,6 +528,7 @@ document.addEventListener('click', function(event) {
   if (!sidebar.contains(event.target) && !toggleButton) {
     sidebar.classList.add('-translate-x-full');
     if (isMobile) {
+      document.body.classList.remove('sidebar-open');
       mainContent.style.transform = 'translateX(0)';
       if (topNav) topNav.style.transform = 'translateX(0)';
       if (pageContent) pageContent.style.transform = 'translateX(0)';
@@ -535,11 +545,13 @@ globalThis.addEventListener('resize', function() {
   
   if (globalThis.innerWidth > 768) {
     sidebar.classList.remove('-translate-x-full');
+    document.body.classList.remove('sidebar-open');
     mainContent.style.transform = '';
     if (topNav) topNav.style.transform = '';
     if (pageContent) pageContent.style.transform = '';
   } else {
     sidebar.classList.add('-translate-x-full');
+    document.body.classList.remove('sidebar-open');
     mainContent.style.transform = 'translateX(0)';
     if (topNav) topNav.style.transform = 'translateX(0)';
     if (pageContent) pageContent.style.transform = 'translateX(0)';
