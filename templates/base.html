@@ -452,16 +452,16 @@ function toggleSidebar() {
   
   sidebar.classList.toggle('-translate-x-full');
   
-  // Push content and top nav on mobile when sidebar is open
+  // Slide content off-screen on mobile when sidebar is open
   if (isMobile) {
     if (sidebar.classList.contains('-translate-x-full')) {
-      mainContent.style.marginLeft = '0';
-      if (topNav) topNav.style.left = '0';
-      if (pageContent) pageContent.style.left = '0';
+      document.body.style.overflowX = 'hidden';
+      if (topNav) topNav.style.transform = 'translateX(0)';
+      if (pageContent) pageContent.style.transform = 'translateX(0)';
     } else {
-      mainContent.style.marginLeft = '16rem';
-      if (topNav) topNav.style.left = '16rem';
-      if (pageContent) pageContent.style.left = '16rem';
+      document.body.style.overflowX = 'visible';
+      if (topNav) topNav.style.transform = 'translateX(16rem)';
+      if (pageContent) pageContent.style.transform = 'translateX(16rem)';
     }
   }
 }
@@ -491,18 +491,18 @@ function handleSwipe() {
   if (swipeDistance > 50) {
     sidebar.classList.remove('-translate-x-full');
     if (isMobile) {
-      mainContent.style.marginLeft = '16rem';
-      if (topNav) topNav.style.left = '16rem';
-      if (pageContent) pageContent.style.left = '16rem';
+      document.body.style.overflowX = 'visible';
+      if (topNav) topNav.style.transform = 'translateX(16rem)';
+      if (pageContent) pageContent.style.transform = 'translateX(16rem)';
     }
   }
   // Swipe left to close
   else if (swipeDistance < -100) {
     sidebar.classList.add('-translate-x-full');
     if (isMobile) {
-      mainContent.style.marginLeft = '0';
-      if (topNav) topNav.style.left = '0';
-      if (pageContent) pageContent.style.left = '0';
+      document.body.style.overflowX = 'hidden';
+      if (topNav) topNav.style.transform = 'translateX(0)';
+      if (pageContent) pageContent.style.transform = 'translateX(0)';
     }
   }
 }
@@ -519,9 +519,9 @@ document.addEventListener('click', function(event) {
   if (!sidebar.contains(event.target) && !toggleButton) {
     sidebar.classList.add('-translate-x-full');
     if (isMobile) {
-      mainContent.style.marginLeft = '0';
-      if (topNav) topNav.style.left = '0';
-      if (pageContent) pageContent.style.left = '0';
+      document.body.style.overflowX = 'hidden';
+      if (topNav) topNav.style.transform = 'translateX(0)';
+      if (pageContent) pageContent.style.transform = 'translateX(0)';
     }
   }
 });
@@ -535,14 +535,14 @@ globalThis.addEventListener('resize', function() {
   
   if (globalThis.innerWidth > 768) {
     sidebar.classList.remove('-translate-x-full');
-    mainContent.style.marginLeft = '';
-    if (topNav) topNav.style.left = '';
-    if (pageContent) pageContent.style.left = '';
+    document.body.style.overflowX = 'hidden';
+    if (topNav) topNav.style.transform = '';
+    if (pageContent) pageContent.style.transform = '';
   } else {
     sidebar.classList.add('-translate-x-full');
-    mainContent.style.marginLeft = '0';
-    if (topNav) topNav.style.left = '0';
-    if (pageContent) pageContent.style.left = '0';
+    document.body.style.overflowX = 'hidden';
+    if (topNav) topNav.style.transform = 'translateX(0)';
+    if (pageContent) pageContent.style.transform = 'translateX(0)';
   }
 });
 
@@ -555,9 +555,9 @@ document.addEventListener('DOMContentLoaded', function() {
   
   sidebar.classList.add('-translate-x-full');
   if (globalThis.innerWidth < 768) {
-    mainContent.style.marginLeft = '0';
-    if (topNav) topNav.style.left = '0';
-    if (pageContent) pageContent.style.left = '0';
+    document.body.style.overflowX = 'hidden';
+    if (topNav) topNav.style.transform = 'translateX(0)';
+    if (pageContent) pageContent.style.transform = 'translateX(0)';
   }
   
   // Auto-fade flash messages
