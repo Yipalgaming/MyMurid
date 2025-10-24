@@ -456,14 +456,16 @@ function toggleSidebar() {
   if (isMobile) {
     if (sidebar.classList.contains('-translate-x-full')) {
       document.body.style.overflowX = 'hidden';
-      if (topNav) {
+      // Only slide top nav on pages WITHOUT fixed content (dashboard pages)
+      if (!pageContent && topNav) {
         topNav.style.transform = 'translateX(0)';
         topNav.style.left = '0';
       }
       if (pageContent) pageContent.style.transform = 'translateX(0)';
     } else {
       document.body.style.overflowX = 'visible';
-      if (topNav) {
+      // Only slide top nav on pages WITHOUT fixed content (dashboard pages)
+      if (!pageContent && topNav) {
         topNav.style.transform = 'translateX(16rem)';
         topNav.style.left = '0';
       }
@@ -498,7 +500,8 @@ function handleSwipe() {
     sidebar.classList.remove('-translate-x-full');
     if (isMobile) {
       document.body.style.overflowX = 'visible';
-      if (topNav) {
+      // Only slide top nav on pages WITHOUT fixed content (dashboard pages)
+      if (!pageContent && topNav) {
         topNav.style.transform = 'translateX(16rem)';
         topNav.style.left = '0';
       }
@@ -510,7 +513,8 @@ function handleSwipe() {
     sidebar.classList.add('-translate-x-full');
     if (isMobile) {
       document.body.style.overflowX = 'hidden';
-      if (topNav) {
+      // Only slide top nav on pages WITHOUT fixed content (dashboard pages)
+      if (!pageContent && topNav) {
         topNav.style.transform = 'translateX(0)';
         topNav.style.left = '0';
       }
@@ -532,7 +536,8 @@ document.addEventListener('click', function(event) {
     sidebar.classList.add('-translate-x-full');
     if (isMobile) {
       document.body.style.overflowX = 'hidden';
-      if (topNav) {
+      // Only slide top nav on pages WITHOUT fixed content (dashboard pages)
+      if (!pageContent && topNav) {
         topNav.style.transform = 'translateX(0)';
         topNav.style.left = '0';
       }
@@ -559,7 +564,8 @@ globalThis.addEventListener('resize', function() {
   } else {
     sidebar.classList.add('-translate-x-full');
     document.body.style.overflowX = 'hidden';
-    if (topNav) {
+    // Only reset top nav transform on pages WITHOUT fixed content (dashboard pages)
+    if (!pageContent && topNav) {
       topNav.style.transform = 'translateX(0)';
       topNav.style.left = '0';
     }
@@ -577,7 +583,8 @@ document.addEventListener('DOMContentLoaded', function() {
   sidebar.classList.add('-translate-x-full');
   if (globalThis.innerWidth < 768) {
     document.body.style.overflowX = 'hidden';
-    if (topNav) {
+    // Only initialize top nav transform on pages WITHOUT fixed content (dashboard pages)
+    if (!pageContent && topNav) {
       topNav.style.transform = 'translateX(0)';
       topNav.style.left = '0';
     }
