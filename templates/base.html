@@ -456,17 +456,11 @@ function toggleSidebar() {
   if (isMobile) {
     if (sidebar.classList.contains('-translate-x-full')) {
       document.body.style.overflowX = 'hidden';
-      if (topNav) {
-        topNav.style.transform = 'translateX(0)';
-        topNav.style.left = '0';
-      }
+      // Top nav stays in place - don't transform it
       if (pageContent) pageContent.style.transform = 'translateX(0)';
     } else {
       document.body.style.overflowX = 'visible';
-      if (topNav) {
-        topNav.style.transform = 'translateX(16rem)';
-        topNav.style.left = '0';
-      }
+      // Top nav stays in place - don't transform it
       if (pageContent) pageContent.style.transform = 'translateX(16rem)';
     }
   }
@@ -498,10 +492,7 @@ function handleSwipe() {
     sidebar.classList.remove('-translate-x-full');
     if (isMobile) {
       document.body.style.overflowX = 'visible';
-      if (topNav) {
-        topNav.style.transform = 'translateX(16rem)';
-        topNav.style.left = '0';
-      }
+      // Top nav stays in place - don't transform it
       if (pageContent) pageContent.style.transform = 'translateX(16rem)';
     }
   }
@@ -510,10 +501,7 @@ function handleSwipe() {
     sidebar.classList.add('-translate-x-full');
     if (isMobile) {
       document.body.style.overflowX = 'hidden';
-      if (topNav) {
-        topNav.style.transform = 'translateX(0)';
-        topNav.style.left = '0';
-      }
+      // Top nav stays in place - don't transform it
       if (pageContent) pageContent.style.transform = 'translateX(0)';
     }
   }
@@ -532,10 +520,7 @@ document.addEventListener('click', function(event) {
     sidebar.classList.add('-translate-x-full');
     if (isMobile) {
       document.body.style.overflowX = 'hidden';
-      if (topNav) {
-        topNav.style.transform = 'translateX(0)';
-        topNav.style.left = '0';
-      }
+      // Top nav stays in place - don't transform it
       if (pageContent) pageContent.style.transform = 'translateX(0)';
     }
   }
@@ -551,18 +536,10 @@ globalThis.addEventListener('resize', function() {
   if (globalThis.innerWidth > 768) {
     sidebar.classList.remove('-translate-x-full');
     document.body.style.overflowX = 'hidden';
-    if (topNav) {
-      topNav.style.transform = '';
-      topNav.style.left = '';
-    }
     if (pageContent) pageContent.style.transform = '';
   } else {
     sidebar.classList.add('-translate-x-full');
     document.body.style.overflowX = 'hidden';
-    if (topNav) {
-      topNav.style.transform = 'translateX(0)';
-      topNav.style.left = '0';
-    }
     if (pageContent) pageContent.style.transform = 'translateX(0)';
   }
 });
@@ -577,10 +554,6 @@ document.addEventListener('DOMContentLoaded', function() {
   sidebar.classList.add('-translate-x-full');
   if (globalThis.innerWidth < 768) {
     document.body.style.overflowX = 'hidden';
-    if (topNav) {
-      topNav.style.transform = 'translateX(0)';
-      topNav.style.left = '0';
-    }
     if (pageContent) pageContent.style.transform = 'translateX(0)';
   }
   
