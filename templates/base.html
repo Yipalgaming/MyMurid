@@ -240,7 +240,7 @@
   </style>
 
 
-  {% if user.is_authenticated %}
+  <!-- {% if user.is_authenticated %}
     {% if user.role != 'staff' %}
   <script>
     let logoutTimer;
@@ -260,7 +260,7 @@
     resetLogoutTimer(); // Start timer on load
   </script>
   {% endif %}
-  {% endif %}
+     endif %} -->
 
   
   <title>{% block title %}Nav Bar{% endblock %}</title>
@@ -456,9 +456,15 @@ function toggleSidebar() {
   if (isMobile) {
     if (sidebar.classList.contains('-translate-x-full')) {
       document.body.style.overflowX = 'hidden';
+      if (topNav) {
+        topNav.style.transform = 'translateX(0)';
+      }
       if (pageContent) pageContent.style.transform = 'translateX(0)';
     } else {
       document.body.style.overflowX = 'visible';
+      if (topNav) {
+        topNav.style.transform = 'translateX(16rem)';
+      }
       if (pageContent) pageContent.style.transform = 'translateX(16rem)';
     }
   }
@@ -490,6 +496,9 @@ function handleSwipe() {
     sidebar.classList.remove('-translate-x-full');
     if (isMobile) {
       document.body.style.overflowX = 'visible';
+      if (topNav) {
+        topNav.style.transform = 'translateX(16rem)';
+      }
       if (pageContent) pageContent.style.transform = 'translateX(16rem)';
     }
   }
@@ -498,6 +507,9 @@ function handleSwipe() {
     sidebar.classList.add('-translate-x-full');
     if (isMobile) {
       document.body.style.overflowX = 'hidden';
+      if (topNav) {
+        topNav.style.transform = 'translateX(0)';
+      }
       if (pageContent) pageContent.style.transform = 'translateX(0)';
     }
   }
@@ -516,6 +528,9 @@ document.addEventListener('click', function(event) {
     sidebar.classList.add('-translate-x-full');
     if (isMobile) {
       document.body.style.overflowX = 'hidden';
+      if (topNav) {
+        topNav.style.transform = 'translateX(0)';
+      }
       if (pageContent) pageContent.style.transform = 'translateX(0)';
     }
   }
@@ -531,10 +546,16 @@ globalThis.addEventListener('resize', function() {
   if (globalThis.innerWidth > 768) {
     sidebar.classList.remove('-translate-x-full');
     document.body.style.overflowX = 'hidden';
+    if (topNav) {
+      topNav.style.transform = '';
+    }
     if (pageContent) pageContent.style.transform = '';
   } else {
     sidebar.classList.add('-translate-x-full');
     document.body.style.overflowX = 'hidden';
+    if (topNav) {
+      topNav.style.transform = 'translateX(0)';
+    }
     if (pageContent) pageContent.style.transform = 'translateX(0)';
   }
 });
@@ -549,6 +570,9 @@ document.addEventListener('DOMContentLoaded', function() {
   sidebar.classList.add('-translate-x-full');
   if (globalThis.innerWidth < 768) {
     document.body.style.overflowX = 'hidden';
+    if (topNav) {
+      topNav.style.transform = 'translateX(0)';
+    }
     if (pageContent) pageContent.style.transform = 'translateX(0)';
   }
   
