@@ -479,23 +479,11 @@
       {% endif %}
     {% endwith %}
 
-  <div class="main-content transition-all duration-300 {% if user.is_authenticated and request.endpoint not in ['login', 'parent_login', 'parent_register'] %}pt-24 md:pt-0 ml-0 md:ml-64{% endif %} {% if request.endpoint in ['login', 'parent_login', 'parent_register'] %}flex justify-center{% endif %}" id="main-content">
+  <div class="main-content transition-all duration-300 {% if user.is_authenticated and request.endpoint not in ['login', 'parent_login', 'parent_register'] %}ml-0 md:ml-64{% endif %} {% if request.endpoint in ['login', 'parent_login', 'parent_register'] %}flex justify-center{% endif %}" id="main-content">
 
   {% block content %}{% endblock %}
 </div>
 
-    <!-- Top Navigation Bar - visible only on mobile -->
-    {% if user.is_authenticated %}
-    <nav class="md:hidden fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-50 shadow-md transition-all duration-300" id="top-nav" aria-label="Top navigation">
-  <div class="flex items-center justify-between h-16 px-4">
-    <button onclick="toggleSidebar()" class="text-gray-600 hover:text-indigo-600 transition-colors p-2">
-      <i class="fas fa-bars text-2xl"></i>
-    </button>
-    <h1 class="text-lg font-semibold text-gray-800">MyMurid</h1>
-    <div class="w-10"></div> <!-- Spacer for centering -->
-  </div>
-</nav>
-{% endif %}
 
 <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
         integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"

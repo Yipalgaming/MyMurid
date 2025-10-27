@@ -33,7 +33,7 @@
         </h2>
         
         <div class="space-y-4">
-          {% for item_id in cart_items %}
+    {% for item_id in cart_items %}
           <div class="bg-gradient-to-br from-gray-50 to-white rounded-xl p-5 border border-gray-200 hover:border-green-300 hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]">
             <div class="flex items-center justify-between flex-wrap gap-4">
               <div class="flex-1 min-w-[200px]">
@@ -54,17 +54,17 @@
                 </div>
               </div>
               <div>
-                <form method="POST" style="display:inline;">
+        <form method="POST" style="display:inline;">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                  <input type="hidden" name="delete" value="{{ item_id.id }}">
+          <input type="hidden" name="delete" value="{{ item_id.id }}">
                   <button type="submit" class="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
                     <i class="fas fa-trash mr-1"></i>Remove
                   </button>
-                </form>
+        </form>
               </div>
             </div>
           </div>
-          {% endfor %}
+    {% endfor %}
         </div>
       </div>
 
@@ -114,13 +114,13 @@
       <div class="flex flex-col sm:flex-row gap-4 items-stretch">
         <form method="POST" action="{{ url_for('payment') }}" class="flex-1">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-          <input type="hidden" name="pay" value="true">
+  <input type="hidden" name="pay" value="true">
           <button type="submit" 
                   class="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl {% if user.balance < total %}opacity-50 cursor-not-allowed{% endif %}"
                   {% if user.balance < total %}disabled{% endif %}>
             <i class="fas fa-credit-card mr-2"></i>Pay Now
           </button>
-        </form>
+</form>
         
         <form action="{{ url_for('order') }}" method="GET" class="flex-1">
           <button type="submit" 
