@@ -193,6 +193,12 @@
       transform: translateX(4px);
     }
     
+    /* Override hover for logout button */
+    .nav-item-modern.text-red-600:hover {
+      background: #ef4444 !important; /* red-500 */
+      color: white !important;
+    }
+    
     .nav-item-modern.active {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
@@ -265,72 +271,6 @@
   
   <title>{% block title %}Nav Bar{% endblock %}</title>
 </head>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <body>
 
   {% if user.is_authenticated %}
@@ -441,7 +381,7 @@
         
         <!-- Logout Button - Fixed at Bottom -->
         <div class="flex-shrink-0 p-6 border-t border-gray-200">
-          <a href="{{ url_for('logout') }}" class="nav-item-modern text-red-600 hover:bg-red-500 hover:text-red-900">
+          <a href="{{ url_for('logout') }}" class="nav-item-modern text-red-600 hover:bg-red-500 hover:text-white">
             <i class="fas fa-sign-out-alt"></i>
             <span>Logout</span>
           </a>
