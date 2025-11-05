@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, jsonify, flash, url
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from flask_wtf.csrf import CSRFProtect
-from models import db, StudentInfo, MenuItem, Order, Vote, Feedback, Parent, ParentChild, Payment, RewardCategory, Achievement, StudentPoints, RewardItem, StudentRedemption
+from models import db, StudentInfo, MenuItem, Order, Vote, Feedback, Parent, ParentChild, Payment, RewardCategory, Achievement, StudentPoints, RewardItem, StudentRedemption, StaffDirectory
 import os, json
 from barcode import Code128
 from barcode.writer import ImageWriter
@@ -1235,6 +1235,55 @@ def feedback():
         return redirect(url_for('feedback'))
     feedbacks = Feedback.query.all()
     return render_template('feedback.html', feedbacks=feedbacks)
+
+@app.route('/directory')
+@login_required
+def directory():
+    """Display school staff directory"""
+    search_query = request.args.get('search', '').strip()
+    department_filter = request.args.get('department', '').strip()
+    
+    # Get all active staff members
+    query = StaffDirectory.query.filter_by(is_active=True)
+    
+    # Apply search filter
+    if search_query:
+        query = query.filter(
+            db.or_(
+                StaffDirectory.name.ilike(f'%{search_query}%'),
+                StaffDirectory.position.ilike(f'%{search_query}%'),
+                StaffDirectory.department.ilike(f'%{search_query}%')
+            )
+        )
+    
+    # Apply department filter
+    if department_filter:
+        query = query.filter(StaffDirectory.department == department_filter)
+    
+    # Order by department, then display_order, then name
+    staff_members = query.order_by(
+        StaffDirectory.department,
+        StaffDirectory.display_order,
+        StaffDirectory.name
+    ).all()
+    
+    # Get all unique departments for filter dropdown
+    departments = db.session.query(StaffDirectory.department).distinct().filter_by(is_active=True).order_by(StaffDirectory.department).all()
+    departments = [dept[0] for dept in departments]
+    
+    # Group staff by department
+    staff_by_department = {}
+    for staff in staff_members:
+        dept = staff.department
+        if dept not in staff_by_department:
+            staff_by_department[dept] = []
+        staff_by_department[dept].append(staff)
+    
+    return render_template('directory.html', 
+                         staff_by_department=staff_by_department,
+                         departments=departments,
+                         search_query=search_query,
+                         department_filter=department_filter)
 
 @app.route('/delete_feedback/<int:id>', methods=['POST'])
 @login_required

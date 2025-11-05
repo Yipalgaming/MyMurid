@@ -316,6 +316,10 @@
               <i class="fas fa-comment"></i>
               <span>Your Feedback</span>
             </a>
+            <a href="{{ url_for('directory') }}" class="nav-item-modern">
+              <i class="fas fa-address-book"></i>
+              <span>School Directory</span>
+            </a>
           {% elif user.role == 'admin' %}
             <a href="{{ url_for('admin_dashboard') }}" class="nav-item-modern">
               <i class="fas fa-tachometer-alt"></i>
@@ -336,6 +340,10 @@
             <a href="{{ url_for('award_points') }}" class="nav-item-modern">
               <i class="fas fa-star"></i>
               <span>Rewards</span>
+            </a>
+            <a href="{{ url_for('directory') }}" class="nav-item-modern">
+              <i class="fas fa-address-book"></i>
+              <span>School Directory</span>
             </a>
           {% elif user.role == 'staff' %}
             <a href="{{ url_for('staff_dashboard') }}" class="nav-item-modern">
@@ -366,6 +374,10 @@
               <i class="fas fa-vote-yea"></i>
               <span>Food Votes</span>
             </a>
+            <a href="{{ url_for('directory') }}" class="nav-item-modern">
+              <i class="fas fa-address-book"></i>
+              <span>School Directory</span>
+            </a>
           {% elif not user.role %}
             <!-- Parent navigation -->
             <a href="{{ url_for('parent_dashboard') }}" class="nav-item-modern">
@@ -375,6 +387,10 @@
             <a href="{{ url_for('add_child') }}" class="nav-item-modern">
               <i class="fas fa-user-plus"></i>
               <span>Add Child</span>
+            </a>
+            <a href="{{ url_for('directory') }}" class="nav-item-modern">
+              <i class="fas fa-address-book"></i>
+              <span>School Directory</span>
             </a>
           {% endif %}
         </nav>

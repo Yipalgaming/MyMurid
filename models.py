@@ -212,3 +212,19 @@ class StudentRedemption(db.Model):
     
     student = db.relationship('StudentInfo', backref='redemptions')
     reward_item = db.relationship('RewardItem', backref='redemptions')
+
+class StaffDirectory(db.Model):
+    __tablename__ = 'staff_directory'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    position = db.Column(db.String(100), nullable=False)  # e.g., "Principal", "Mathematics Teacher"
+    department = db.Column(db.String(100), nullable=False)  # e.g., "Administration", "Mathematics", "Science"
+    email = db.Column(db.String(120))
+    phone = db.Column(db.String(20))
+    office_location = db.Column(db.String(100))  # e.g., "Room 101", "Main Office"
+    bio = db.Column(db.Text)
+    photo_path = db.Column(db.String(100))  # Path to staff photo
+    is_active = db.Column(db.Boolean, default=True)
+    display_order = db.Column(db.Integer, default=0)  # For ordering within department
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=8))))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=8))), onupdate=lambda: datetime.now(timezone(timedelta(hours=8))))
