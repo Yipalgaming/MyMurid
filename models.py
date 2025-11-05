@@ -222,6 +222,10 @@ class StaffDirectory(db.Model):
     email = db.Column(db.String(120))
     phone = db.Column(db.String(20))
     office_location = db.Column(db.String(100))  # e.g., "Room 101", "Main Office"
+    floor_level = db.Column(db.Integer, default=1)  # Floor number (1, 2, 3, etc.)
+    zone_area = db.Column(db.String(100))  # Zone/area on the map (e.g., "A1", "North Wing", "Building A")
+    map_x = db.Column(db.Float)  # X coordinate on map (0-100 percentage)
+    map_y = db.Column(db.Float)  # Y coordinate on map (0-100 percentage)
     bio = db.Column(db.Text)
     photo_path = db.Column(db.String(100))  # Path to staff photo
     is_active = db.Column(db.Boolean, default=True)

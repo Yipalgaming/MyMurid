@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}School Directory{% endblock %}
+{% block title %}School Directory Map{% endblock %}
 {% block content %}
 <div class="fixed inset-y-0 left-0 md:left-64 right-0 bg-gradient-to-br from-teal-400 via-cyan-500 to-blue-500 overflow-hidden transition-all duration-300">
   <!-- Mobile Top Nav -->
@@ -18,12 +18,12 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6">
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-2xl md:text-3xl font-bold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">School Directory</h1>
-          <p class="text-gray-600 mt-1 text-sm md:text-base hidden sm:block">Find and contact school staff members</p>
+          <h1 class="text-2xl md:text-3xl font-bold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">School Directory Map</h1>
+          <p class="text-gray-600 mt-1 text-sm md:text-base hidden sm:block">Find locations and departments</p>
         </div>
         <div class="flex items-center space-x-4">
           <div class="bg-gradient-to-r from-teal-500 to-cyan-500 rounded-full p-2 md:p-3 shadow-lg">
-            <i class="fas fa-address-book text-white text-lg md:text-xl"></i>
+            <i class="fas fa-map text-white text-lg md:text-xl"></i>
           </div>
         </div>
       </div>
@@ -34,148 +34,261 @@
   <div class="absolute top-44 md:top-24 left-0 right-0 bottom-0 md:bottom-0 overflow-y-auto pb-20 md:pb-0">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-8">
       
-      <!-- Search and Filter Bar -->
-      <div class="bg-white rounded-2xl shadow-xl border border-gray-200 p-4 sm:p-6 mb-8">
-        <form method="GET" action="{{ url_for('directory') }}" class="flex flex-col sm:flex-row gap-4">
-          <!-- Search Input -->
-          <div class="flex-1">
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <i class="fas fa-search text-gray-400"></i>
-              </div>
-              <input type="text" 
-                     name="search" 
-                     value="{{ search_query }}" 
-                     placeholder="Search by name, position, or department..." 
-                     class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
-            </div>
+      <!-- Floor Selector -->
+      <div class="bg-white rounded-2xl shadow-xl border border-gray-200 p-4 sm:p-6 mb-6">
+        <div class="flex items-center justify-between flex-wrap gap-4">
+          <div class="flex items-center gap-2">
+            <i class="fas fa-layer-group text-teal-600 text-xl"></i>
+            <span class="font-semibold text-gray-700">Select Floor:</span>
           </div>
-          
-          <!-- Department Filter -->
-          <div class="sm:w-48">
-            <select name="department" 
-                    class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
-              <option value="">All Departments</option>
-              {% for dept in departments %}
-                <option value="{{ dept }}" {% if department_filter == dept %}selected{% endif %}>{{ dept }}</option>
-              {% endfor %}
-            </select>
+          <div class="flex gap-2">
+            {% for floor in available_floors %}
+            <a href="{{ url_for('directory', floor=floor) }}" 
+               id="floor-btn-{{ floor }}" 
+               class="floor-btn px-6 py-2 rounded-lg font-medium transition-all duration-200 {% if floor == current_floor %}bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg{% else %}bg-gray-200 text-gray-700 hover:bg-gray-300{% endif %}">
+              <i class="fas fa-building mr-2"></i>Floor {{ floor }}
+            </a>
+            {% endfor %}
           </div>
-          
-          <!-- Search Button -->
-          <button type="submit" 
-                  class="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl">
-            <i class="fas fa-search mr-2"></i>Search
-          </button>
-          
-          <!-- Clear Button -->
-          {% if search_query or department_filter %}
-          <a href="{{ url_for('directory') }}" 
-             class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-lg font-medium transition-all duration-200 flex items-center justify-center">
-            <i class="fas fa-times mr-2"></i>Clear
-          </a>
-          {% endif %}
-        </form>
+        </div>
       </div>
 
-      <!-- Staff Directory by Department -->
-      {% if staff_by_department %}
-        {% for department, staff_list in staff_by_department.items() %}
-          <div class="mb-8">
-            <!-- Department Header -->
-            <div class="bg-white rounded-t-2xl shadow-lg border-b-2 border-teal-500 p-4 mb-4">
-              <h2 class="text-2xl font-bold text-gray-900 flex items-center">
-                <i class="fas fa-building text-teal-600 mr-3"></i>
-                {{ department }}
-                <span class="ml-3 text-lg font-normal text-gray-500">({{ staff_list|length }})</span>
-              </h2>
-            </div>
-            
-            <!-- Staff Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {% for staff in staff_list %}
-                <div class="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100 transform hover:scale-105">
-                  <!-- Staff Photo/Icon -->
-                  <div class="bg-gradient-to-br from-teal-400 to-cyan-500 h-32 flex items-center justify-center">
-                    {% if staff.photo_path %}
-                      <img src="{{ url_for('static', filename='images/staff/' + staff.photo_path) }}" 
-                           alt="{{ staff.name }}" 
-                           class="w-full h-full object-cover">
-                    {% else %}
-                      <div class="text-white text-4xl">
-                        <i class="fas fa-user-circle"></i>
-                      </div>
-                    {% endif %}
-                  </div>
-                  
-                  <!-- Staff Info -->
-                  <div class="p-5">
-                    <h3 class="text-xl font-bold text-gray-900 mb-1">{{ staff.name }}</h3>
-                    <p class="text-teal-600 font-semibold mb-3">
-                      <i class="fas fa-briefcase text-sm mr-1"></i>{{ staff.position }}
-                    </p>
-                    
-                    <!-- Contact Information -->
-                    <div class="space-y-2 text-sm text-gray-600">
-                      {% if staff.email %}
-                        <div class="flex items-center">
-                          <i class="fas fa-envelope text-teal-500 mr-2 w-4"></i>
-                          <a href="mailto:{{ staff.email }}" class="hover:text-teal-600 truncate">{{ staff.email }}</a>
-                        </div>
-                      {% endif %}
-                      
-                      {% if staff.phone %}
-                        <div class="flex items-center">
-                          <i class="fas fa-phone text-teal-500 mr-2 w-4"></i>
-                          <a href="tel:{{ staff.phone }}" class="hover:text-teal-600">{{ staff.phone }}</a>
-                        </div>
-                      {% endif %}
-                      
-                      {% if staff.office_location %}
-                        <div class="flex items-center">
-                          <i class="fas fa-map-marker-alt text-teal-500 mr-2 w-4"></i>
-                          <span>{{ staff.office_location }}</span>
-                        </div>
-                      {% endif %}
-                    </div>
-                    
-                    <!-- Bio (if available) -->
-                    {% if staff.bio %}
-                      <div class="mt-4 pt-4 border-t border-gray-200">
-                        <p class="text-sm text-gray-600 line-clamp-2">{{ staff.bio }}</p>
-                      </div>
-                    {% endif %}
-                  </div>
-                </div>
-              {% endfor %}
-            </div>
+      <!-- Map Container -->
+      <div class="bg-white rounded-2xl shadow-xl border border-gray-200 p-4 sm:p-6 mb-6">
+        <div class="relative bg-gray-100 rounded-xl overflow-hidden" style="min-height: 600px;">
+          <!-- Interactive Map -->
+          <div id="map-container" class="relative w-full h-full" style="min-height: 600px;">
+            <!-- Floor Plan Map -->
+            <svg viewBox="0 0 1000 600" class="w-full h-full" preserveAspectRatio="xMidYMid meet">
+              <!-- Background Building Shape -->
+              <rect x="50" y="50" width="900" height="500" fill="#e0e7ff" stroke="#6366f1" stroke-width="3" rx="10"/>
+              
+              <!-- Zones/Areas - Clickable -->
+              <!-- Administration Office -->
+              <g class="map-zone cursor-pointer hover:opacity-80 transition-opacity" data-zone="administration" onclick="showZoneInfo('administration')">
+                <rect x="100" y="100" width="180" height="150" fill="#fef3c7" stroke="#f59e0b" stroke-width="2" rx="5"/>
+                <text x="190" y="165" text-anchor="middle" fill="#92400e" font-size="18" font-weight="bold">Administration</text>
+                <text x="190" y="185" text-anchor="middle" fill="#78350f" font-size="12">Main Office</text>
+                <circle cx="290" cy="120" r="8" fill="#ef4444" class="pulse-animation"/>
+              </g>
+              
+              <!-- Science Department -->
+              <g class="map-zone cursor-pointer hover:opacity-80 transition-opacity" data-zone="science" onclick="showZoneInfo('science')">
+                <rect x="320" y="100" width="200" height="150" fill="#dbeafe" stroke="#3b82f6" stroke-width="2" rx="5"/>
+                <text x="420" y="165" text-anchor="middle" fill="#1e40af" font-size="18" font-weight="bold">Science</text>
+                <text x="420" y="185" text-anchor="middle" fill="#1e3a8a" font-size="12">Labs & Offices</text>
+                <circle cx="520" cy="120" r="8" fill="#ef4444" class="pulse-animation"/>
+              </g>
+              
+              <!-- Mathematics Department -->
+              <g class="map-zone cursor-pointer hover:opacity-80 transition-opacity" data-zone="mathematics" onclick="showZoneInfo('mathematics')">
+                <rect x="560" y="100" width="200" height="150" fill="#fce7f3" stroke="#ec4899" stroke-width="2" rx="5"/>
+                <text x="660" y="165" text-anchor="middle" fill="#9f1239" font-size="18" font-weight="bold">Mathematics</text>
+                <text x="660" y="185" text-anchor="middle" fill="#831843" font-size="12">Classrooms</text>
+                <circle cx="760" cy="120" r="8" fill="#ef4444" class="pulse-animation"/>
+              </g>
+              
+              <!-- Library -->
+              <g class="map-zone cursor-pointer hover:opacity-80 transition-opacity" data-zone="library" onclick="showZoneInfo('library')">
+                <rect x="100" y="300" width="250" height="200" fill="#d1fae5" stroke="#10b981" stroke-width="2" rx="5"/>
+                <text x="225" y="380" text-anchor="middle" fill="#065f46" font-size="22" font-weight="bold">Library</text>
+                <text x="225" y="400" text-anchor="middle" fill="#064e3b" font-size="14">Reading & Study</text>
+                <circle cx="350" cy="320" r="8" fill="#ef4444" class="pulse-animation"/>
+              </g>
+              
+              <!-- Canteen -->
+              <g class="map-zone cursor-pointer hover:opacity-80 transition-opacity" data-zone="canteen" onclick="showZoneInfo('canteen')">
+                <rect x="390" y="300" width="250" height="200" fill="#fef3c7" stroke="#f59e0b" stroke-width="2" rx="5"/>
+                <text x="515" y="380" text-anchor="middle" fill="#92400e" font-size="22" font-weight="bold">Canteen</text>
+                <text x="515" y="400" text-anchor="middle" fill="#78350f" font-size="14">Food & Dining</text>
+                <circle cx="640" cy="320" r="8" fill="#ef4444" class="pulse-animation"/>
+              </g>
+              
+              <!-- Gymnasium -->
+              <g class="map-zone cursor-pointer hover:opacity-80 transition-opacity" data-zone="gymnasium" onclick="showZoneInfo('gymnasium')">
+                <rect x="680" y="300" width="220" height="200" fill="#fee2e2" stroke="#ef4444" stroke-width="2" rx="5"/>
+                <text x="790" y="380" text-anchor="middle" fill="#991b1b" font-size="22" font-weight="bold">Gymnasium</text>
+                <text x="790" y="400" text-anchor="middle" fill="#7f1d1d" font-size="14">Sports & Activities</text>
+                <circle cx="900" cy="320" r="8" fill="#ef4444" class="pulse-animation"/>
+              </g>
+              
+              <!-- Hallways -->
+              <rect x="100" y="250" width="800" height="30" fill="#f3f4f6" stroke="#9ca3af" stroke-width="1"/>
+              <rect x="100" y="280" width="30" height="220" fill="#f3f4f6" stroke="#9ca3af" stroke-width="1"/>
+              <rect x="620" y="280" width="30" height="220" fill="#f3f4f6" stroke="#9ca3af" stroke-width="1"/>
+              
+              <!-- "You Are Here" Marker -->
+              <g class="animate-pulse">
+                <circle cx="150" cy="550" r="12" fill="#ef4444" stroke="white" stroke-width="3"/>
+                <text x="150" y="575" text-anchor="middle" fill="#ef4444" font-size="14" font-weight="bold">You Are Here</text>
+              </g>
+            </svg>
           </div>
-        {% endfor %}
-      {% else %}
-        <!-- No Results -->
-        <div class="bg-white rounded-2xl shadow-xl border border-gray-200 p-12 text-center">
-          <div class="text-gray-400 text-6xl mb-4">
-            <i class="fas fa-search"></i>
-          </div>
-          <h3 class="text-2xl font-bold text-gray-900 mb-2">No Staff Found</h3>
-          <p class="text-gray-600 mb-6">
-            {% if search_query or department_filter %}
-              Try adjusting your search or filter criteria.
-            {% else %}
-              No staff members are currently available in the directory.
-            {% endif %}
-          </p>
-          {% if search_query or department_filter %}
-            <a href="{{ url_for('directory') }}" 
-               class="inline-block bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl">
-              <i class="fas fa-redo mr-2"></i>View All Staff
-            </a>
-          {% endif %}
         </div>
-      {% endif %}
+        
+        <!-- Legend -->
+        <div class="mt-4 flex flex-wrap gap-4 text-sm">
+          <div class="flex items-center gap-2">
+            <div class="w-4 h-4 bg-red-500 rounded-full animate-pulse"></div>
+            <span class="text-gray-600">Clickable Zone</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="w-4 h-4 bg-red-500 rounded-full"></div>
+            <span class="text-gray-600">You Are Here</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Zone Information Panel -->
+      <div id="zone-info-panel" class="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 hidden">
+        <div class="flex items-start justify-between mb-4">
+          <div>
+            <h2 id="zone-title" class="text-2xl font-bold text-gray-900 mb-2"></h2>
+            <p id="zone-description" class="text-gray-600"></p>
+          </div>
+          <button onclick="closeZoneInfo()" class="text-gray-400 hover:text-gray-600">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+        
+        <div id="zone-staff-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+          <!-- Staff members will be loaded here -->
+        </div>
+      </div>
+
+      <!-- Quick Search -->
+      <div class="bg-white rounded-2xl shadow-xl border border-gray-200 p-4 sm:p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <i class="fas fa-search text-teal-600 mr-2"></i>Quick Search
+        </h3>
+        <div class="flex flex-wrap gap-2">
+          <button onclick="showZoneInfo('administration')" class="px-4 py-2 bg-teal-100 hover:bg-teal-200 text-teal-700 rounded-lg transition-colors">
+            Administration
+          </button>
+          <button onclick="showZoneInfo('science')" class="px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-colors">
+            Science
+          </button>
+          <button onclick="showZoneInfo('mathematics')" class="px-4 py-2 bg-pink-100 hover:bg-pink-200 text-pink-700 rounded-lg transition-colors">
+            Mathematics
+          </button>
+          <button onclick="showZoneInfo('library')" class="px-4 py-2 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-colors">
+            Library
+          </button>
+          <button onclick="showZoneInfo('canteen')" class="px-4 py-2 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 rounded-lg transition-colors">
+            Canteen
+          </button>
+          <button onclick="showZoneInfo('gymnasium')" class="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors">
+            Gymnasium
+          </button>
+        </div>
+      </div>
       
     </div>
   </div>
 </div>
-{% endblock %}
 
+<style>
+  .pulse-animation {
+    animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+  
+  .map-zone:hover rect {
+    filter: brightness(1.1);
+  }
+  
+  .floor-btn.active {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+</style>
+
+<script>
+  // Zone data from backend
+  const zoneData = {
+    {% for zone, staff_list in staff_by_zone.items() %}
+    '{{ zone|lower|replace(" ", "_")|replace("-", "_") }}': {
+      title: '{{ zone }}',
+      description: '{{ zone }} area with offices and facilities.',
+      staff: [
+        {% for staff in staff_list %}
+        { 
+          name: '{{ staff.name|e }}', 
+          position: '{{ staff.position|e }}', 
+          email: '{{ staff.email|e if staff.email else "" }}', 
+          phone: '{{ staff.phone|e if staff.phone else "" }}', 
+          room: '{{ staff.office_location|e if staff.office_location else "" }}' 
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+      ]
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  };
+
+  function showZoneInfo(zoneId) {
+    const zone = zoneData[zoneId];
+    if (!zone) {
+      // Try to find zone by name match
+      const zoneKey = Object.keys(zoneData).find(key => 
+        key.toLowerCase().includes(zoneId.toLowerCase()) || 
+        zoneData[key].title.toLowerCase().includes(zoneId.toLowerCase())
+      );
+      if (zoneKey) {
+        return showZoneInfo(zoneKey);
+      }
+      return;
+    }
+    
+    const panel = document.getElementById('zone-info-panel');
+    const title = document.getElementById('zone-title');
+    const description = document.getElementById('zone-description');
+    const staffList = document.getElementById('zone-staff-list');
+    
+    title.textContent = zone.title;
+    description.textContent = zone.description;
+    
+    // Populate staff list
+    if (zone.staff && zone.staff.length > 0) {
+      staffList.innerHTML = zone.staff.map(staff => `
+        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+          <h4 class="font-semibold text-gray-900 mb-1">${staff.name}</h4>
+          <p class="text-sm text-teal-600 mb-2">${staff.position}</p>
+          <div class="space-y-1 text-xs text-gray-600">
+            ${staff.email ? `<div><i class="fas fa-envelope mr-1"></i><a href="mailto:${staff.email}" class="hover:text-teal-600">${staff.email}</a></div>` : ''}
+            ${staff.phone ? `<div><i class="fas fa-phone mr-1"></i><a href="tel:${staff.phone}" class="hover:text-teal-600">${staff.phone}</a></div>` : ''}
+            ${staff.room ? `<div><i class="fas fa-map-marker-alt mr-1"></i>${staff.room}</div>` : ''}
+          </div>
+        </div>
+      `).join('');
+    } else {
+      staffList.innerHTML = '<div class="col-span-full text-center text-gray-500 py-4">No staff information available for this zone.</div>';
+    }
+    
+    panel.classList.remove('hidden');
+    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    
+    // Highlight zone on map
+    document.querySelectorAll('.map-zone').forEach(el => {
+      el.classList.remove('ring-4', 'ring-teal-500');
+    });
+    const zoneElement = document.querySelector(`[data-zone="${zoneId}"]`);
+    if (zoneElement) {
+      zoneElement.classList.add('ring-4', 'ring-teal-500');
+    }
+  }
+
+  function closeZoneInfo() {
+    document.getElementById('zone-info-panel').classList.add('hidden');
+    document.querySelectorAll('.map-zone').forEach(el => {
+      el.classList.remove('ring-4', 'ring-teal-500');
+    });
+  }
+</script>
+{% endblock %}

@@ -1239,51 +1239,37 @@ def feedback():
 @app.route('/directory')
 @login_required
 def directory():
-    """Display school staff directory"""
-    search_query = request.args.get('search', '').strip()
-    department_filter = request.args.get('department', '').strip()
+    """Display school directory map"""
+    floor_level = request.args.get('floor', 1, type=int)
     
-    # Get all active staff members
-    query = StaffDirectory.query.filter_by(is_active=True)
-    
-    # Apply search filter
-    if search_query:
-        query = query.filter(
-            db.or_(
-                StaffDirectory.name.ilike(f'%{search_query}%'),
-                StaffDirectory.position.ilike(f'%{search_query}%'),
-                StaffDirectory.department.ilike(f'%{search_query}%')
-            )
-        )
-    
-    # Apply department filter
-    if department_filter:
-        query = query.filter(StaffDirectory.department == department_filter)
-    
-    # Order by department, then display_order, then name
-    staff_members = query.order_by(
-        StaffDirectory.department,
+    # Get all active staff members for the selected floor
+    staff_members = StaffDirectory.query.filter_by(is_active=True, floor_level=floor_level).order_by(
+        StaffDirectory.zone_area,
         StaffDirectory.display_order,
         StaffDirectory.name
     ).all()
     
-    # Get all unique departments for filter dropdown
-    departments = db.session.query(StaffDirectory.department).distinct().filter_by(is_active=True).order_by(StaffDirectory.department).all()
-    departments = [dept[0] for dept in departments]
-    
-    # Group staff by department
-    staff_by_department = {}
+    # Group staff by zone/area
+    staff_by_zone = {}
+    zones = []
     for staff in staff_members:
-        dept = staff.department
-        if dept not in staff_by_department:
-            staff_by_department[dept] = []
-        staff_by_department[dept].append(staff)
+        zone = staff.zone_area or staff.department or 'Unknown'
+        if zone not in staff_by_zone:
+            staff_by_zone[zone] = []
+            zones.append(zone)
+        staff_by_zone[zone].append(staff)
+    
+    # Get all unique floors
+    floors = db.session.query(StaffDirectory.floor_level).distinct().filter_by(is_active=True).order_by(StaffDirectory.floor_level).all()
+    floors = [floor[0] for floor in floors if floor[0]]
+    if not floors:
+        floors = [1]  # Default to floor 1 if no data
     
     return render_template('directory.html', 
-                         staff_by_department=staff_by_department,
-                         departments=departments,
-                         search_query=search_query,
-                         department_filter=department_filter)
+                         staff_by_zone=staff_by_zone,
+                         zones=zones,
+                         current_floor=floor_level,
+                         available_floors=floors)
 
 @app.route('/delete_feedback/<int:id>', methods=['POST'])
 @login_required
