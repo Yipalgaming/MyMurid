@@ -19,8 +19,8 @@ def validate_ic_format(value):
     """Validate IC format - allows Unicode characters, symbols, etc."""
     if not value:
         return False, "IC cannot be empty"
-    if len(value) < 1 or len(value) > 50:
-        return False, "IC must be between 1 and 50 characters"
+    if len(value) < 1 or len(value) > 12:
+        return False, "IC must be between 1 and 12 characters"
     if not value.strip():
         return False, "IC cannot be only whitespace"
     return True, None
@@ -41,7 +41,7 @@ def update_student_ic_pin():
     print("UPDATE STUDENT IC AND PIN")
     print("="*60)
     print("Note: IC and PIN can now contain symbols, Chinese characters, etc.")
-    print("(1-50 characters, cannot be empty or only whitespace)")
+    print("(IC: 1-12 characters, PIN: 4 digits, cannot be empty or only whitespace)")
     
     # List all students
     students = StudentInfo.query.filter_by(role='student').all()
@@ -75,7 +75,7 @@ def update_student_ic_pin():
         print(f"  PIN: (hidden)")
         
         # Update IC
-        new_ic = input("\nEnter new IC number (1-50 chars, can include symbols/Chinese, or press Enter to skip): ").strip()
+        new_ic = input("\nEnter new IC number (1-12 chars, can include symbols/Chinese, or press Enter to skip): ").strip()
         if new_ic:
             is_valid, error_msg = validate_ic_format(new_ic)
             if not is_valid:
@@ -201,13 +201,13 @@ def bulk_update_students():
             student_id, new_ic, new_pin = int(parts[0]), parts[1].strip(), parts[2].strip()
             
             # Validate IC
-            is_valid, error_msg = validate_ic_pin_format(new_ic)
+            is_valid, error_msg = validate_ic_format(new_ic)
             if not is_valid:
                 print(f"❌ Invalid IC for student {student_id}: {error_msg}")
                 continue
             
             # Validate PIN
-            is_valid, error_msg = validate_ic_pin_format(new_pin)
+            is_valid, error_msg = validate_pin_format(new_pin)
             if not is_valid:
                 print(f"❌ Invalid PIN for student {student_id}: {error_msg}")
                 continue

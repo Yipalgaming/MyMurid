@@ -88,9 +88,9 @@ def validate_ic_number(ic):
     if not ic:
         return False
     # Allow Unicode characters, symbols, and alphanumeric
-    # Minimum 1 character, maximum 50 characters (reasonable limit)
-    # This allows Chinese characters, symbols, emojis, etc.
-    if len(ic) < 1 or len(ic) > 50:
+    # Minimum 1 character, maximum 12 characters
+    # This allows Chinese characters, symbols, emojis, etc. (for admin testing)
+    if len(ic) < 1 or len(ic) > 12:
         return False
     # Check if it contains at least one printable character (not just whitespace)
     if not ic.strip():
@@ -1621,6 +1621,19 @@ def paid_orders():
             })
         # Sort by status (pending first)
         grouped_orders[student].sort(key=lambda x: x['status'] == 'completed')
+
+    # Sort students: first by pending orders count (descending), then by name
+    sorted_students = sorted(
+        grouped_orders.items(),
+        key=lambda x: (
+            -sum(1 for item in x[1] if item['status'] == 'pending'),  # More pending orders first
+            x[0].name.lower()  # Then alphabetically by name
+        )
+    )
+    
+    # Convert to OrderedDict for template
+    from collections import OrderedDict
+    grouped_orders = OrderedDict(sorted_students)
 
     return render_template("paid_orders.html", grouped_orders=grouped_orders, search_query=search_query)
 
