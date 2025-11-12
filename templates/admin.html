@@ -89,17 +89,20 @@
         <i class="fas fa-tools text-indigo-600 mr-2"></i>Admin Tools
       </h2>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <!-- Student Management -->
+        <!-- Students & Menu -->
         <div class="bg-white/70 rounded-xl p-6 border border-white/30">
           <div class="flex items-center mb-4">
             <div class="bg-blue-100 rounded-full w-12 h-12 flex items-center justify-center mr-4">
-              <i class="fas fa-users text-blue-600 text-xl"></i>
+              <i class="fas fa-user-friends text-blue-600 text-xl"></i>
             </div>
-            <h3 class="text-lg font-semibold text-gray-900">Student Management</h3>
+            <h3 class="text-lg font-semibold text-gray-900">Students & Menu</h3>
           </div>
           <div class="space-y-3">
             <a href="{{ url_for('manage_students') }}" class="block w-full bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-xl transition-colors">
               <i class="fas fa-user-edit mr-2"></i>Manage Students
+            </a>
+            <a href="{{ url_for('order') }}" class="block w-full bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-xl transition-colors">
+              <i class="fas fa-utensils mr-2"></i>View &amp; Manage Menu
             </a>
           </div>
         </div>
@@ -113,8 +116,8 @@
             <h3 class="text-lg font-semibold text-gray-900">Financial</h3>
           </div>
           <div class="space-y-3">
-            <a href="{{ url_for('topup') }}" class="block w-full bg-green-50 hover:bg-green-100 text-green-700 px-4 py-2 rounded-xl transition-colors">
-              <i class="fas fa-plus-circle mr-2"></i>Top-Up Balance
+            <a href="{{ url_for('admin_finance') }}" class="block w-full bg-green-50 hover:bg-green-100 text-green-700 px-4 py-2 rounded-xl transition-colors">
+              <i class="fas fa-wallet mr-2"></i>Finance Dashboard
             </a>
             <a href="{{ url_for('transactions') }}" class="block w-full bg-green-50 hover:bg-green-100 text-green-700 px-4 py-2 rounded-xl transition-colors">
               <i class="fas fa-exchange-alt mr-2"></i>Transactions

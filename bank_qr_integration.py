@@ -177,32 +177,84 @@ class GrabPayQRPayment(BankQRPayment):
         return super().generate_qr_payment(amount, transaction_id, description)
 
 class MockQRPayment:
-    """Mock QR Payment for testing (current implementation)"""
+    """Mock QR Payment for testing with manual bank account transfers"""
     
     def __init__(self, config: Dict = None):
         self.config = config or {}
+        # Check if single canteen account is configured
+        self.canteen_account = None
+        if config and config.get('canteen_bank_account'):
+            self.canteen_account = {
+                'bank': config.get('canteen_bank_name', 'Canteen Bank'),
+                'account': config.get('canteen_bank_account'),
+                'name': config.get('canteen_account_name', 'Canteen Account')
+            }
+        
+        # Get test bank accounts from config (fallback if single account not set)
+        self.test_accounts = config.get('test_accounts', [
+            {'bank': 'Maybank', 'account': '1234567890', 'name': 'MyMurid Test Account 1'},
+            {'bank': 'CIMB', 'account': '0987654321', 'name': 'MyMurid Test Account 2'},
+            {'bank': 'Public Bank', 'account': '1122334455', 'name': 'MyMurid Test Account 3'}
+        ])
         
     def generate_qr_payment(self, amount: float, transaction_id: str, 
                           description: str = "MyMurid Payment") -> Dict:
-        """Generate mock QR payment"""
+        """Generate mock QR payment with bank account number or DuitNow QR"""
+        # Check if canteen has existing DuitNow QR code
+        duitnow_qr = self.config.get('duitnow_qr_code', '')
+        if duitnow_qr and duitnow_qr.strip():
+            # Use existing DuitNow QR code exactly as provided
+            # DuitNow QR codes are static and must be used as-is
+            # Users will enter the amount manually in their payment app
+            # DO NOT modify the QR code string - it breaks the EMV format
+            
+            return {
+                'success': True,
+                'qr_code': duitnow_qr.strip(),
+                'qr_data': duitnow_qr.strip(),  # Use exact QR code as provided
+                'payment_url': f"/admin/payments/{transaction_id}",
+                'expires_at': (datetime.now(timezone(timedelta(hours=8))) + timedelta(minutes=15)).isoformat(),
+                'reference_id': f"DUITNOW_{transaction_id[:8]}",
+                'bank_account': None,  # DuitNow QR doesn't show account number
+                'bank_name': 'DuitNow',
+                'account_name': self.config.get('canteen_account_name', 'Canteen Account'),
+                'is_duitnow': True
+            }
+        
+        # Use single canteen account if configured, otherwise rotate between multiple accounts
+        if self.canteen_account:
+            selected_account = self.canteen_account
+        else:
+            # Use first account by default, or rotate based on transaction ID
+            import hashlib
+            account_index = int(hashlib.md5(transaction_id.encode()).hexdigest(), 16) % len(self.test_accounts)
+            selected_account = self.test_accounts[account_index]
+        
+        # Generate QR data with bank account details
+        qr_data = f"PAYMENT|{selected_account['bank']}|{selected_account['account']}|{amount:.2f}|{transaction_id}|MyMurid"
+        
         return {
             'success': True,
-            'qr_code': f"bank_qr://payment?amount={amount}&transaction_id={transaction_id}&merchant=MyMurid&account=1234567890",
-            'qr_data': f"bank_qr://payment?amount={amount}&transaction_id={transaction_id}&merchant=MyMurid&account=1234567890",
-            'payment_url': f"https://mock-payment.com/pay/{transaction_id}",
+            'qr_code': qr_data,
+            'qr_data': qr_data,
+            'payment_url': f"/admin/payments/{transaction_id}",
             'expires_at': (datetime.now(timezone(timedelta(hours=8))) + timedelta(minutes=15)).isoformat(),
-            'reference_id': f"MOCK_{transaction_id}"
+            'reference_id': f"TEST_{transaction_id}",
+            'bank_account': selected_account['account'],
+            'bank_name': selected_account['bank'],
+            'account_name': selected_account['name'],
+            'is_duitnow': False
         }
     
     def check_payment_status(self, transaction_id: str) -> Dict:
-        """Check mock payment status (simulates completion after 30 seconds)"""
-        # Simulate payment completion after 30 seconds
+        """Check mock payment status - returns pending unless manually approved"""
+        # This will be checked against database - return pending for manual approval
         return {
             'success': True,
-            'status': 'completed',
-            'amount': '10.00',
-            'paid_at': datetime.now(timezone(timedelta(hours=8))).isoformat(),
-            'reference_id': f"MOCK_{transaction_id}"
+            'status': 'pending',  # Admin must manually approve
+            'amount': None,
+            'paid_at': None,
+            'reference_id': f"TEST_{transaction_id}"
         }
 
 def get_payment_provider(provider_name: str, config: Dict) -> BankQRPayment:

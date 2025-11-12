@@ -43,31 +43,41 @@
         </h2>
         
         <div class="space-y-4">
-    {% for item_id in cart_items %}
+    {% for cart_item in cart_items %}
           <div class="bg-gradient-to-br from-gray-50 to-white rounded-xl p-5 border border-gray-200 hover:border-green-300 hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]">
             <div class="flex items-center justify-between flex-wrap gap-4">
               <div class="flex-1 min-w-[200px]">
-                <h3 class="font-bold text-gray-900 text-lg mb-2">{{ item_id.item.name }}</h3>
+                <h3 class="font-bold text-gray-900 text-lg mb-2">{{ cart_item.item.name }}</h3>
                 <div class="flex items-center gap-6 text-sm flex-wrap">
                   <span class="bg-green-50 px-3 py-1 rounded-lg text-green-700 font-medium">
                     <i class="fas fa-tag mr-1"></i>
-                    RM {{ "%.2f"|format(item_id.item.price) }}
+                    RM {{ "%.2f"|format(cart_item.item.price) }}
                   </span>
-                  <span class="bg-gray-100 px-3 py-1 rounded-lg text-gray-700 font-medium">
-                    <i class="fas fa-shopping-basket mr-1"></i>
-                    Qty: {{ item_id.quantity }}
-                  </span>
-                  <span class="bg-emerald-50 px-3 py-1 rounded-lg font-bold text-emerald-700">
+                  <div class="flex items-center gap-2 bg-gray-100 px-3 py-1 rounded-lg">
+                    <button onclick="updatePaymentQuantity({{ cart_item.menu_item_id }}, -1)" 
+                            class="w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-700 flex items-center justify-center transition-colors"
+                            id="decrease-{{ cart_item.menu_item_id }}">
+                      <i class="fas fa-minus text-xs"></i>
+                    </button>
+                    <span class="font-semibold text-gray-900 w-8 text-center" id="qty-{{ cart_item.menu_item_id }}" data-price="{{ "%.2f"|format(cart_item.item.price) }}">{{ cart_item.quantity }}</span>
+                    <button onclick="updatePaymentQuantity({{ cart_item.menu_item_id }}, 1)" 
+                            class="w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-700 flex items-center justify-center transition-colors">
+                      <i class="fas fa-plus text-xs"></i>
+                    </button>
+                  </div>
+                  <span class="bg-emerald-50 px-3 py-1 rounded-lg font-bold text-emerald-700" id="total-{{ cart_item.menu_item_id }}">
                     <i class="fas fa-coins mr-1"></i>
-                    RM {{ "%.2f"|format(item_id.item.price * item_id.quantity) }}
+                    RM <span id="total-amount-{{ cart_item.menu_item_id }}">{{ "%.2f"|format(cart_item.total_price) }}</span>
                   </span>
                 </div>
               </div>
               <div>
         <form method="POST" style="display:inline;">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-          <input type="hidden" name="delete" value="{{ item_id.id }}">
-                  <button type="submit" class="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
+          {% for order_id in cart_item.order_ids %}
+          <input type="hidden" name="delete" value="{{ order_id }}">
+          {% endfor %}
+                  <button type="submit" onclick="return confirm('Remove all {{ cart_item.quantity }} of {{ cart_item.item.name }}?')" class="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
                     <i class="fas fa-trash mr-1"></i>Remove
                   </button>
         </form>
@@ -88,7 +98,7 @@
           <div class="bg-gray-50 rounded-xl p-4">
             <div class="flex justify-between items-center mb-2">
               <span class="text-gray-600">Total Amount:</span>
-              <span class="text-2xl font-bold text-green-600">RM {{ "%.2f"|format(total) }}</span>
+              <span class="text-2xl font-bold text-green-600" id="payment-total-amount">RM {{ "%.2f"|format(total) }}</span>
             </div>
           </div>
           
@@ -122,7 +132,7 @@
 
       <!-- Action Buttons -->
       <div class="flex flex-col sm:flex-row gap-4 items-stretch">
-        <form method="POST" action="{{ url_for('payment') }}" class="flex-1">
+        <form method="POST" action="{{ url_for('payment') }}" class="flex-1" onsubmit="return confirmPayment()">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
   <input type="hidden" name="pay" value="true">
           <button type="submit" 
@@ -156,4 +166,119 @@
 {% endif %}
   </div>
 </div>
+<script>
+function confirmPayment() {
+  let grandTotal = 0;
+  document.querySelectorAll('[id^="total-amount-"]').forEach(el => {
+    grandTotal += parseFloat(el.textContent);
+  });
+  const formatted = grandTotal.toFixed(2);
+  return confirm(`Confirm payment of RM ${formatted}? This will deduct from your balance.`);
+}
+
+async function updatePaymentQuantity(menuItemId, change) {
+  const qtyElement = document.getElementById(`qty-${menuItemId}`);
+  const totalElement = document.getElementById(`total-amount-${menuItemId}`);
+  const decreaseBtn = document.getElementById(`decrease-${menuItemId}`);
+  const currentQty = parseInt(qtyElement.textContent);
+  const price = parseFloat(qtyElement.getAttribute('data-price'));
+  
+  const newQty = currentQty + change;
+  
+  // Prevent quantity from going below 1
+  if (newQty < 1) {
+    return;
+  }
+  
+  // Disable button if quantity would be 1
+  if (newQty === 1) {
+    decreaseBtn.disabled = true;
+    decreaseBtn.classList.add('opacity-50', 'cursor-not-allowed');
+  } else {
+    decreaseBtn.disabled = false;
+    decreaseBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+  }
+  
+  // Update UI immediately for better UX
+  qtyElement.textContent = newQty;
+  const newTotal = (price * newQty).toFixed(2);
+  totalElement.textContent = newTotal;
+  
+  // Update total amount
+  updateTotalAmount();
+  
+  // Send update to server
+  try {
+    const response = await fetch('/api/update-order-quantity', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+      },
+      body: JSON.stringify({
+        menu_item_id: menuItemId,
+        quantity: newQty
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      // Revert on error
+      qtyElement.textContent = currentQty;
+      totalElement.textContent = (price * currentQty).toFixed(2);
+      updateTotalAmount();
+      alert('Failed to update quantity: ' + (data.error || 'Unknown error'));
+    } else {
+      // Reload page to sync with server
+      window.location.reload();
+    }
+  } catch (error) {
+    // Revert on error
+    qtyElement.textContent = currentQty;
+    totalElement.textContent = (price * currentQty).toFixed(2);
+    updateTotalAmount();
+    alert('Error updating quantity. Please try again.');
+  }
+}
+
+function updateTotalAmount() {
+  let grandTotal = 0;
+  document.querySelectorAll('[id^="total-amount-"]').forEach(el => {
+    grandTotal += parseFloat(el.textContent);
+  });
+  
+  const totalDisplay = document.getElementById('payment-total-amount');
+  if (totalDisplay) {
+    totalDisplay.textContent = `RM ${grandTotal.toFixed(2)}`;
+  }
+  
+  // Update payment button state
+  const userBalance = parseFloat('{{ user.balance|float }}');
+  const payButton = document.querySelector('form[onsubmit] button[type="submit"]');
+  if (payButton) {
+    if (userBalance < grandTotal) {
+      payButton.disabled = true;
+      payButton.classList.add('opacity-50', 'cursor-not-allowed');
+    } else {
+      payButton.disabled = false;
+      payButton.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+  }
+}
+
+// Initialize button states on page load
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('[id^="qty-"]').forEach(qtyEl => {
+    const qty = parseInt(qtyEl.textContent);
+    const menuItemId = qtyEl.id.replace('qty-', '');
+    const decreaseBtn = document.getElementById(`decrease-${menuItemId}`);
+    
+    if (qty === 1 && decreaseBtn) {
+      decreaseBtn.disabled = true;
+      decreaseBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    }
+  });
+});
+</script>
 {% endblock %}

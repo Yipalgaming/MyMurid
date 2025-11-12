@@ -12,7 +12,7 @@ class StudentInfo(db.Model, UserMixin):
     __tablename__ = 'student_info'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
-    ic_number = db.Column(db.String(4), unique=True, index=True)
+    ic_number = db.Column(db.String(50), unique=True, index=True)  # Supports Unicode, symbols, Chinese characters
     pin_hash = db.Column(db.String(255), nullable=False)  # Hashed PIN for login
     password_hash = db.Column(db.String(255))  # Hashed password for admin login
     role = db.Column(db.String(10), default='student', index=True)  # 'admin' or 'student'
@@ -82,6 +82,24 @@ class Feedback(db.Model):
     message = db.Column(db.Text)
     student_id = db.Column(db.Integer, db.ForeignKey(STUDENT_INFO_ID))
     student = db.relationship('StudentInfo', backref='feedbacks')
+    media = db.relationship(
+        'FeedbackMedia',
+        backref='feedback',
+        cascade='all, delete-orphan',
+        order_by='FeedbackMedia.uploaded_at'
+    )
+
+
+class FeedbackMedia(db.Model):
+    __tablename__ = 'feedback_media'
+
+    id = db.Column(db.Integer, primary_key=True)
+    feedback_id = db.Column(db.Integer, db.ForeignKey('feedback.id'), nullable=False, index=True)
+    file_path = db.Column(db.String(255), nullable=False)
+    media_type = db.Column(db.String(20), nullable=False)  # image or video
+    original_filename = db.Column(db.String(255))
+    mimetype = db.Column(db.String(100))
+    uploaded_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=8))))
 
 class Vote(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -213,8 +231,8 @@ class StudentRedemption(db.Model):
     student = db.relationship('StudentInfo', backref='redemptions')
     reward_item = db.relationship('RewardItem', backref='redemptions')
 
-class StaffDirectory(db.Model):
-    __tablename__ = 'staff_directory'
+class Directory(db.Model):
+    __tablename__ = 'directory'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     position = db.Column(db.String(100), nullable=False)  # e.g., "Principal", "Mathematics Teacher"
@@ -230,5 +248,24 @@ class StaffDirectory(db.Model):
     photo_path = db.Column(db.String(100))  # Path to staff photo
     is_active = db.Column(db.Boolean, default=True)
     display_order = db.Column(db.Integer, default=0)  # For ordering within department
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=8))))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=8))), onupdate=lambda: datetime.now(timezone(timedelta(hours=8))))
+
+class Facility(db.Model):
+    __tablename__ = 'facility'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)  # e.g., "Classroom 101", "Science Lab 1", "Library"
+    facility_type = db.Column(db.String(50), nullable=False)  # classroom, lab, library, canteen, gym, office, restroom, etc.
+    floor_level = db.Column(db.Integer, default=1)
+    zone_area = db.Column(db.String(100))  # Zone/area on the map
+    room_number = db.Column(db.String(20))  # Room number/identifier
+    map_x = db.Column(db.Float)  # X coordinate on map (0-100 percentage)
+    map_y = db.Column(db.Float)  # Y coordinate on map (0-100 percentage)
+    description = db.Column(db.Text)
+    capacity = db.Column(db.Integer)  # For classrooms/labs
+    icon = db.Column(db.String(50), default='fas fa-door-open')  # Font Awesome icon class
+    color = db.Column(db.String(20), default='blue')  # Color for the icon/marker
+    is_active = db.Column(db.Boolean, default=True)
+    display_order = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=8))))
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=8))), onupdate=lambda: datetime.now(timezone(timedelta(hours=8))))

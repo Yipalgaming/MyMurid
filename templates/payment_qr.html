@@ -14,14 +14,27 @@
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
         .qr-code {
-            width: 200px;
-            height: 200px;
-            background: #f8f9fa;
-            border: 2px dashed #dee2e6;
+            width: 280px;
+            height: 280px;
+            background: #ffffff;
+            border: 4px solid #e5e7eb;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto;
+            padding: 10px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        #qrcode {
+            width: 100%;
+            height: 100%;
+        }
+        #qrcode img {
+            width: 100% !important;
+            height: 100% !important;
+            max-width: 260px;
+            max-height: 260px;
         }
     </style>
 </head>
@@ -50,22 +63,45 @@
                     <span class="text-gray-600">Amount:</span>
                     <span class="font-semibold text-green-600">RM {{ payment.amount }}</span>
                 </div>
+                {% if bank_account %}
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-gray-600">Bank:</span>
+                    <span class="font-semibold">{{ bank_name }}</span>
+                </div>
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-gray-600">Account Number:</span>
+                    <span class="font-mono font-semibold text-indigo-600">{{ bank_account }}</span>
+                </div>
+                {% endif %}
                 <div class="flex items-center justify-between">
                     <span class="text-gray-600">Transaction ID:</span>
                     <span class="font-mono text-sm text-gray-500">{{ payment.transaction_id[:8] }}...</span>
                 </div>
             </div>
+            
+            {% if bank_account %}
+            <!-- Bank Transfer Instructions -->
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                <h4 class="font-semibold text-yellow-800 mb-2">
+                    <i class="fas fa-info-circle mr-2"></i>Transfer Instructions
+                </h4>
+                <ol class="text-yellow-700 text-sm space-y-1">
+                    <li>1. Transfer RM {{ payment.amount }} to:</li>
+                    <li class="ml-4 font-semibold">{{ bank_name }}: {{ bank_account }}</li>
+                    <li>2. Include Transaction ID in remarks: <span class="font-mono">{{ payment.transaction_id[:8] }}</span></li>
+                    <li>3. After transferring, admin will approve your payment</li>
+                    <li>4. Your child's balance will be updated automatically</li>
+                </ol>
+            </div>
+            {% endif %}
 
             <!-- QR Code Display -->
             <div class="text-center mb-6">
                 <div class="qr-code rounded-lg mb-4">
-                    <div class="text-center">
-                        <i class="fas fa-qrcode text-6xl text-gray-400 mb-2"></i>
-                        <p class="text-gray-500 text-sm">QR Code</p>
-                        <p class="text-gray-400 text-xs">{{ qr_data }}</p>
-                    </div>
+                    <div id="qrcode"></div>
                 </div>
-                <p class="text-gray-600 text-sm">Scan this QR code with your bank's mobile app</p>
+                <p class="text-gray-600 text-sm mb-2">Scan this QR code with your bank's mobile app</p>
+                <p class="text-gray-500 text-xs font-mono break-all">{{ qr_data }}</p>
             </div>
 
             <!-- Payment Instructions -->
@@ -115,7 +151,118 @@
 
     <script>
         const transactionId = '{{ payment.transaction_id }}';
+        const qrData = '{{ qr_data|e }}';
         let statusCheckInterval;
+        let qrCodeReady = false;
+        
+        // Generate QR Code - wait for library to load
+        function generateQRCode() {
+            const qrContainer = document.getElementById('qrcode');
+            
+            // Check if QRCode library is loaded
+            if (typeof QRCode === 'undefined') {
+                console.error('QRCode library not loaded, retrying...');
+                // Retry after a short delay
+                setTimeout(generateQRCode, 200);
+                return;
+            }
+            
+            console.log('QR Data:', qrData); // Debug log
+            
+            if (!qrData || qrData.trim() === '' || qrData === 'None') {
+                console.error('QR Data is empty or None');
+                qrContainer.innerHTML = `
+                    <div class="text-center p-4">
+                        <i class="fas fa-exclamation-triangle text-yellow-500 text-4xl mb-2"></i>
+                        <p class="text-gray-600 text-sm">QR Code data is missing</p>
+                        <p class="text-gray-500 text-xs mt-2">Please contact support</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Generate QR code using QRCode library (qrcodejs API)
+            try {
+                // Clear container first
+                qrContainer.innerHTML = '';
+                
+                // Create QR code using qrcodejs API
+                const qr = new QRCode(qrContainer, {
+                    text: qrData,
+                    width: 260,
+                    height: 260,
+                    colorDark: '#000000',
+                    colorLight: '#FFFFFF',
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+            } catch (error) {
+                console.error('QR Code generation exception:', error);
+                qrContainer.innerHTML = `
+                    <div class="text-center p-4">
+                        <i class="fas fa-exclamation-triangle text-yellow-500 text-4xl mb-2"></i>
+                        <p class="text-gray-600 text-sm">QR Code generation failed</p>
+                        <p class="text-gray-500 text-xs mt-2">Error: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        function handleQRCodeError() {
+            console.error('Failed to load QRCode library from local file');
+            // Try CDN as fallback
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+            script.onload = function() {
+                qrCodeReady = true;
+                initQRCode();
+            };
+            script.onerror = function() {
+                console.error('Failed to load QRCode from CDN fallback');
+                const qrContainer = document.getElementById('qrcode');
+                if (qrContainer) {
+                    qrContainer.innerHTML = `
+                        <div class="text-center p-4">
+                            <i class="fas fa-exclamation-triangle text-yellow-500 text-4xl mb-2"></i>
+                            <p class="text-gray-600 text-sm">QR Code library failed to load</p>
+                            <p class="text-gray-500 text-xs mt-2">Please contact support</p>
+                        </div>
+                    `;
+                }
+            };
+            document.head.appendChild(script);
+        }
+        
+        function initQRCode() {
+            qrCodeReady = true;
+            if (typeof QRCode !== 'undefined') {
+                generateQRCode();
+            } else {
+                // Wait a bit more
+                setTimeout(function() {
+                    if (typeof QRCode !== 'undefined') {
+                        generateQRCode();
+                    } else {
+                        handleQRCodeError();
+                    }
+                }, 100);
+            }
+        }
+        
+        // Load QRCode library dynamically from local file
+        function loadQRCodeLibrary() {
+            const script = document.createElement('script');
+            script.src = '{{ url_for("static", filename="js/qrcode.min.js") }}';
+            script.onload = initQRCode;
+            script.onerror = handleQRCodeError;
+            document.head.appendChild(script);
+        }
+        
+        // Start loading when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadQRCodeLibrary);
+        } else {
+            loadQRCodeLibrary();
+        }
 
         function checkPaymentStatus() {
             fetch(`/api/payment/status/${transactionId}`)

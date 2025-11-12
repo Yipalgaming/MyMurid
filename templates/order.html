@@ -21,7 +21,14 @@
           <h1 class="text-2xl md:text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Order Food</h1>
           <p class="text-gray-600 mt-1 text-sm md:text-base hidden sm:block">Choose from our delicious menu</p>
         </div>
-        <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-3">
+          {% if current_user.role == 'admin' %}
+          <button id="toggleEditModeBtn"
+                  onclick="toggleEditMode()"
+                  class="hidden md:inline-flex items-center bg-white border border-purple-200 text-purple-600 hover:bg-purple-50 px-4 py-2 rounded-xl font-medium transition-colors shadow-sm">
+            <i class="fas fa-edit mr-2"></i>Edit Menu
+          </button>
+          {% endif %}
           <div class="bg-gradient-to-r from-purple-500 to-pink-500 rounded-full p-3 shadow-lg">
             <i class="fas fa-utensils text-white text-xl"></i>
           </div>
@@ -33,6 +40,15 @@
   <!-- Content Area -->
   <div class="absolute top-44 md:top-24 left-0 right-0 bottom-0 md:bottom-0 overflow-y-auto pb-20 md:pb-0">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-8">
+    <div class="flex justify-end md:hidden mb-4">
+      {% if current_user.role == 'admin' %}
+      <button id="toggleEditModeBtnMobile"
+              onclick="toggleEditMode()"
+              class="inline-flex items-center bg-white border border-purple-200 text-purple-600 hover:bg-purple-50 px-3 py-2 rounded-lg font-medium transition-colors shadow-sm">
+        <i class="fas fa-edit mr-2"></i>Edit Menu
+      </button>
+      {% endif %}
+    </div>
     <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
       {% for item in items %}
       <div class="bg-white rounded-xl md:rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group border border-gray-200 transform hover:scale-105">
@@ -54,17 +70,40 @@
           </div>
         {% endif %}
         
-        <div class="p-3 sm:p-5">
+        <div class="p-3 sm:p-5 flex flex-col space-y-2">
           <h3 class="text-sm sm:text-lg font-semibold text-gray-900 mb-1 sm:mb-2 line-clamp-1 sm:line-clamp-none">{{ item.name }}</h3>
           <p class="text-gray-600 text-xs sm:text-sm mb-2 sm:mb-4 line-clamp-1 sm:line-clamp-2 hidden sm:block">{{ item.description or 'Delicious food item' }}</p>
           
           <button onclick="addToCart({{ item.id }}, '{{ item.name|e }}', {{ item.price }})" 
-                  class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white py-1.5 sm:py-2.5 px-2 sm:px-4 rounded-lg sm:rounded-xl text-xs sm:text-base font-medium transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center">
+                  class="order-action w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white py-1.5 sm:py-2.5 px-2 sm:px-4 rounded-lg sm:rounded-xl text-xs sm:text-base font-medium transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center">
             <i class="fas fa-plus mr-1 sm:mr-2 text-xs sm:text-sm"></i><span class="hidden sm:inline">Add to Cart</span><span class="sm:hidden">Add</span>
           </button>
+          {% if current_user.role == 'admin' %}
+          <div class="admin-actions hidden flex-col space-y-2">
+            <a href="{{ url_for('edit_menu_item', item_id=item.id) }}"
+               class="w-full inline-flex items-center justify-center bg-white border border-purple-200 text-purple-600 hover:bg-purple-50 py-1.5 sm:py-2.5 px-2 sm:px-4 rounded-lg sm:rounded-xl text-xs sm:text-base font-medium transition-all duration-300 shadow-sm hover:shadow-md">
+              <i class="fas fa-edit mr-1 sm:mr-2 text-xs sm:text-sm"></i>Edit Item
+            </a>
+            <form method="POST" action="{{ url_for('delete_menu_item', item_id=item.id) }}" onsubmit="return confirm('Delete {{ item.name }} from the menu?')">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+              <button type="submit"
+                      class="w-full inline-flex items-center justify-center bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 py-1.5 sm:py-2.5 px-2 sm:px-4 rounded-lg sm:rounded-xl text-xs sm:text-base font-medium transition-all duration-300 shadow-sm hover:shadow-md">
+                <i class="fas fa-trash-alt mr-1 sm:mr-2 text-xs sm:text-sm"></i>Delete Item
+              </button>
+            </form>
+          </div>
+          {% endif %}
         </div>
       </div>
       {% endfor %}
+      {% if current_user.role == 'admin' %}
+      <a href="{{ url_for('create_menu_item') }}"
+         class="admin-add-button hidden border-2 border-dashed border-purple-300 rounded-xl md:rounded-2xl flex flex-col items-center justify-center p-6 text-purple-500 hover:border-purple-400 hover:text-purple-600 transition-all duration-300 bg-white/60">
+        <i class="fas fa-plus-circle text-3xl mb-3"></i>
+        <span class="text-sm sm:text-base font-semibold text-center">Add New Menu Item</span>
+        <span class="text-xs text-purple-400 mt-1">Upload image, price and details</span>
+      </a>
+      {% endif %}
   </div>
 </div>
 
@@ -111,13 +150,42 @@
 
 <script>
 let cart = [];
+let editMode = false;
+
+// Show toast notification
+function showToast(message, type = 'success') {
+  const toast = document.createElement('div');
+  const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+  const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+  toast.className = `fixed top-20 right-4 z-[100] ${bgColor} text-white px-6 py-3 rounded-xl shadow-2xl transform transition-all duration-300 translate-x-full`;
+  toast.innerHTML = `
+    <div class="flex items-center">
+      <i class="fas ${icon} mr-2"></i>
+      <span>${message}</span>
+    </div>
+  `;
+  document.body.appendChild(toast);
+  
+  // Animate in
+  setTimeout(() => {
+    toast.classList.remove('translate-x-full');
+  }, 10);
+  
+  // Remove after 3 seconds
+  setTimeout(() => {
+    toast.classList.add('translate-x-full');
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
 
 function addToCart(id, name, price) {
   const existing = cart.find(item => item.id === id);
   if (existing) {
     existing.quantity += 1;
+    showToast(`${name} added! (Qty: ${existing.quantity})`, 'success');
   } else {
     cart.push({ id, name, price, quantity: 1 });
+    showToast(`${name} added to cart!`, 'success');
   }
   updateCartDisplay();
 }
@@ -198,5 +266,52 @@ function prepareOrderSubmission() {
   document.getElementById('cart_items_input').value = JSON.stringify(cart);
   return true;
 }
+
+function setEditMode(enabled) {
+  editMode = enabled;
+  const orderActions = document.querySelectorAll('.order-action');
+  const adminActions = document.querySelectorAll('.admin-actions');
+  const adminAddButtons = document.querySelectorAll('.admin-add-button');
+  const toggleButtons = [document.getElementById('toggleEditModeBtn'), document.getElementById('toggleEditModeBtnMobile')].filter(Boolean);
+
+  orderActions.forEach(btn => btn.classList.toggle('hidden', enabled));
+  adminActions.forEach(section => section.classList.toggle('hidden', !enabled));
+  adminAddButtons.forEach(btn => btn.classList.toggle('hidden', !enabled));
+  toggleButtons.forEach(btn => {
+    btn.innerHTML = enabled ? '<i class="fas fa-check mr-2"></i>Done Editing' : '<i class="fas fa-edit mr-2"></i>Edit Menu';
+  });
+
+  if (enabled) {
+    if (window.location.hash !== '#manage') {
+      window.location.hash = 'manage';
+    }
+  } else if (window.location.hash === '#manage') {
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+  }
+}
+
+function toggleEditMode() {
+  setEditMode(!editMode);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const params = new URLSearchParams(window.location.search);
+  const startInEdit = window.location.hash === '#manage' || params.get('mode') === 'edit';
+  setEditMode(startInEdit);
+  
+  // Load existing unpaid orders into cart
+  {% if existing_cart %}
+  const existingCart = {{ existing_cart|tojson }};
+  existingCart.forEach(item => {
+    cart.push({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity
+    });
+  });
+  updateCartDisplay();
+  {% endif %}
+});
 </script>
 {% endblock %}

@@ -2,13 +2,14 @@ from flask import Flask, render_template, request, redirect, jsonify, flash, url
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from flask_wtf.csrf import CSRFProtect
-from models import db, StudentInfo, MenuItem, Order, Vote, Feedback, Parent, ParentChild, Payment, RewardCategory, Achievement, StudentPoints, RewardItem, StudentRedemption, StaffDirectory
-import os, json
+from models import db, StudentInfo, MenuItem, Order, Vote, Feedback, FeedbackMedia, Parent, ParentChild, Payment, RewardCategory, Achievement, StudentPoints, RewardItem, StudentRedemption, Directory, Facility
+import os, json, uuid
 from barcode import Code128
 from barcode.writer import ImageWriter
 from flask_migrate import Migrate
 from flask_migrate import upgrade as alembic_upgrade
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from transactions import Transaction
 from sqlalchemy import func
 from sqlalchemy.engine import make_url
@@ -18,6 +19,7 @@ from error_handlers import register_error_handlers
 import re
 from functools import wraps
 import time
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
 # Load environment variables from .env file if it exists
 try:
@@ -33,6 +35,19 @@ except Exception as e:
 config_name = os.environ.get('FLASK_ENV', 'development')
 app = Flask(__name__)
 app.config.from_object(config[config_name])
+
+# Upload configuration
+app.config.setdefault('FEEDBACK_UPLOAD_FOLDER', os.path.join(app.root_path, 'static', 'uploads', 'feedback'))
+app.config.setdefault('MENU_IMAGE_UPLOAD_FOLDER', os.path.join(app.root_path, 'static', 'images'))
+app.config.setdefault('MAX_CONTENT_LENGTH', 50 * 1024 * 1024)  # 50 MB limit for uploads
+
+ALLOWED_MENU_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+ALLOWED_FEEDBACK_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+ALLOWED_FEEDBACK_VIDEO_EXTENSIONS = {'mp4', 'mov', 'avi', 'mkv', 'webm'}
+
+# Ensure upload directories exist
+for folder in [app.config['FEEDBACK_UPLOAD_FOLDER'], app.config['MENU_IMAGE_UPLOAD_FOLDER']]:
+    os.makedirs(folder, exist_ok=True)
 
 # Initialize extensions
 db.init_app(app)
@@ -69,13 +84,21 @@ ACCESS_DENIED = "Access denied."
 
 # Input validation functions
 def validate_ic_number(ic):
-    """Validate IC number format"""
-    if not ic or not re.match(r'^\d{4}$', ic):
+    """Validate IC number format - allows Unicode characters (including Chinese), symbols, and alphanumeric"""
+    if not ic:
+        return False
+    # Allow Unicode characters, symbols, and alphanumeric
+    # Minimum 1 character, maximum 50 characters (reasonable limit)
+    # This allows Chinese characters, symbols, emojis, etc.
+    if len(ic) < 1 or len(ic) > 50:
+        return False
+    # Check if it contains at least one printable character (not just whitespace)
+    if not ic.strip():
         return False
     return True
 
 def validate_pin(pin):
-    """Validate PIN format"""
+    """Validate PIN format - must be exactly 4 digits"""
     if not pin or not re.match(r'^\d{4}$', pin):
         return False
     return True
@@ -108,6 +131,74 @@ def sanitize_input(text):
     # Remove HTML tags and escape special characters
     import html
     return html.escape(text.strip())
+
+def is_allowed_file(filename, allowed_extensions):
+    """Check if a filename has an allowed extension"""
+    return bool(filename and '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_extensions)
+
+def save_feedback_attachment(file_storage):
+    """Save feedback attachment and return metadata"""
+    filename = secure_filename(file_storage.filename or '')
+    if not filename:
+        raise ValueError("Invalid file name")
+    
+    extension = filename.rsplit('.', 1)[1].lower()
+    if extension in ALLOWED_FEEDBACK_IMAGE_EXTENSIONS:
+        media_type = 'image'
+    elif extension in ALLOWED_FEEDBACK_VIDEO_EXTENSIONS:
+        media_type = 'video'
+    else:
+        raise ValueError("Unsupported file type")
+    
+    unique_name = f"{uuid.uuid4().hex}_{filename}"
+    save_path = os.path.join(app.config['FEEDBACK_UPLOAD_FOLDER'], unique_name)
+    file_storage.save(save_path)
+    
+    relative_path = os.path.join('uploads', 'feedback', unique_name).replace('\\', '/')
+    
+    return {
+        'file_path': relative_path,
+        'media_type': media_type,
+        'original_filename': file_storage.filename,
+        'mimetype': file_storage.mimetype
+    }
+
+def delete_static_file(relative_path):
+    """Delete a file from the static directory if it exists"""
+    if not relative_path:
+        return
+    absolute_path = os.path.join(app.root_path, 'static', relative_path)
+    try:
+        if os.path.exists(absolute_path):
+            os.remove(absolute_path)
+    except Exception as e:
+        app.logger.warning(f"Failed to delete file {absolute_path}: {e}")
+
+def save_menu_image(file_storage):
+    """Save uploaded menu image and return stored filename"""
+    filename = secure_filename(file_storage.filename or '')
+    if not filename:
+        raise ValueError("Invalid image file name")
+    
+    extension = filename.rsplit('.', 1)[1].lower()
+    if extension not in ALLOWED_MENU_IMAGE_EXTENSIONS:
+        raise ValueError("Unsupported image format. Allowed: PNG, JPG, JPEG, GIF, WEBP")
+    
+    unique_name = f"{uuid.uuid4().hex}_{filename}"
+    save_path = os.path.join(app.config['MENU_IMAGE_UPLOAD_FOLDER'], unique_name)
+    file_storage.save(save_path)
+    return unique_name
+
+def delete_menu_image(filename):
+    """Delete an existing menu image file"""
+    if not filename:
+        return
+    absolute_path = os.path.join(app.config['MENU_IMAGE_UPLOAD_FOLDER'], filename)
+    try:
+        if os.path.exists(absolute_path):
+            os.remove(absolute_path)
+    except Exception as e:
+        app.logger.warning(f"Failed to delete menu image {absolute_path}: {e}")
 
 # Rate limiting decorator
 def rate_limit(max_requests=5, window=300):
@@ -298,10 +389,10 @@ def login():
             
             print(f"Login attempt: IC={ic}, PIN={'*' * len(pin)}")
             
-            # Input validation
+            # Input validation - show same error message for format errors and invalid credentials
             if not validate_ic_number(ic) or not validate_pin(pin):
                 print(f"Validation failed: IC={ic}, PIN={'*' * len(pin)}")
-                flash(INVALID_IC_FORMAT, 'error')
+                flash(INVALID_CREDENTIALS, 'error')
                 return redirect(url_for('login'))
             
             print(f"Validation passed, looking up student: {ic}")
@@ -570,8 +661,24 @@ def parent_payment(child_id):
             )
             
             # Generate QR code data (simplified - in real implementation, use bank API)
-            qr_data = generate_bank_qr_code(amount_decimal, transaction_id)
+            qr_data_result = generate_bank_qr_code(amount_decimal, transaction_id)
+            
+            # Extract qr_data from result - check both qr_data and qr_code fields
+            if isinstance(qr_data_result, dict):
+                qr_data = qr_data_result.get('qr_data') or qr_data_result.get('qr_code') or str(qr_data_result)
+            else:
+                qr_data = str(qr_data_result)
+            
+            # Ensure qr_data is not None or empty
+            if not qr_data or qr_data.strip() == '':
+                app.logger.error(f"QR data is empty for transaction {transaction_id}")
+                qr_data = f"PAYMENT|{amount_decimal:.2f}|{transaction_id}|MyMurid"
+            
             payment.qr_code_data = qr_data
+            
+            # Store bank account info if available
+            bank_account = qr_data_result.get('bank_account') if isinstance(qr_data_result, dict) else None
+            bank_name = qr_data_result.get('bank_name') if isinstance(qr_data_result, dict) else None
             
             db.session.add(payment)
             db.session.commit()
@@ -579,7 +686,9 @@ def parent_payment(child_id):
             return render_template('payment_qr.html', 
                                  payment=payment, 
                                  child=child,
-                                 qr_data=qr_data)
+                                 qr_data=qr_data,
+                                 bank_account=bank_account,
+                                 bank_name=bank_name)
             
         except Exception as e:
             db.session.rollback()
@@ -680,16 +789,24 @@ def generate_bank_qr_code(amount, transaction_id):
         )
         
         if result['success']:
-            return result['qr_data']
+            return result  # Return full result dict with bank account info
         else:
             app.logger.error(f"QR generation failed: {result['error']}")
             # Fallback to mock QR
-            return f"bank_qr://payment?amount={amount}&transaction_id={transaction_id}&merchant=MyMurid&account=1234567890"
+            return {
+                'qr_data': f"bank_qr://payment?amount={amount}&transaction_id={transaction_id}&merchant=MyMurid&account=1234567890",
+                'bank_account': '1234567890',
+                'bank_name': 'Test Bank'
+            }
             
     except Exception as e:
         app.logger.error(f"QR generation error: {str(e)}")
         # Fallback to mock QR
-        return f"bank_qr://payment?amount={amount}&transaction_id={transaction_id}&merchant=MyMurid&account=1234567890"
+        return {
+            'qr_data': f"bank_qr://payment?amount={amount}&transaction_id={transaction_id}&merchant=MyMurid&account=1234567890",
+            'bank_account': '1234567890',
+            'bank_name': 'Test Bank'
+        }
 
 # Rewards & Gamification Routes
 @app.route('/rewards')
@@ -984,7 +1101,209 @@ def order():
         return handle_order_submission()
     
     items, categories = get_menu_data()
-    return render_template("order.html", items=items, categories=categories)
+    
+    # Load existing unpaid orders for the cart
+    if current_user.role == 'student':
+        student = StudentInfo.query.get(current_user.id)
+        if student:
+            unpaid_orders = Order.query.filter_by(student_id=student.id, payment_status='unpaid').all()
+            # Group by menu_item_id
+            from collections import defaultdict
+            grouped_orders = defaultdict(lambda: {'item': None, 'quantity': 0})
+            for order in unpaid_orders:
+                menu_id = order.menu_item_id
+                if grouped_orders[menu_id]['item'] is None:
+                    grouped_orders[menu_id]['item'] = order.item
+                grouped_orders[menu_id]['quantity'] += order.quantity
+            
+            # Convert to list for template
+            existing_cart = []
+            for menu_id, data in grouped_orders.items():
+                existing_cart.append({
+                    'id': menu_id,
+                    'name': data['item'].name,
+                    'price': float(data['item'].price),
+                    'quantity': data['quantity']
+                })
+        else:
+            existing_cart = []
+    else:
+        existing_cart = []
+    
+    return render_template("order.html", items=items, categories=categories, existing_cart=existing_cart)
+
+
+@app.route("/admin/menu/new", methods=["GET", "POST"])
+@login_required
+def create_menu_item():
+    """Admin view to create a new menu item"""
+    if current_user.role != 'admin':
+        flash(ACCESS_DENIED, "error")
+        return redirect(url_for('order'))
+
+    temp_item = MenuItem(name="", price=Decimal("0.00"), is_available=True)
+
+    if request.method == 'POST':
+        name = sanitize_input(request.form.get('name'))
+        description = request.form.get('description', '').strip()
+        category = sanitize_input(request.form.get('category'))
+        price_input = request.form.get('price', '').strip()
+        is_available = request.form.get('is_available') == 'on'
+        image_file = request.files.get('image')
+
+        if not name:
+            flash('Item name is required.', 'error')
+            return redirect(url_for('create_menu_item'))
+
+        try:
+            price_decimal = Decimal(price_input)
+            if price_decimal <= 0:
+                raise InvalidOperation
+        except (InvalidOperation, ValueError):
+            flash('Please enter a valid price (e.g., 3.50).', 'error')
+            return redirect(url_for('create_menu_item'))
+
+        temp_item.name = name
+        temp_item.description = sanitize_input(description) if description else None
+        temp_item.category = category if category else None
+        temp_item.price = price_decimal
+        temp_item.is_available = is_available
+
+        new_image_filename = None
+
+        try:
+            if image_file and image_file.filename:
+                new_image_filename = save_menu_image(image_file)
+                temp_item.image_path = new_image_filename
+
+            db.session.add(temp_item)
+            db.session.commit()
+            flash(f"{temp_item.name} added to the menu.", "success")
+            return redirect(url_for('order'))
+
+        except ValueError as ve:
+            db.session.rollback()
+            if new_image_filename:
+                delete_menu_image(new_image_filename)
+            flash(str(ve), 'error')
+        except Exception as e:
+            db.session.rollback()
+            if new_image_filename:
+                delete_menu_image(new_image_filename)
+            app.logger.error(f"Menu item creation error: {e}")
+            flash('Failed to create menu item. Please try again.', 'error')
+
+    return render_template(
+        'edit_menu_item.html',
+        item=temp_item,
+        form_action=url_for('create_menu_item'),
+        is_new=True
+    )
+
+
+@app.route("/admin/menu/<int:item_id>/edit", methods=["GET", "POST"])
+@login_required
+def edit_menu_item(item_id):
+    """Admin view to edit menu item details and image"""
+    if current_user.role != 'admin':
+        flash(ACCESS_DENIED, "error")
+        return redirect(url_for('order'))
+
+    item = MenuItem.query.get_or_404(item_id)
+
+    if request.method == 'POST':
+        name = sanitize_input(request.form.get('name'))
+        description = request.form.get('description', '').strip()
+        category = sanitize_input(request.form.get('category'))
+        price_input = request.form.get('price', '').strip()
+        is_available = request.form.get('is_available') == 'on'
+        image_file = request.files.get('image')
+
+        if not name:
+            flash('Item name is required.', 'error')
+            return redirect(url_for('edit_menu_item', item_id=item_id))
+
+        try:
+            price_decimal = Decimal(price_input)
+            if price_decimal <= 0:
+                raise InvalidOperation
+        except (InvalidOperation, ValueError):
+            flash('Please enter a valid price (e.g., 3.50).', 'error')
+            return redirect(url_for('edit_menu_item', item_id=item_id))
+
+        old_image = item.image_path
+        new_image_filename = None
+
+        try:
+            item.name = name
+            item.description = sanitize_input(description) if description else None
+            item.category = category if category else None
+            item.price = price_decimal
+            item.is_available = is_available
+
+            if image_file and image_file.filename:
+                new_image_filename = save_menu_image(image_file)
+                item.image_path = new_image_filename
+                if old_image and old_image != new_image_filename:
+                    delete_menu_image(old_image)
+
+            db.session.commit()
+            flash(f"{item.name} updated successfully.", "success")
+            return redirect(url_for('order'))
+
+        except ValueError as ve:
+            db.session.rollback()
+            if new_image_filename and new_image_filename != old_image:
+                delete_menu_image(new_image_filename)
+            flash(str(ve), 'error')
+        except Exception as e:
+            db.session.rollback()
+            if new_image_filename and new_image_filename != old_image:
+                delete_menu_image(new_image_filename)
+            app.logger.error(f"Menu item update error: {e}")
+            flash('Failed to update menu item. Please try again.', 'error')
+
+    return render_template(
+        'edit_menu_item.html',
+        item=item,
+        form_action=url_for('edit_menu_item', item_id=item.id),
+        is_new=False
+    )
+
+
+@app.route("/admin/menu/<int:item_id>/delete", methods=["POST"])
+@login_required
+def delete_menu_item(item_id):
+    """Admin action to delete or archive a menu item"""
+    if current_user.role != 'admin':
+        flash(ACCESS_DENIED, "error")
+        return redirect(url_for('order'))
+
+    item = MenuItem.query.get_or_404(item_id)
+    redirect_target = request.referrer or url_for('order')
+
+    try:
+        orders_count = Order.query.filter_by(menu_item_id=item.id).count()
+        if orders_count > 0:
+            # Archive item instead of deleting to preserve order history
+            if item.image_path:
+                delete_menu_image(item.image_path)
+                item.image_path = None
+            item.is_available = False
+            db.session.commit()
+            flash(f"{item.name} archived because it has existing orders.", "info")
+        else:
+            if item.image_path:
+                delete_menu_image(item.image_path)
+            db.session.delete(item)
+            db.session.commit()
+            flash(f"{item.name} deleted from menu.", "success")
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Menu item deletion error: {e}")
+        flash('Failed to delete menu item. Please try again.', 'error')
+
+    return redirect(redirect_target)
 
 def handle_order_submission():
     """Handle order submission from cart"""
@@ -1028,19 +1347,153 @@ def payment():
             return handle_order_payment(student)
 
     unpaid_orders = Order.query.filter_by(student_id=student.id, payment_status='unpaid').all()
-    total = sum(order.total_price for order in unpaid_orders)
-    return render_template("payment.html", cart_items=unpaid_orders, total=total, user=student)
+    
+    # Group orders by menu_item_id and sum quantities
+    from collections import defaultdict
+    grouped_orders = defaultdict(lambda: {'item': None, 'quantity': 0, 'total_price': 0, 'order_ids': []})
+    
+    for order in unpaid_orders:
+        menu_id = order.menu_item_id
+        if menu_id not in grouped_orders or grouped_orders[menu_id]['item'] is None:
+            grouped_orders[menu_id]['item'] = order.item
+        grouped_orders[menu_id]['quantity'] += order.quantity
+        grouped_orders[menu_id]['total_price'] += float(order.total_price or 0)
+        grouped_orders[menu_id]['order_ids'].append(order.id)
+    
+    # Convert to list format for template
+    grouped_cart_items = []
+    for menu_id, data in grouped_orders.items():
+        grouped_cart_items.append({
+            'menu_item_id': menu_id,
+            'item': data['item'],
+            'quantity': data['quantity'],
+            'total_price': data['total_price'],
+            'order_ids': data['order_ids']
+        })
+    
+    total = sum(item['total_price'] for item in grouped_cart_items)
+    return render_template("payment.html", cart_items=grouped_cart_items, total=total, user=student)
+
+@app.route("/my-orders")
+@login_required
+def my_orders():
+    """Student view to see all their orders (paid and unpaid)"""
+    if current_user.role != 'student':
+        flash(ACCESS_DENIED, "error")
+        return redirect(url_for('home'))
+    
+    student = StudentInfo.query.get(current_user.id)
+    if not student:
+        flash("Student not found.", "error")
+        return redirect(url_for('student_dashboard'))
+    
+    # Get all orders for this student, ordered by most recent first
+    all_orders = Order.query.filter_by(student_id=student.id).order_by(Order.order_time.desc()).all()
+    
+    # Group orders by payment status
+    paid_orders = [o for o in all_orders if o.payment_status == 'paid']
+    unpaid_orders = [o for o in all_orders if o.payment_status == 'unpaid']
+    
+    # Group paid orders by order_time (same day/time = same order session)
+    from collections import defaultdict
+    from datetime import datetime
+    
+    grouped_paid = defaultdict(list)
+    for order in paid_orders:
+        # Group by date and hour (orders within same hour are considered same session)
+        order_key = order.order_time.strftime('%Y-%m-%d %H:00') if order.order_time else 'unknown'
+        grouped_paid[order_key].append(order)
+    
+    # Convert to sorted list of tuples for template
+    grouped_paid_sorted = sorted(grouped_paid.items(), key=lambda x: x[0], reverse=True)
+    
+    return render_template("my_orders.html", 
+                         paid_orders=paid_orders,
+                         unpaid_orders=unpaid_orders,
+                         grouped_paid=grouped_paid_sorted,
+                         student=student)
 
 def handle_order_delete(student):
-    order_id = request.form.get("delete")
-    order = Order.query.get(order_id)
-    if order and order.student_id == student.id and order.payment_status == 'unpaid':
-        db.session.delete(order)
+    # Handle multiple order IDs (when grouped items are deleted)
+    order_ids = request.form.getlist("delete")
+    deleted_count = 0
+    
+    for order_id in order_ids:
+        order = Order.query.get(order_id)
+        if order and order.student_id == student.id and order.payment_status == 'unpaid':
+            db.session.delete(order)
+            deleted_count += 1
+    
+    if deleted_count > 0:
         db.session.commit()
-        flash("🗑️ Order deleted.", "success")
+        flash(f"🗑️ {deleted_count} order(s) deleted.", "success")
     else:
-        flash("❌ Order not found or already paid.", "error")
+        flash("❌ No orders found or already paid.", "error")
     return redirect(url_for("payment"))
+
+@app.route('/api/update-order-quantity', methods=['POST'])
+@login_required
+def update_order_quantity():
+    """API endpoint to update order quantity for a menu item"""
+    if current_user.role != 'student':
+        return jsonify({'error': ACCESS_DENIED}), 403
+    
+    data = request.get_json()
+    menu_item_id = data.get('menu_item_id')
+    new_quantity = data.get('quantity')
+    
+    if not menu_item_id or new_quantity is None:
+        return jsonify({'error': 'Missing menu_item_id or quantity'}), 400
+    
+    if new_quantity < 1:
+        return jsonify({'error': 'Quantity cannot be less than 1'}), 400
+    
+    student = StudentInfo.query.get(current_user.id)
+    if not student:
+        return jsonify({'error': 'Student not found'}), 404
+    
+    # Get all unpaid orders for this menu item
+    unpaid_orders = Order.query.filter_by(
+        student_id=student.id,
+        menu_item_id=menu_item_id,
+        payment_status='unpaid'
+    ).all()
+    
+    if not unpaid_orders:
+        return jsonify({'error': 'No unpaid orders found for this item'}), 404
+    
+    # Get the menu item to get the price
+    menu_item = MenuItem.query.get(menu_item_id)
+    if not menu_item:
+        return jsonify({'error': 'Menu item not found'}), 404
+    
+    try:
+        # If we have multiple orders, consolidate them into one
+        # Otherwise, just update the quantity of the existing order
+        if len(unpaid_orders) > 1:
+            # Keep the first order, update its quantity
+            main_order = unpaid_orders[0]
+            main_order.quantity = new_quantity
+            main_order.total_price = float(menu_item.price) * new_quantity
+            
+            # Delete the rest
+            for order in unpaid_orders[1:]:
+                db.session.delete(order)
+        else:
+            # Update the single order
+            unpaid_orders[0].quantity = new_quantity
+            unpaid_orders[0].total_price = float(menu_item.price) * new_quantity
+        
+        db.session.commit()
+        return jsonify({
+            'success': True,
+            'quantity': new_quantity,
+            'total_price': float(menu_item.price) * new_quantity
+        })
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error updating order quantity: {str(e)}")
+        return jsonify({'error': 'Failed to update quantity'}), 500
 
 def validate_payment_conditions(student, unpaid_orders):
     """Validate payment conditions before processing"""
@@ -1050,15 +1503,18 @@ def validate_payment_conditions(student, unpaid_orders):
     if student.frozen:
         raise ValueError(ACCOUNT_FROZEN)
 
-    total_amount = sum(float(order.total_price) for order in unpaid_orders)
-    if student.balance < total_amount:
+    total_amount = sum(Decimal(order.total_price or 0) for order in unpaid_orders)
+    total_amount = total_amount.quantize(Decimal('1'), rounding=ROUND_HALF_UP)
+    total_amount_int = int(total_amount)
+
+    if student.balance < total_amount_int:
         raise ValueError(INSUFFICIENT_BALANCE)
 
-    return total_amount
+    return total_amount_int
 
 def process_payment_transaction(student, unpaid_orders, total_amount):
     """Process the payment transaction"""
-    # Update student balance
+    # Update student balance using integer arithmetic (amount in RM)
     student.balance -= total_amount
     
     # Mark orders as paid
@@ -1068,7 +1524,7 @@ def process_payment_transaction(student, unpaid_orders, total_amount):
     # Create transaction record
     new_tx = Transaction(
         type="Payment",
-        amount=-total_amount,
+        amount=Decimal(-total_amount).quantize(Decimal('0.01')),
         description=f"Payment for {len(unpaid_orders)} items"
         )
     db.session.add(new_tx)
@@ -1114,63 +1570,144 @@ def paid_orders():
         flash(ACCESS_DENIED, "error")
         return redirect(url_for("student_dashboard"))
 
-    if request.method == "POST":
-        order_id = request.form.get("order_id")
-        order = Order.query.get(order_id)
-        if order:
-            order.status = 'completed'  # Fixed: use status instead of done
-            db.session.commit()
-            flash("✅ Order marked as completed.", "success")
-        return redirect(url_for("paid_orders"))
-
+    # Get search query
+    search_query = request.args.get('search', '').strip()
+    
     # Optimize query with join to avoid N+1 queries
-    paid_orders = db.session.query(Order, StudentInfo)\
+    query = db.session.query(Order, StudentInfo, MenuItem)\
         .join(StudentInfo)\
+        .join(MenuItem)\
         .filter(Order.payment_status == 'paid')\
-        .order_by(Order.order_time.desc())\
-        .all()
+        .order_by(Order.order_time.desc())
+    
+    # Apply search filter
+    if search_query:
+        query = query.filter(
+            db.or_(
+                StudentInfo.name.ilike(f'%{search_query}%'),
+                StudentInfo.ic_number.ilike(f'%{search_query}%'),
+                MenuItem.name.ilike(f'%{search_query}%')
+            )
+        )
+    
+    paid_orders = query.all()
 
-    grouped = {}
-    for order, student in paid_orders:
-        if student not in grouped:
-            grouped[student] = []
-        grouped[student].append(order)
+    # Group orders by student and menu item name
+    from collections import defaultdict
+    grouped_by_student = defaultdict(lambda: defaultdict(lambda: {'orders': [], 'total_qty': 0, 'total_price': 0, 'status': 'pending'}))
+    
+    for order, student, menu_item in paid_orders:
+        grouped_by_student[student][menu_item.name]['orders'].append(order)
+        grouped_by_student[student][menu_item.name]['total_qty'] += order.quantity
+        grouped_by_student[student][menu_item.name]['total_price'] += float(order.total_price or 0)
+        # If any order is completed, mark as completed
+        if order.status == 'completed':
+            grouped_by_student[student][menu_item.name]['status'] = 'completed'
+        grouped_by_student[student][menu_item.name]['menu_item'] = menu_item
 
-    # Sort orders by status (completed first)
-    for orders in grouped.values():
-        orders.sort(key=lambda x: x.status == 'completed', reverse=True)
+    # Convert to format expected by template
+    grouped_orders = {}
+    for student, items in grouped_by_student.items():
+        grouped_orders[student] = []
+        for item_name, data in items.items():
+            grouped_orders[student].append({
+                'name': item_name,
+                'orders': data['orders'],
+                'total_qty': data['total_qty'],
+                'total_price': data['total_price'],
+                'status': data['status'],
+                'menu_item': data['menu_item'],
+                'order_ids': [o.id for o in data['orders']]
+            })
+        # Sort by status (pending first)
+        grouped_orders[student].sort(key=lambda x: x['status'] == 'completed')
 
-    return render_template("paid_orders.html", grouped_orders=grouped)
+    return render_template("paid_orders.html", grouped_orders=grouped_orders, search_query=search_query)
 
-@app.route("/mark-done/<int:id>", methods=["POST"])
+@app.route("/mark-done", methods=["POST"])
 @login_required
-def mark_order_done(id):
+def mark_order_done():
+    """Mark order(s) as done - accepts JSON with order_id or order_ids array"""
     if current_user.role not in ['admin', 'staff']:
-        flash("Unauthorized access", "error")
-        return redirect(url_for("paid_orders"))
+        return jsonify({'error': 'Unauthorized access'}), 403
 
-    order = Order.query.get(id)
-    if not order:
-        flash("Order not found.", "error")
-        return redirect(url_for("paid_orders"))
+    data = request.get_json()
+    order_id = data.get('order_id')
+    order_ids = data.get('order_ids', [])
+    
+    # Support both single order_id and array of order_ids
+    if order_id:
+        order_ids = [order_id]
+    
+    if not order_ids:
+        return jsonify({'error': 'No order IDs provided'}), 400
+    
+    updated_count = 0
+    try:
+        for oid in order_ids:
+            order = Order.query.get(oid)
+            if order and order.payment_status == 'paid':
+                order.status = 'completed'
+                updated_count += 1
+        
+        if updated_count > 0:
+            db.session.commit()
+            return jsonify({'success': True, 'message': f'{updated_count} order(s) marked as completed'})
+        else:
+            return jsonify({'error': 'No valid orders found'}), 404
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error marking orders as done: {str(e)}")
+        return jsonify({'error': 'Failed to update orders'}), 500
 
-    order.status = 'completed'
-    db.session.commit()
-    return redirect(url_for("paid_orders"))
-
-@app.route("/delete-order/<int:id>", methods=["POST"])
+@app.route("/delete-order", methods=["POST"])
 @login_required
-def delete_order(id):
+def delete_order():
+    """Delete order(s) - refunds money if order is pending, just deletes if completed"""
     if current_user.role not in ['admin', 'staff']:
-        flash("Unauthorized", "error")
-        return redirect(url_for("paid_orders"))
+        return jsonify({'error': 'Unauthorized'}), 403
 
-    order = Order.query.get(id)
-    if order:
-        db.session.delete(order)
-        db.session.commit()
-        flash("Order deleted.", "success")
-    return redirect(url_for("paid_orders"))
+    data = request.get_json()
+    order_id = data.get('order_id')
+    order_ids = data.get('order_ids', [])
+    
+    # Support both single order_id and array of order_ids
+    if order_id:
+        order_ids = [order_id]
+    
+    if not order_ids:
+        return jsonify({'error': 'No order IDs provided'}), 400
+    
+    deleted_count = 0
+    refunded_amount = 0
+    
+    try:
+        for oid in order_ids:
+            order = Order.query.get(oid)
+            if order and order.payment_status == 'paid':
+                student = StudentInfo.query.get(order.student_id)
+                if student:
+                    # If order is pending, refund the money
+                    if order.status != 'completed':
+                        refund_amount = float(order.total_price or 0)
+                        student.balance += int(refund_amount)
+                        refunded_amount += refund_amount
+                
+                db.session.delete(order)
+                deleted_count += 1
+        
+        if deleted_count > 0:
+            db.session.commit()
+            message = f'{deleted_count} order(s) deleted'
+            if refunded_amount > 0:
+                message += f'. RM {refunded_amount:.2f} refunded to student account.'
+            return jsonify({'success': True, 'message': message, 'refunded': refunded_amount})
+        else:
+            return jsonify({'error': 'No valid orders found'}), 404
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error deleting orders: {str(e)}")
+        return jsonify({'error': 'Failed to delete orders'}), 500
 
 @app.route('/scan', methods=['POST'])
 def scan():
@@ -1228,26 +1765,117 @@ def delete_vote(id):
 @login_required
 def feedback():
     if request.method == 'POST':
-        message = request.form.get('message')
+        message = request.form.get('message', '').strip()
+        attachments = request.files.getlist('attachments')
+        attachments = [file for file in attachments if file and file.filename]
+        
+        if not message and not attachments:
+            flash('Please enter feedback or attach a file.', 'error')
+            return redirect(url_for('feedback'))
+
+        if len(attachments) > 5:
+            flash('You can upload up to 5 attachments per feedback.', 'error')
+            return redirect(url_for('feedback'))
+
+        try:
+            # Ensure feedback media table exists (for deployments without migrations)
+            FeedbackMedia.__table__.create(db.engine, checkfirst=True)
+        except Exception as e:
+            app.logger.warning(f"Could not ensure feedback_media table exists: {e}")
+
         new_feedback = Feedback(message=message, student_id=current_user.id)
-        db.session.add(new_feedback)
-        db.session.commit()
+        saved_paths = []
+        
+        try:
+            db.session.add(new_feedback)
+            db.session.flush()  # assign ID before adding attachments
+            
+            for file_storage in attachments:
+                meta = save_feedback_attachment(file_storage)
+                saved_paths.append(meta['file_path'])
+                
+                media_record = FeedbackMedia(
+                    feedback_id=new_feedback.id,
+                    file_path=meta['file_path'],
+                    media_type=meta['media_type'],
+                    original_filename=meta['original_filename'],
+                    mimetype=meta['mimetype']
+                )
+                db.session.add(media_record)
+            
+            db.session.commit()
+            flash('Feedback submitted successfully.', 'success')
+        except ValueError as ve:
+            db.session.rollback()
+            for path in saved_paths:
+                delete_static_file(path)
+            flash(str(ve), 'error')
+        except Exception as e:
+            db.session.rollback()
+            for path in saved_paths:
+                delete_static_file(path)
+            app.logger.error(f"Feedback submission error: {e}")
+            flash('Failed to submit feedback. Please try again.', 'error')
+        
         return redirect(url_for('feedback'))
-    feedbacks = Feedback.query.all()
+
+    feedbacks = Feedback.query.order_by(Feedback.timestamp.desc()).all()
     return render_template('feedback.html', feedbacks=feedbacks)
 
 @app.route('/directory')
 @login_required
 def directory():
-    """Display school directory map"""
+    """Display school directory map - SMK SEKSYEN 3 BANDAR KINRARA"""
+    # Single floor plan - show all staff and facilities regardless of floor
     floor_level = request.args.get('floor', 1, type=int)
     
-    # Get all active staff members for the selected floor
-    staff_members = StaffDirectory.query.filter_by(is_active=True, floor_level=floor_level).order_by(
-        StaffDirectory.zone_area,
-        StaffDirectory.display_order,
-        StaffDirectory.name
-    ).all()
+    staff_members = []
+    facilities = []
+    floors = [1]  # Single floor plan
+    
+    try:
+        # Get all active staff members (single floor plan shows all)
+        staff_members = Directory.query.filter_by(is_active=True).order_by(
+            Directory.zone_area,
+            Directory.display_order,
+            Directory.name
+        ).all()
+        
+        # Get all active facilities (single floor plan shows all)
+        facilities = Facility.query.filter_by(is_active=True).order_by(
+            Facility.facility_type,
+            Facility.zone_area,
+            Facility.display_order,
+            Facility.name
+        ).all()
+        
+        # For single floor plan, just use floor 1
+        floors = [1]
+        
+    except Exception as e:
+        # If tables don't exist, create them
+        if 'does not exist' in str(e) or 'UndefinedTable' in str(e):
+            try:
+                # Create the tables directly using the table's create method
+                Directory.__table__.create(db.engine, checkfirst=True)
+                Facility.__table__.create(db.engine, checkfirst=True)
+                flash('Directory tables created. You can now add staff and facilities.', 'success')
+                staff_members = []
+                facilities = []
+                floors = [1]
+            except Exception as create_error:
+                flash(f'Error creating directory tables: {str(create_error)}', 'error')
+                staff_members = []
+                facilities = []
+                floors = [1]
+        else:
+            flash(f'Error loading directory: {str(e)}', 'error')
+            staff_members = []
+            facilities = []
+            floors = [1]
+    
+    if not floors:
+        floors = [1]  # Default to floor 1 if no data
     
     # Group staff by zone/area
     staff_by_zone = {}
@@ -1259,15 +1887,19 @@ def directory():
             zones.append(zone)
         staff_by_zone[zone].append(staff)
     
-    # Get all unique floors
-    floors = db.session.query(StaffDirectory.floor_level).distinct().filter_by(is_active=True).order_by(StaffDirectory.floor_level).all()
-    floors = [floor[0] for floor in floors if floor[0]]
-    if not floors:
-        floors = [1]  # Default to floor 1 if no data
+    # Group facilities by type
+    facilities_by_type = {}
+    for facility in facilities:
+        facility_type = facility.facility_type or 'other'
+        if facility_type not in facilities_by_type:
+            facilities_by_type[facility_type] = []
+        facilities_by_type[facility_type].append(facility)
     
     return render_template('directory.html', 
                          staff_by_zone=staff_by_zone,
                          zones=zones,
+                         facilities=facilities,
+                         facilities_by_type=facilities_by_type,
                          current_floor=floor_level,
                          available_floors=floors)
 
@@ -1276,6 +1908,9 @@ def directory():
 def delete_feedback(id):
     feedback = Feedback.query.get_or_404(id)
     if current_user.role == 'admin' or feedback.student_id == current_user.id:
+        if feedback.media:
+            for media in feedback.media:
+                delete_static_file(media.file_path)
         db.session.delete(feedback)
         db.session.commit()
         flash('Feedback deleted.', 'success')
@@ -1283,12 +1918,12 @@ def delete_feedback(id):
         flash('You can only delete your own feedback.', 'error')
     return redirect(url_for('feedback'))
 
-@app.route('/topup', methods=['GET', 'POST'])
-@login_required
-def topup():
+def _render_admin_finance_page():
     if current_user.role != 'admin':
         flash(ACCESS_DENIED, "error")
         return redirect(url_for('home'))
+
+    topup_student = None
 
     if request.method == 'POST':
         ic = request.form.get('ic', '').strip()
@@ -1297,29 +1932,30 @@ def topup():
         # Input validation
         if not validate_ic_number(ic):
             flash(INVALID_IC_FORMAT, 'error')
-            return redirect(url_for('topup'))
+            return redirect(request.url)
         
         if not validate_amount(amount):
             flash(INVALID_AMOUNT, 'error')
-            return redirect(url_for('topup'))
+            return redirect(request.url)
         
         student = safe_get_student(ic)
         if not student:
             flash(STUDENT_NOT_FOUND, 'error')
-            return redirect(url_for('topup'))
+            return redirect(request.url)
 
         if student.frozen:
             flash(ACCOUNT_FROZEN, "error")
-            return redirect(url_for("topup"))
+            return redirect(request.url)
 
         try:
             amount_int = int(amount)
             student.balance += amount_int
+            topup_student = student
         
             new_tx = Transaction(
-            type="Top-up",
-            amount=amount_int,  # Fixed: use int instead of string
-            description=f"Top-up for {student.name}"
+                type="Top-up",
+                amount=amount_int,  # Fixed: use int instead of string
+                description=f"Top-up for {student.name}"
             )
             db.session.add(new_tx)
             db.session.commit()
@@ -1328,8 +1964,114 @@ def topup():
             db.session.rollback()
             app.logger.error(f"Top-up error: {str(e)}")
             flash("Error processing top-up. Please try again.", "error")
+    
+    # Get all pending payments
+    pending_payments = Payment.query.filter_by(status='pending').order_by(Payment.created_at.desc()).all()
+    completed_payments = Payment.query.filter_by(status='completed').order_by(Payment.completed_at.desc()).limit(20).all()
+    
+    return render_template(
+        'admin_finance.html',
+        pending_payments=pending_payments,
+        completed_payments=completed_payments,
+        topup_student=topup_student
+    )
 
-    return render_template("topup.html")
+
+@app.route('/admin/finance', methods=['GET', 'POST'])
+@login_required
+def admin_finance():
+    """Unified admin finance dashboard for top-ups and payment approvals"""
+    return _render_admin_finance_page()
+
+
+@app.route('/topup', methods=['GET', 'POST'])
+@login_required
+def topup():
+    """Backward-compatible route pointing to admin finance dashboard"""
+    return _render_admin_finance_page()
+
+
+@app.route('/admin/payments')
+@login_required
+def admin_payments():
+    """Backward-compatible route that now renders the finance dashboard"""
+    return _render_admin_finance_page()
+
+@app.route('/admin/payments/approve/<transaction_id>', methods=['POST'])
+@login_required
+def approve_payment(transaction_id):
+    """Admin route to approve a payment"""
+    if current_user.role != 'admin':
+        flash(ACCESS_DENIED, "error")
+        return redirect(url_for('home'))
+    
+    payment = Payment.query.filter_by(transaction_id=transaction_id).first()
+    if not payment:
+        flash('Payment not found.', 'error')
+        return redirect(url_for('admin_finance'))
+    
+    if payment.status != 'pending':
+        flash('Payment already processed.', 'error')
+        return redirect(url_for('admin_finance'))
+    
+    try:
+        # Update payment status
+        payment.status = 'completed'
+        payment.completed_at = datetime.now(timezone(timedelta(hours=8)))
+        
+        # Add balance to student's account
+        child = StudentInfo.query.get(payment.student_id)
+        if child:
+            child.balance += int(payment.amount)
+            
+            # Create transaction record
+            new_tx = Transaction(
+                type="Top-up",
+                amount=int(payment.amount),
+                description=f"QR Payment top-up for {child.name} (Transaction: {transaction_id[:8]})"
+            )
+            db.session.add(new_tx)
+            db.session.commit()
+            
+            flash(f'Payment approved! RM{payment.amount} added to {child.name}\'s account.', 'success')
+        else:
+            flash('Student not found.', 'error')
+            db.session.rollback()
+            
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Payment approval error: {str(e)}")
+        flash('Error approving payment. Please try again.', 'error')
+    
+    return redirect(url_for('admin_finance'))
+
+@app.route('/admin/payments/reject/<transaction_id>', methods=['POST'])
+@login_required
+def reject_payment(transaction_id):
+    """Admin route to reject a payment"""
+    if current_user.role != 'admin':
+        flash(ACCESS_DENIED, "error")
+        return redirect(url_for('home'))
+    
+    payment = Payment.query.filter_by(transaction_id=transaction_id).first()
+    if not payment:
+        flash('Payment not found.', 'error')
+        return redirect(url_for('admin_finance'))
+    
+    if payment.status != 'pending':
+        flash('Payment already processed.', 'error')
+        return redirect(url_for('admin_finance'))
+    
+    try:
+        payment.status = 'failed'
+        db.session.commit()
+        flash('Payment rejected.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Payment rejection error: {str(e)}")
+        flash('Error rejecting payment. Please try again.', 'error')
+    
+    return redirect(url_for('admin_finance'))
 
 @app.route('/freeze_card', methods=['POST'])
 @login_required

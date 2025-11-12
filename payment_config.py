@@ -49,7 +49,32 @@ class PaymentConfig:
                 'merchant_id': 'MOCK_MERCHANT',
                 'api_key': 'MOCK_API_KEY',
                 'secret_key': 'MOCK_SECRET_KEY',
-                'callback_url': os.environ.get('PAYMENT_CALLBACK_URL', 'https://yourdomain.com/api/payment/callback')
+                'callback_url': os.environ.get('PAYMENT_CALLBACK_URL', 'https://yourdomain.com/api/payment/callback'),
+                # DuitNow QR Code (if canteen has existing DuitNow QR)
+                'duitnow_qr_code': os.environ.get('DUITNOW_QR_CODE', ''),  # Full DuitNow QR code string
+                # Single Canteen Bank Account Configuration
+                # If CANTEEN_BANK_ACCOUNT is set, use single account. Otherwise, use multiple accounts.
+                'canteen_bank_name': os.environ.get('CANTEEN_BANK_NAME', os.environ.get('TEST_BANK_1_NAME', 'Maybank')),
+                'canteen_bank_account': os.environ.get('CANTEEN_BANK_ACCOUNT', os.environ.get('TEST_BANK_1_ACCOUNT', '1234567890')),
+                'canteen_account_name': os.environ.get('CANTEEN_ACCOUNT_NAME', os.environ.get('TEST_BANK_1_ACCOUNT_NAME', 'Canteen Account')),
+                # Multiple test bank accounts (fallback if single account not set)
+                'test_accounts': [
+                    {
+                        'bank': os.environ.get('TEST_BANK_1_NAME', 'Maybank'),
+                        'account': os.environ.get('TEST_BANK_1_ACCOUNT', '1234567890'),
+                        'name': os.environ.get('TEST_BANK_1_ACCOUNT_NAME', 'MyMurid Test Account 1')
+                    },
+                    {
+                        'bank': os.environ.get('TEST_BANK_2_NAME', 'CIMB'),
+                        'account': os.environ.get('TEST_BANK_2_ACCOUNT', '0987654321'),
+                        'name': os.environ.get('TEST_BANK_2_ACCOUNT_NAME', 'MyMurid Test Account 2')
+                    },
+                    {
+                        'bank': os.environ.get('TEST_BANK_3_NAME', 'Public Bank'),
+                        'account': os.environ.get('TEST_BANK_3_ACCOUNT', '1122334455'),
+                        'name': os.environ.get('TEST_BANK_3_ACCOUNT_NAME', 'MyMurid Test Account 3')
+                    }
+                ]
             }
         }
     

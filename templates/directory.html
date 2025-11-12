@@ -9,7 +9,7 @@
         <i class="fas fa-bars text-2xl"></i>
       </button>
       <h1 class="text-lg font-semibold text-gray-800">MyMurid</h1>
-      <div class="w-10"></div> <!-- Spacer for centering -->
+      <div class="w-10"></div>
     </div>
   </nav>
   
@@ -18,12 +18,12 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6">
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-2xl md:text-3xl font-bold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">School Directory Map</h1>
-          <p class="text-gray-600 mt-1 text-sm md:text-base hidden sm:block">Find locations and departments</p>
+          <h1 class="text-2xl md:text-3xl font-bold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">School Directory</h1>
+          <p class="text-gray-600 mt-1 text-sm md:text-base hidden sm:block">Find classrooms, facilities, and locations</p>
         </div>
         <div class="flex items-center space-x-4">
           <div class="bg-gradient-to-r from-teal-500 to-cyan-500 rounded-full p-2 md:p-3 shadow-lg">
-            <i class="fas fa-map text-white text-lg md:text-xl"></i>
+            <i class="fas fa-map-marked-alt text-white text-lg md:text-xl"></i>
           </div>
         </div>
       </div>
@@ -34,155 +34,536 @@
   <div class="absolute top-44 md:top-24 left-0 right-0 bottom-0 md:bottom-0 overflow-y-auto pb-20 md:pb-0">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-8">
       
-      <!-- Floor Selector -->
+      <!-- School Info -->
       <div class="bg-white rounded-2xl shadow-xl border border-gray-200 p-4 sm:p-6 mb-6">
         <div class="flex items-center justify-between flex-wrap gap-4">
-          <div class="flex items-center gap-2">
-            <i class="fas fa-layer-group text-teal-600 text-xl"></i>
-            <span class="font-semibold text-gray-700">Select Floor:</span>
+          <div class="flex items-center gap-3">
+            <div class="bg-gradient-to-r from-teal-500 to-cyan-500 rounded-full p-3">
+              <i class="fas fa-school text-white text-xl"></i>
+            </div>
+            <div>
+              <h2 class="text-xl font-bold text-gray-900">SMK SEKSYEN 3 BANDAR KINRARA</h2>
+              <p class="text-sm text-gray-600">School Directory Map</p>
+            </div>
           </div>
-          <div class="flex gap-2">
-            {% for floor in available_floors %}
-            <a href="{{ url_for('directory', floor=floor) }}" 
-               id="floor-btn-{{ floor }}" 
-               class="floor-btn px-6 py-2 rounded-lg font-medium transition-all duration-200 {% if floor == current_floor %}bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg{% else %}bg-gray-200 text-gray-700 hover:bg-gray-300{% endif %}">
-              <i class="fas fa-building mr-2"></i>Floor {{ floor }}
-            </a>
-            {% endfor %}
-          </div>
-        </div>
-      </div>
-
-      <!-- Map Container -->
-      <div class="bg-white rounded-2xl shadow-xl border border-gray-200 p-4 sm:p-6 mb-6">
-        <div class="relative bg-gray-100 rounded-xl overflow-hidden" style="min-height: 600px;">
-          <!-- Interactive Map -->
-          <div id="map-container" class="relative w-full h-full" style="min-height: 600px;">
-            <!-- Floor Plan Map -->
-            <svg viewBox="0 0 1000 600" class="w-full h-full" preserveAspectRatio="xMidYMid meet">
-              <!-- Background Building Shape -->
-              <rect x="50" y="50" width="900" height="500" fill="#e0e7ff" stroke="#6366f1" stroke-width="3" rx="10"/>
-              
-              <!-- Zones/Areas - Clickable -->
-              <!-- Administration Office -->
-              <g class="map-zone cursor-pointer hover:opacity-80 transition-opacity" data-zone="administration" onclick="showZoneInfo('administration')">
-                <rect x="100" y="100" width="180" height="150" fill="#fef3c7" stroke="#f59e0b" stroke-width="2" rx="5"/>
-                <text x="190" y="165" text-anchor="middle" fill="#92400e" font-size="18" font-weight="bold">Administration</text>
-                <text x="190" y="185" text-anchor="middle" fill="#78350f" font-size="12">Main Office</text>
-                <circle cx="290" cy="120" r="8" fill="#ef4444" class="pulse-animation"/>
-              </g>
-              
-              <!-- Science Department -->
-              <g class="map-zone cursor-pointer hover:opacity-80 transition-opacity" data-zone="science" onclick="showZoneInfo('science')">
-                <rect x="320" y="100" width="200" height="150" fill="#dbeafe" stroke="#3b82f6" stroke-width="2" rx="5"/>
-                <text x="420" y="165" text-anchor="middle" fill="#1e40af" font-size="18" font-weight="bold">Science</text>
-                <text x="420" y="185" text-anchor="middle" fill="#1e3a8a" font-size="12">Labs & Offices</text>
-                <circle cx="520" cy="120" r="8" fill="#ef4444" class="pulse-animation"/>
-              </g>
-              
-              <!-- Mathematics Department -->
-              <g class="map-zone cursor-pointer hover:opacity-80 transition-opacity" data-zone="mathematics" onclick="showZoneInfo('mathematics')">
-                <rect x="560" y="100" width="200" height="150" fill="#fce7f3" stroke="#ec4899" stroke-width="2" rx="5"/>
-                <text x="660" y="165" text-anchor="middle" fill="#9f1239" font-size="18" font-weight="bold">Mathematics</text>
-                <text x="660" y="185" text-anchor="middle" fill="#831843" font-size="12">Classrooms</text>
-                <circle cx="760" cy="120" r="8" fill="#ef4444" class="pulse-animation"/>
-              </g>
-              
-              <!-- Library -->
-              <g class="map-zone cursor-pointer hover:opacity-80 transition-opacity" data-zone="library" onclick="showZoneInfo('library')">
-                <rect x="100" y="300" width="250" height="200" fill="#d1fae5" stroke="#10b981" stroke-width="2" rx="5"/>
-                <text x="225" y="380" text-anchor="middle" fill="#065f46" font-size="22" font-weight="bold">Library</text>
-                <text x="225" y="400" text-anchor="middle" fill="#064e3b" font-size="14">Reading & Study</text>
-                <circle cx="350" cy="320" r="8" fill="#ef4444" class="pulse-animation"/>
-              </g>
-              
-              <!-- Canteen -->
-              <g class="map-zone cursor-pointer hover:opacity-80 transition-opacity" data-zone="canteen" onclick="showZoneInfo('canteen')">
-                <rect x="390" y="300" width="250" height="200" fill="#fef3c7" stroke="#f59e0b" stroke-width="2" rx="5"/>
-                <text x="515" y="380" text-anchor="middle" fill="#92400e" font-size="22" font-weight="bold">Canteen</text>
-                <text x="515" y="400" text-anchor="middle" fill="#78350f" font-size="14">Food & Dining</text>
-                <circle cx="640" cy="320" r="8" fill="#ef4444" class="pulse-animation"/>
-              </g>
-              
-              <!-- Gymnasium -->
-              <g class="map-zone cursor-pointer hover:opacity-80 transition-opacity" data-zone="gymnasium" onclick="showZoneInfo('gymnasium')">
-                <rect x="680" y="300" width="220" height="200" fill="#fee2e2" stroke="#ef4444" stroke-width="2" rx="5"/>
-                <text x="790" y="380" text-anchor="middle" fill="#991b1b" font-size="22" font-weight="bold">Gymnasium</text>
-                <text x="790" y="400" text-anchor="middle" fill="#7f1d1d" font-size="14">Sports & Activities</text>
-                <circle cx="900" cy="320" r="8" fill="#ef4444" class="pulse-animation"/>
-              </g>
-              
-              <!-- Hallways -->
-              <rect x="100" y="250" width="800" height="30" fill="#f3f4f6" stroke="#9ca3af" stroke-width="1"/>
-              <rect x="100" y="280" width="30" height="220" fill="#f3f4f6" stroke="#9ca3af" stroke-width="1"/>
-              <rect x="620" y="280" width="30" height="220" fill="#f3f4f6" stroke="#9ca3af" stroke-width="1"/>
-              
-              <!-- "You Are Here" Marker -->
-              <g class="animate-pulse">
-                <circle cx="150" cy="550" r="12" fill="#ef4444" stroke="white" stroke-width="3"/>
-                <text x="150" y="575" text-anchor="middle" fill="#ef4444" font-size="14" font-weight="bold">You Are Here</text>
-              </g>
-            </svg>
-          </div>
-        </div>
-        
-        <!-- Legend -->
-        <div class="mt-4 flex flex-wrap gap-4 text-sm">
-          <div class="flex items-center gap-2">
-            <div class="w-4 h-4 bg-red-500 rounded-full animate-pulse"></div>
-            <span class="text-gray-600">Clickable Zone</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <div class="w-4 h-4 bg-red-500 rounded-full"></div>
-            <span class="text-gray-600">You Are Here</span>
+          <div class="flex items-center gap-2 text-sm text-gray-600">
+            <i class="fas fa-map-marker-alt text-teal-600"></i>
+            <span>Single Floor Plan</span>
           </div>
         </div>
       </div>
 
-      <!-- Zone Information Panel -->
-      <div id="zone-info-panel" class="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 hidden">
-        <div class="flex items-start justify-between mb-4">
-          <div>
-            <h2 id="zone-title" class="text-2xl font-bold text-gray-900 mb-2"></h2>
-            <p id="zone-description" class="text-gray-600"></p>
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <!-- Main Map Area -->
+        <div class="lg:col-span-3">
+          <!-- Legend on Top -->
+          <div class="bg-white rounded-2xl shadow-xl border border-gray-200 p-4 sm:p-6 mb-6">
+            <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+              <i class="fas fa-list text-teal-600 mr-2"></i>Legend
+            </h2>
+            
+            <div class="flex flex-wrap gap-4">
+              <!-- Facility Type Icons -->
+              <div class="legend-item flex items-center gap-2 px-3 py-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors" onclick="filterByType('classroom')">
+                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <i class="fas fa-chalkboard-teacher text-blue-600"></i>
+                </div>
+                <span class="text-sm font-medium text-gray-700">Classroom</span>
+              </div>
+              
+              <div class="legend-item flex items-center gap-2 px-3 py-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors" onclick="filterByType('lab')">
+                <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                  <i class="fas fa-flask text-green-600"></i>
+                </div>
+                <span class="text-sm font-medium text-gray-700">Laboratory</span>
+              </div>
+              
+              <div class="legend-item flex items-center gap-2 px-3 py-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors" onclick="filterByType('office')">
+                <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
+                  <i class="fas fa-briefcase text-yellow-600"></i>
+                </div>
+                <span class="text-sm font-medium text-gray-700">Office</span>
+              </div>
+              
+              <div class="legend-item flex items-center gap-2 px-3 py-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors" onclick="filterByType('library')">
+                <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <i class="fas fa-book text-purple-600"></i>
+                </div>
+                <span class="text-sm font-medium text-gray-700">Library</span>
+              </div>
+              
+              <div class="legend-item flex items-center gap-2 px-3 py-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors" onclick="filterByType('canteen')">
+                <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                  <i class="fas fa-utensils text-orange-600"></i>
+                </div>
+                <span class="text-sm font-medium text-gray-700">Canteen</span>
+              </div>
+              
+              <div class="legend-item flex items-center gap-2 px-3 py-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors" onclick="filterByType('gym')">
+                <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
+                  <i class="fas fa-dumbbell text-red-600"></i>
+                </div>
+                <span class="text-sm font-medium text-gray-700">Gymnasium</span>
+              </div>
+              
+              <div class="legend-item flex items-center gap-2 px-3 py-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors" onclick="filterByType('restroom')">
+                <div class="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center">
+                  <i class="fas fa-restroom text-teal-600"></i>
+                </div>
+                <span class="text-sm font-medium text-gray-700">Restroom</span>
+              </div>
+              
+              <div class="legend-item flex items-center gap-2 px-3 py-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors" onclick="filterByType('staircase')">
+                <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                  <i class="fas fa-stairs text-gray-600"></i>
+                </div>
+                <span class="text-sm font-medium text-gray-700">Staircase</span>
+              </div>
+              
+              <div class="legend-item flex items-center gap-2 px-3 py-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors" onclick="filterByType('lift')">
+                <div class="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
+                  <i class="fas fa-elevator text-indigo-600"></i>
+                </div>
+                <span class="text-sm font-medium text-gray-700">Lift</span>
+              </div>
+              
+              <!-- Divider -->
+              <div class="w-px h-8 bg-gray-300"></div>
+              
+              <!-- Special Markers -->
+              <div class="legend-item flex items-center gap-2 px-3 py-2">
+                <div class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center animate-pulse">
+                  <i class="fas fa-map-marker-alt text-white text-xs"></i>
+                </div>
+                <span class="text-sm font-medium text-gray-700">You Are Here</span>
+              </div>
+              
+              <div class="legend-item flex items-center gap-2 px-3 py-2">
+                <div class="w-8 h-8 bg-gray-200 rounded border-2 border-gray-400"></div>
+                <span class="text-sm font-medium text-gray-700">Hallway</span>
+              </div>
+            </div>
           </div>
-          <button onclick="closeZoneInfo()" class="text-gray-400 hover:text-gray-600">
-            <i class="fas fa-times text-xl"></i>
-          </button>
-        </div>
-        
-        <div id="zone-staff-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-          <!-- Staff members will be loaded here -->
-        </div>
-      </div>
 
-      <!-- Quick Search -->
-      <div class="bg-white rounded-2xl shadow-xl border border-gray-200 p-4 sm:p-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <i class="fas fa-search text-teal-600 mr-2"></i>Quick Search
-        </h3>
-        <div class="flex flex-wrap gap-2">
-          <button onclick="showZoneInfo('administration')" class="px-4 py-2 bg-teal-100 hover:bg-teal-200 text-teal-700 rounded-lg transition-colors">
-            Administration
-          </button>
-          <button onclick="showZoneInfo('science')" class="px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-colors">
-            Science
-          </button>
-          <button onclick="showZoneInfo('mathematics')" class="px-4 py-2 bg-pink-100 hover:bg-pink-200 text-pink-700 rounded-lg transition-colors">
-            Mathematics
-          </button>
-          <button onclick="showZoneInfo('library')" class="px-4 py-2 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-colors">
-            Library
-          </button>
-          <button onclick="showZoneInfo('canteen')" class="px-4 py-2 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 rounded-lg transition-colors">
-            Canteen
-          </button>
-          <button onclick="showZoneInfo('gymnasium')" class="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors">
-            Gymnasium
-          </button>
+          <!-- Map Container -->
+          <div class="bg-white rounded-2xl shadow-xl border border-gray-200 p-4 sm:p-6 mb-6">
+            <div class="relative bg-gray-50 rounded-xl overflow-hidden border-2 border-gray-300" style="min-height: 700px;">
+              <!-- Interactive Map -->
+              <div id="map-container" class="relative w-full h-full" style="min-height: 700px;">
+                <!-- Floor Plan Image -->
+                <!-- School Plan: SMK SEKSYEN 3 BANDAR KINRARA -->
+                <img id="floor-plan-image" 
+                     src="{{ url_for('static', filename='images/floor_plan.png') }}"
+                     alt="SMK SEKSYEN 3 BANDAR KINRARA - School Floor Plan"
+                     class="w-full h-auto max-h-[800px] object-contain"
+                     onerror="this.style.display='none'; document.getElementById('placeholder-map').style.display='block';"
+                     style="display: block;">
+                
+                <!-- Placeholder SVG map (shown if image not found) -->
+                <svg id="placeholder-map" viewBox="0 0 1200 700" class="w-full h-full" preserveAspectRatio="xMidYMid meet" style="display: none;">
+                  <!-- Background Building Shape -->
+                  <rect x="50" y="50" width="1100" height="600" fill="#ffffff" stroke="#3b82f6" stroke-width="4" rx="15"/>
+                  
+                  <!-- Grid pattern -->
+                  <defs>
+                    <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
+                      <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#e5e7eb" stroke-width="0.5"/>
+                    </pattern>
+                  </defs>
+                  <rect x="50" y="50" width="1100" height="600" fill="url(#grid)" opacity="0.2"/>
+                  
+                  <!-- Zone Areas -->
+                  <g class="map-zone cursor-pointer" data-zone="administration" onclick="showZoneInfo('administration')">
+                    <rect x="80" y="80" width="200" height="180" fill="#fef3c7" stroke="#f59e0b" stroke-width="2" rx="8" opacity="0.2"/>
+                    <text x="180" y="150" text-anchor="middle" fill="#92400e" font-size="18" font-weight="bold">Administration</text>
+                  </g>
+                  
+                  <g class="map-zone cursor-pointer" data-zone="science" onclick="showZoneInfo('science')">
+                    <rect x="320" y="80" width="220" height="180" fill="#dbeafe" stroke="#3b82f6" stroke-width="2" rx="8" opacity="0.2"/>
+                    <text x="430" y="150" text-anchor="middle" fill="#1e40af" font-size="18" font-weight="bold">Science</text>
+                  </g>
+                  
+                  <g class="map-zone cursor-pointer" data-zone="mathematics" onclick="showZoneInfo('mathematics')">
+                    <rect x="580" y="80" width="220" height="180" fill="#fce7f3" stroke="#ec4899" stroke-width="2" rx="8" opacity="0.2"/>
+                    <text x="690" y="150" text-anchor="middle" fill="#9f1239" font-size="18" font-weight="bold">Mathematics</text>
+                  </g>
+                  
+                  <g class="map-zone cursor-pointer" data-zone="library" onclick="showZoneInfo('library')">
+                    <rect x="840" y="80" width="280" height="180" fill="#d1fae5" stroke="#10b981" stroke-width="2" rx="8" opacity="0.2"/>
+                    <text x="980" y="150" text-anchor="middle" fill="#065f46" font-size="18" font-weight="bold">Library</text>
+                  </g>
+                  
+                  <g class="map-zone cursor-pointer" data-zone="classrooms" onclick="showZoneInfo('classrooms')">
+                    <rect x="80" y="300" width="400" height="300" fill="#e0e7ff" stroke="#6366f1" stroke-width="2" rx="8" opacity="0.2"/>
+                    <text x="280" y="440" text-anchor="middle" fill="#4338ca" font-size="22" font-weight="bold">Classrooms</text>
+                  </g>
+                  
+                  <g class="map-zone cursor-pointer" data-zone="canteen" onclick="showZoneInfo('canteen')">
+                    <rect x="520" y="300" width="300" height="300" fill="#fef3c7" stroke="#f59e0b" stroke-width="2" rx="8" opacity="0.2"/>
+                    <text x="670" y="440" text-anchor="middle" fill="#92400e" font-size="22" font-weight="bold">Canteen</text>
+                  </g>
+                  
+                  <g class="map-zone cursor-pointer" data-zone="gymnasium" onclick="showZoneInfo('gymnasium')">
+                    <rect x="860" y="300" width="260" height="300" fill="#fee2e2" stroke="#ef4444" stroke-width="2" rx="8" opacity="0.2"/>
+                    <text x="990" y="440" text-anchor="middle" fill="#991b1b" font-size="22" font-weight="bold">Gymnasium</text>
+                  </g>
+                  
+                  <!-- Hallways -->
+                  <rect x="80" y="280" width="1040" height="30" fill="#f3f4f6" stroke="#9ca3af" stroke-width="2" rx="5"/>
+                  <rect x="80" y="280" width="30" height="320" fill="#f3f4f6" stroke="#9ca3af" stroke-width="2" rx="5"/>
+                  <rect x="500" y="280" width="30" height="320" fill="#f3f4f6" stroke="#9ca3af" stroke-width="2" rx="5"/>
+                  <rect x="850" y="280" width="30" height="320" fill="#f3f4f6" stroke="#9ca3af" stroke-width="2" rx="5"/>
+                  
+                  <!-- Facility Markers from Database -->
+                  {% for facility in facilities %}
+                    {% if facility.map_x and facility.map_y %}
+                      {% set x_pos = (facility.map_x * 12) if facility.map_x <= 100 else 50 + (facility.map_x * 0.92) %}
+                      {% set y_pos = (facility.map_y * 7) if facility.map_y <= 100 else 50 + (facility.map_y * 0.86) %}
+                      <g class="facility-marker cursor-pointer transition-all duration-200 hover:scale-110" 
+                         data-facility-id="{{ facility.id }}"
+                         data-facility-type="{{ facility.facility_type }}"
+                         onclick="showFacilityInfo({{ facility.id }})"
+                         transform="translate({{ x_pos }}, {{ y_pos }})">
+                        <!-- Marker Background -->
+                        <circle r="16" fill="white" stroke="#3b82f6" stroke-width="3"/>
+                        <!-- Icon -->
+                        <text x="0" y="6" text-anchor="middle" fill="#3b82f6" font-size="16" font-family="FontAwesome">
+                          {% if facility.facility_type == 'classroom' %}
+                            <tspan class="fas fa-chalkboard-teacher"></tspan>
+                          {% elif facility.facility_type == 'lab' %}
+                            <tspan class="fas fa-flask"></tspan>
+                          {% elif facility.facility_type == 'office' %}
+                            <tspan class="fas fa-briefcase"></tspan>
+                          {% elif facility.facility_type == 'library' %}
+                            <tspan class="fas fa-book"></tspan>
+                          {% elif facility.facility_type == 'canteen' %}
+                            <tspan class="fas fa-utensils"></tspan>
+                          {% elif facility.facility_type == 'gym' %}
+                            <tspan class="fas fa-dumbbell"></tspan>
+                          {% elif facility.facility_type == 'restroom' %}
+                            <tspan class="fas fa-restroom"></tspan>
+                          {% elif facility.facility_type == 'staircase' %}
+                            <tspan class="fas fa-stairs"></tspan>
+                          {% elif facility.facility_type == 'lift' %}
+                            <tspan class="fas fa-elevator"></tspan>
+                          {% else %}
+                            <tspan class="fas fa-map-marker-alt"></tspan>
+                          {% endif %}
+                        </text>
+                        <!-- Room Number Label -->
+                        {% if facility.room_number %}
+                          <text x="0" y="35" text-anchor="middle" fill="#374151" font-size="11" font-weight="bold">{{ facility.room_number }}</text>
+                        {% endif %}
+                      </g>
+                    {% endif %}
+                  {% endfor %}
+                  
+                  <!-- Default Facility Markers (if no database data) -->
+                  {% if not facilities %}
+                    <!-- Classroom -->
+                    <g class="facility-marker cursor-pointer" onclick="showZoneInfo('classrooms')" transform="translate(280, 450)">
+                      <circle r="16" fill="white" stroke="#6366f1" stroke-width="3"/>
+                      <text x="0" y="6" text-anchor="middle" fill="#6366f1" font-size="16" font-family="FontAwesome"><tspan class="fas fa-chalkboard-teacher"></tspan></text>
+                      <text x="0" y="35" text-anchor="middle" fill="#374151" font-size="11" font-weight="bold">A101</text>
+                    </g>
+                    
+                    <!-- Science Lab -->
+                    <g class="facility-marker cursor-pointer" onclick="showZoneInfo('science')" transform="translate(430, 160)">
+                      <circle r="16" fill="white" stroke="#10b981" stroke-width="3"/>
+                      <text x="0" y="6" text-anchor="middle" fill="#10b981" font-size="16" font-family="FontAwesome"><tspan class="fas fa-flask"></tspan></text>
+                      <text x="0" y="35" text-anchor="middle" fill="#374151" font-size="11" font-weight="bold">Lab 1</text>
+                    </g>
+                    
+                    <!-- Office -->
+                    <g class="facility-marker cursor-pointer" onclick="showZoneInfo('administration')" transform="translate(180, 160)">
+                      <circle r="16" fill="white" stroke="#f59e0b" stroke-width="3"/>
+                      <text x="0" y="6" text-anchor="middle" fill="#f59e0b" font-size="16" font-family="FontAwesome"><tspan class="fas fa-briefcase"></tspan></text>
+                      <text x="0" y="35" text-anchor="middle" fill="#374151" font-size="11" font-weight="bold">Office</text>
+                    </g>
+                    
+                    <!-- Library -->
+                    <g class="facility-marker cursor-pointer" onclick="showZoneInfo('library')" transform="translate(980, 160)">
+                      <circle r="16" fill="white" stroke="#8b5cf6" stroke-width="3"/>
+                      <text x="0" y="6" text-anchor="middle" fill="#8b5cf6" font-size="16" font-family="FontAwesome"><tspan class="fas fa-book"></tspan></text>
+                      <text x="0" y="35" text-anchor="middle" fill="#374151" font-size="11" font-weight="bold">Library</text>
+                    </g>
+                    
+                    <!-- Canteen -->
+                    <g class="facility-marker cursor-pointer" onclick="showZoneInfo('canteen')" transform="translate(670, 450)">
+                      <circle r="16" fill="white" stroke="#f97316" stroke-width="3"/>
+                      <text x="0" y="6" text-anchor="middle" fill="#f97316" font-size="16" font-family="FontAwesome"><tspan class="fas fa-utensils"></tspan></text>
+                      <text x="0" y="35" text-anchor="middle" fill="#374151" font-size="11" font-weight="bold">Canteen</text>
+                    </g>
+                    
+                    <!-- Gym -->
+                    <g class="facility-marker cursor-pointer" onclick="showZoneInfo('gymnasium')" transform="translate(990, 450)">
+                      <circle r="16" fill="white" stroke="#ef4444" stroke-width="3"/>
+                      <text x="0" y="6" text-anchor="middle" fill="#ef4444" font-size="16" font-family="FontAwesome"><tspan class="fas fa-dumbbell"></tspan></text>
+                      <text x="0" y="35" text-anchor="middle" fill="#374151" font-size="11" font-weight="bold">Gym</text>
+                    </g>
+                    
+                    <!-- Staircase -->
+                    <g class="facility-marker cursor-pointer" transform="translate(515, 295)">
+                      <circle r="14" fill="white" stroke="#6b7280" stroke-width="2"/>
+                      <text x="0" y="5" text-anchor="middle" fill="#6b7280" font-size="14" font-family="FontAwesome"><tspan class="fas fa-stairs"></tspan></text>
+                    </g>
+                    
+                    <!-- Lift -->
+                    <g class="facility-marker cursor-pointer" transform="translate(865, 295)">
+                      <circle r="14" fill="white" stroke="#6366f1" stroke-width="2"/>
+                      <text x="0" y="5" text-anchor="middle" fill="#6366f1" font-size="14" font-family="FontAwesome"><tspan class="fas fa-elevator"></tspan></text>
+                    </g>
+                    
+                    <!-- Restroom -->
+                    <g class="facility-marker cursor-pointer" transform="translate(515, 595)">
+                      <circle r="14" fill="white" stroke="#14b8a6" stroke-width="2"/>
+                      <text x="0" y="5" text-anchor="middle" fill="#14b8a6" font-size="14" font-family="FontAwesome"><tspan class="fas fa-restroom"></tspan></text>
+                    </g>
+                  {% endif %}
+                  
+                  <!-- "You Are Here" Marker -->
+                  <g class="animate-pulse" transform="translate(150, 620)">
+                    <circle r="18" fill="#ef4444" stroke="white" stroke-width="4"/>
+                    <circle r="10" fill="white"/>
+                    <text x="0" y="35" text-anchor="middle" fill="#ef4444" font-size="16" font-weight="bold">You Are Here</text>
+                  </g>
+                </svg>
+                
+                <!-- Overlay Zones (Clickable Areas) for School Blocks -->
+                <div class="absolute inset-0">
+                  <!-- BLOK A (Bottom-Middle) - Offices, Library, Labs -->
+                  <div class="map-zone absolute cursor-pointer hover:bg-blue-200 hover:bg-opacity-30 transition-all duration-200 border-2 border-blue-500 border-opacity-50 rounded-lg"
+                       data-zone="blok_a" 
+                       onclick="showZoneInfo('blok_a')"
+                       style="left: 35%; top: 65%; width: 30%; height: 20%;">
+                    <div class="absolute inset-0 flex items-center justify-center bg-blue-100 bg-opacity-20 rounded-lg">
+                      <span class="text-blue-800 font-bold text-sm md:text-base">BLOK A</span>
+                    </div>
+                  </div>
+                  
+                  <!-- BLOK B (Left-Middle) - Classrooms, Lobbies -->
+                  <div class="map-zone absolute cursor-pointer hover:bg-purple-200 hover:bg-opacity-30 transition-all duration-200 border-2 border-purple-500 border-opacity-50 rounded-lg"
+                       data-zone="blok_b" 
+                       onclick="showZoneInfo('blok_b')"
+                       style="left: 10%; top: 40%; width: 25%; height: 30%;">
+                    <div class="absolute inset-0 flex items-center justify-center bg-purple-100 bg-opacity-20 rounded-lg">
+                      <span class="text-purple-800 font-bold text-sm md:text-base">BLOK B</span>
+                    </div>
+                  </div>
+                  
+                  <!-- BLOK C (Right-Middle) - Classrooms, Lobbies -->
+                  <div class="map-zone absolute cursor-pointer hover:bg-pink-200 hover:bg-opacity-30 transition-all duration-200 border-2 border-pink-500 border-opacity-50 rounded-lg"
+                       data-zone="blok_c" 
+                       onclick="showZoneInfo('blok_c')"
+                       style="left: 65%; top: 40%; width: 25%; height: 30%;">
+                    <div class="absolute inset-0 flex items-center justify-center bg-pink-100 bg-opacity-20 rounded-lg">
+                      <span class="text-pink-800 font-bold text-sm md:text-base">BLOK C</span>
+                    </div>
+                  </div>
+                  
+                  <!-- BLOK D (Top-Middle) - Labs, Halls, Studios -->
+                  <div class="map-zone absolute cursor-pointer hover:bg-green-200 hover:bg-opacity-30 transition-all duration-200 border-2 border-green-500 border-opacity-50 rounded-lg"
+                       data-zone="blok_d" 
+                       onclick="showZoneInfo('blok_d')"
+                       style="left: 35%; top: 15%; width: 30%; height: 25%;">
+                    <div class="absolute inset-0 flex items-center justify-center bg-green-100 bg-opacity-20 rounded-lg">
+                      <span class="text-green-800 font-bold text-sm md:text-base">BLOK D</span>
+                    </div>
+                  </div>
+                  
+                  <!-- Canteen (Left Side) -->
+                  <div class="map-zone absolute cursor-pointer hover:bg-orange-200 hover:bg-opacity-30 transition-all duration-200 border-2 border-orange-500 border-opacity-50 rounded-lg"
+                       data-zone="canteen" 
+                       onclick="showZoneInfo('canteen')"
+                       style="left: 5%; top: 50%; width: 15%; height: 20%;">
+                    <div class="absolute inset-0 flex items-center justify-center bg-orange-100 bg-opacity-20 rounded-lg">
+                      <span class="text-orange-800 font-bold text-sm md:text-base">Kantin</span>
+                    </div>
+                  </div>
+                  
+                  <!-- Padang (Field - Top-Left) -->
+                  <div class="map-zone absolute cursor-pointer hover:bg-green-200 hover:bg-opacity-30 transition-all duration-200 border-2 border-green-500 border-opacity-50 rounded-lg"
+                       data-zone="padang" 
+                       onclick="showZoneInfo('padang')"
+                       style="left: 5%; top: 5%; width: 20%; height: 30%;">
+                    <div class="absolute inset-0 flex items-center justify-center bg-green-100 bg-opacity-20 rounded-lg">
+                      <span class="text-green-800 font-bold text-sm md:text-base">Padang</span>
+                    </div>
+                  </div>
+                  
+                  <!-- Sports Courts (Top-Right) -->
+                  <div class="map-zone absolute cursor-pointer hover:bg-red-200 hover:bg-opacity-30 transition-all duration-200 border-2 border-red-500 border-opacity-50 rounded-lg"
+                       data-zone="sports_courts" 
+                       onclick="showZoneInfo('sports_courts')"
+                       style="left: 70%; top: 5%; width: 25%; height: 25%;">
+                    <div class="absolute inset-0 flex items-center justify-center bg-red-100 bg-opacity-20 rounded-lg">
+                      <span class="text-red-800 font-bold text-sm md:text-base">Sports Courts</span>
+                    </div>
+                  </div>
+                  
+                  <!-- DATARAN SEMESTIB (Central Plaza) -->
+                  <div class="map-zone absolute cursor-pointer hover:bg-yellow-200 hover:bg-opacity-30 transition-all duration-200 border-2 border-yellow-500 border-opacity-50 rounded-lg"
+                       data-zone="dataran_semestib" 
+                       onclick="showZoneInfo('dataran_semestib')"
+                       style="left: 40%; top: 45%; width: 20%; height: 15%;">
+                    <div class="absolute inset-0 flex items-center justify-center bg-yellow-100 bg-opacity-20 rounded-lg">
+                      <span class="text-yellow-800 font-bold text-xs md:text-sm">DATARAN SEMESTIB</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Facility Markers Overlay - Position these based on your floor plan image coordinates -->
+                <div class="absolute inset-0 pointer-events-none">
+                  {% for facility in facilities %}
+                    {% if facility.map_x and facility.map_y %}
+                      <!-- Facility marker positioned at map_x and map_y (as percentages) -->
+                      <div class="facility-marker absolute cursor-pointer pointer-events-auto transform transition-all duration-200 hover:scale-110 hover:z-10" 
+                           data-facility-id="{{ facility.id }}"
+                           data-facility-type="{{ facility.facility_type }}"
+                           onclick="showFacilityInfo({{ facility.id }})"
+                           style="left: {{ facility.map_x }}%; top: {{ facility.map_y }}%; transform: translate(-50%, -50%);">
+                        <div class="relative">
+                          <div class="w-10 h-10 bg-white rounded-full border-4 border-blue-500 flex items-center justify-center shadow-lg">
+                            {% if facility.facility_type == 'classroom' %}
+                              <i class="fas fa-chalkboard-teacher text-blue-600"></i>
+                            {% elif facility.facility_type == 'lab' %}
+                              <i class="fas fa-flask text-green-600"></i>
+                            {% elif facility.facility_type == 'office' %}
+                              <i class="fas fa-briefcase text-yellow-600"></i>
+                            {% elif facility.facility_type == 'library' %}
+                              <i class="fas fa-book text-purple-600"></i>
+                            {% elif facility.facility_type == 'canteen' %}
+                              <i class="fas fa-utensils text-orange-600"></i>
+                            {% elif facility.facility_type == 'gym' %}
+                              <i class="fas fa-dumbbell text-red-600"></i>
+                            {% elif facility.facility_type == 'restroom' %}
+                              <i class="fas fa-restroom text-teal-600"></i>
+                            {% elif facility.facility_type == 'staircase' %}
+                              <i class="fas fa-stairs text-gray-600"></i>
+                            {% elif facility.facility_type == 'lift' %}
+                              <i class="fas fa-elevator text-indigo-600"></i>
+                            {% else %}
+                              <i class="fas fa-map-marker-alt text-blue-600"></i>
+                            {% endif %}
+                          </div>
+                          {% if facility.room_number %}
+                            <div class="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                              {{ facility.room_number }}
+                            </div>
+                          {% endif %}
+                        </div>
+                      </div>
+                    {% endif %}
+                  {% endfor %}
+                  
+                  <!-- "You Are Here" Marker - GPS Location -->
+                  <div id="gps-location-marker" class="absolute hidden animate-pulse z-50" style="transform: translate(-50%, -50%);">
+                    <div class="relative">
+                      <div class="w-10 h-10 bg-red-500 rounded-full border-4 border-white flex items-center justify-center shadow-lg">
+                        <i class="fas fa-map-marker-alt text-white text-xs"></i>
+                      </div>
+                      <div class="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 bg-red-500 text-white text-xs px-2 py-1 rounded whitespace-nowrap font-bold">
+                        You Are Here
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Facility/Location Information Panel -->
+          <div id="info-panel" class="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 hidden">
+            <div class="flex items-start justify-between mb-4">
+              <div>
+                <h2 id="info-title" class="text-2xl font-bold text-gray-900 mb-2"></h2>
+                <p id="info-description" class="text-gray-600"></p>
+              </div>
+              <button onclick="closeInfoPanel()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+              </button>
+            </div>
+            
+            <div id="info-content" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+              <!-- Content will be loaded here -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Search Sidebar -->
+        <div class="lg:col-span-1">
+          <div class="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 sticky top-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+              <i class="fas fa-search text-teal-600 mr-2"></i>Search
+            </h2>
+            
+            <!-- Search Input -->
+            <div class="mb-6">
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i class="fas fa-search text-gray-400"></i>
+                </div>
+                <input type="text" 
+                       id="search-input"
+                       placeholder="Search facilities..." 
+                       class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+              </div>
+            </div>
+
+            <!-- GPS Location Button -->
+            <div class="mb-6">
+              <button id="gps-location-btn" onclick="requestLocation()" class="w-full px-4 py-3 bg-gradient-to-r from-teal-500 to-cyan-500 text-white rounded-lg font-medium hover:from-teal-600 hover:to-cyan-600 transition-all duration-200 shadow-lg flex items-center justify-center gap-2">
+                <i class="fas fa-map-marker-alt"></i>
+                <span id="gps-btn-text">Show My Location</span>
+              </button>
+              <p id="gps-status" class="text-xs text-gray-500 mt-2 text-center hidden"></p>
+            </div>
+
+            <!-- Filter by Type -->
+            <div class="mb-6">
+              <h3 class="text-sm font-semibold text-gray-700 mb-3">Filter by Type</h3>
+              <div class="space-y-2">
+                <button onclick="filterByType('classroom')" class="w-full text-left px-3 py-2 text-sm bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2">
+                  <i class="fas fa-chalkboard-teacher text-blue-600"></i>
+                  <span>Classroom</span>
+                </button>
+                <button onclick="filterByType('lab')" class="w-full text-left px-3 py-2 text-sm bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2">
+                  <i class="fas fa-flask text-green-600"></i>
+                  <span>Laboratory</span>
+                </button>
+                <button onclick="filterByType('office')" class="w-full text-left px-3 py-2 text-sm bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2">
+                  <i class="fas fa-briefcase text-yellow-600"></i>
+                  <span>Office</span>
+                </button>
+                <button onclick="filterByType('library')" class="w-full text-left px-3 py-2 text-sm bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2">
+                  <i class="fas fa-book text-purple-600"></i>
+                  <span>Library</span>
+                </button>
+                <button onclick="filterByType('canteen')" class="w-full text-left px-3 py-2 text-sm bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2">
+                  <i class="fas fa-utensils text-orange-600"></i>
+                  <span>Canteen</span>
+                </button>
+                <button onclick="filterByType('gym')" class="w-full text-left px-3 py-2 text-sm bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2">
+                  <i class="fas fa-dumbbell text-red-600"></i>
+                  <span>Gymnasium</span>
+                </button>
+                <button onclick="filterByType('restroom')" class="w-full text-left px-3 py-2 text-sm bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2">
+                  <i class="fas fa-restroom text-teal-600"></i>
+                  <span>Restroom</span>
+                </button>
+                <button onclick="filterByType('staircase')" class="w-full text-left px-3 py-2 text-sm bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2">
+                  <i class="fas fa-stairs text-gray-600"></i>
+                  <span>Staircase</span>
+                </button>
+                <button onclick="filterByType('lift')" class="w-full text-left px-3 py-2 text-sm bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2">
+                  <i class="fas fa-elevator text-indigo-600"></i>
+                  <span>Lift</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      
     </div>
   </div>
 </div>
@@ -195,24 +576,151 @@
   @keyframes pulse {
     0%, 100% {
       opacity: 1;
+      transform: scale(1);
     }
     50% {
-      opacity: 0.5;
+      opacity: 0.7;
+      transform: scale(1.1);
     }
   }
   
-  .map-zone:hover rect {
-    filter: brightness(1.1);
+  /* Map Zone Overlays - Hidden by default, visible on hover or when active */
+  .map-zone {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  
+  .map-zone:hover,
+  .map-zone.active {
+    opacity: 1;
+  }
+  
+  .map-zone > div {
+    transition: background-color 0.2s ease;
+  }
+  
+  .facility-marker {
+    z-index: 10;
+  }
+  
+  .facility-marker:hover {
+    transform: translate(-50%, -50%) scale(1.15) !important;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+    z-index: 20;
   }
   
   .floor-btn.active {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   }
+
+  .legend-item:hover {
+    background-color: #f9fafb;
+  }
+  
+  /* Ensure map container maintains aspect ratio */
+  #map-container {
+    position: relative;
+  }
+  
+  #floor-plan-image {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
 </style>
 
 <script>
-  // Zone data from backend
-  const zoneData = {
+  // Zone data from backend - merge with default zones
+  // SMK SEKSYEN 3 BANDAR KINRARA
+  const defaultZones = {
+    'blok_a': {
+      title: 'BLOK A',
+      description: 'Offices, Library, Labs, and Administrative Facilities. Contains Pejabat (Office), Perpustakaan (Library), Makmal Komputer (Computer Lab), Bilik Guru (Teachers\' Room), and more.',
+      staff: [],
+      facilities: []
+    },
+    'blok_b': {
+      title: 'BLOK B',
+      description: 'Classrooms and Lobbies. Contains BILIK DARJAH (Classrooms), LOBI B (Lobby B), UBK (Counseling Unit), Koperasi (Cooperative), and Tangga B (Stair B).',
+      staff: [],
+      facilities: []
+    },
+    'blok_c': {
+      title: 'BLOK C',
+      description: 'Classrooms and Lobbies. Contains BILIK DARJAH (Classrooms), LOBI C (Lobby C), and Tangga A (Stair A).',
+      staff: [],
+      facilities: []
+    },
+    'blok_d': {
+      title: 'BLOK D',
+      description: 'Labs, Halls, and Studios. Contains Makmal Kimia (Chemistry Lab), Makmal Fizik (Physics Lab), Makmal Bio (Biology Lab), Dewan Gemilang (Gemilang Hall), Studio Seni (Art Studio), and more.',
+      staff: [],
+      facilities: []
+    },
+    'canteen': {
+      title: 'Kantin (Canteen)',
+      description: 'School canteen and dining area. Located on the left side of the school.',
+      staff: [],
+      facilities: []
+    },
+    'padang': {
+      title: 'Padang (Field)',
+      description: 'Main sports field for outdoor activities and sports events.',
+      staff: [],
+      facilities: []
+    },
+    'sports_courts': {
+      title: 'Sports Courts',
+      description: 'Gelanggang Bola Keranjang (Basketball Court), Gelanggang Petanque (Petanque Court), and Tapak Segak.',
+      staff: [],
+      facilities: []
+    },
+    'dataran_semestib': {
+      title: 'DATARAN SEMESTIB',
+      description: 'Central plaza and gathering area. Surrounded by BLOK A, B, C, and D.',
+      staff: [],
+      facilities: []
+    },
+    'administration': {
+      title: 'Administration Office',
+      description: 'Main office for school administration, principal, and office staff.',
+      staff: [],
+      facilities: []
+    },
+    'science': {
+      title: 'Science Department',
+      description: 'Science laboratories, classrooms, and faculty offices.',
+      staff: [],
+      facilities: []
+    },
+    'mathematics': {
+      title: 'Mathematics Department',
+      description: 'Mathematics classrooms and faculty offices.',
+      staff: [],
+      facilities: []
+    },
+    'classrooms': {
+      title: 'Classrooms',
+      description: 'General purpose classrooms for various subjects.',
+      staff: [],
+      facilities: []
+    },
+    'library': {
+      title: 'School Library',
+      description: 'Main library with reading areas, study spaces, and computer lab.',
+      staff: [],
+      facilities: []
+    },
+    'gymnasium': {
+      title: 'Gymnasium & Sports Complex',
+      description: 'Indoor sports facilities, gym, and sports equipment.',
+      staff: [],
+      facilities: []
+    }
+  };
+
+  // Merge backend data with defaults
+  const backendZones = {
     {% for zone, staff_list in staff_by_zone.items() %}
     '{{ zone|lower|replace(" ", "_")|replace("-", "_") }}': {
       title: '{{ zone }}',
@@ -227,68 +735,417 @@
           room: '{{ staff.office_location|e if staff.office_location else "" }}' 
         }{% if not loop.last %},{% endif %}
         {% endfor %}
-      ]
+      ],
+      facilities: []
     }{% if not loop.last %},{% endif %}
     {% endfor %}
   };
 
+  // Facilities data
+  const facilitiesData = {
+    {% for facility in facilities %}
+    {{ facility.id }}: {
+      id: {{ facility.id }},
+      name: '{{ facility.name|e }}',
+      type: '{{ facility.facility_type|e }}',
+      room: '{{ facility.room_number|e if facility.room_number else "" }}',
+      description: '{{ facility.description|e if facility.description else "" }}',
+      capacity: {{ facility.capacity if facility.capacity else 'null' }},
+      icon: '{{ facility.icon|e if facility.icon else "fas fa-door-open" }}',
+      color: '{{ facility.color|e if facility.color else "blue" }}',
+      zone: '{{ facility.zone_area|e if facility.zone_area else "" }}'
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  };
+
+  // Merge defaults with backend data (backend data takes precedence)
+  const zoneData = { ...defaultZones, ...backendZones };
+
+  // Add facilities to zones
+  {% for facility in facilities %}
+    {% if facility.zone_area %}
+      const zoneKey{{ facility.id }} = '{{ facility.zone_area|lower|replace(" ", "_")|replace("-", "_") }}';
+      if (zoneData[zoneKey{{ facility.id }}]) {
+        if (!zoneData[zoneKey{{ facility.id }}].facilities) zoneData[zoneKey{{ facility.id }}].facilities = [];
+        zoneData[zoneKey{{ facility.id }}].facilities.push(facilitiesData[{{ facility.id }}]);
+      }
+    {% endif %}
+  {% endfor %}
+
   function showZoneInfo(zoneId) {
-    const zone = zoneData[zoneId];
+    console.log('showZoneInfo called with:', zoneId);
+    
+    let zone = zoneData[zoneId];
+    
+    // If exact match not found, try to find by name match
     if (!zone) {
-      // Try to find zone by name match
       const zoneKey = Object.keys(zoneData).find(key => 
+        key.toLowerCase() === zoneId.toLowerCase() ||
         key.toLowerCase().includes(zoneId.toLowerCase()) || 
         zoneData[key].title.toLowerCase().includes(zoneId.toLowerCase())
       );
       if (zoneKey) {
-        return showZoneInfo(zoneKey);
+        zone = zoneData[zoneKey];
+      } else {
+        zone = {
+          title: zoneId.charAt(0).toUpperCase() + zoneId.slice(1),
+          description: 'Information about this area.',
+          staff: [],
+          facilities: []
+        };
       }
-      return;
     }
     
-    const panel = document.getElementById('zone-info-panel');
-    const title = document.getElementById('zone-title');
-    const description = document.getElementById('zone-description');
-    const staffList = document.getElementById('zone-staff-list');
+    const panel = document.getElementById('info-panel');
+    const title = document.getElementById('info-title');
+    const description = document.getElementById('info-description');
+    const content = document.getElementById('info-content');
     
     title.textContent = zone.title;
     description.textContent = zone.description;
     
-    // Populate staff list
-    if (zone.staff && zone.staff.length > 0) {
-      staffList.innerHTML = zone.staff.map(staff => `
-        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-          <h4 class="font-semibold text-gray-900 mb-1">${staff.name}</h4>
-          <p class="text-sm text-teal-600 mb-2">${staff.position}</p>
-          <div class="space-y-1 text-xs text-gray-600">
-            ${staff.email ? `<div><i class="fas fa-envelope mr-1"></i><a href="mailto:${staff.email}" class="hover:text-teal-600">${staff.email}</a></div>` : ''}
-            ${staff.phone ? `<div><i class="fas fa-phone mr-1"></i><a href="tel:${staff.phone}" class="hover:text-teal-600">${staff.phone}</a></div>` : ''}
-            ${staff.room ? `<div><i class="fas fa-map-marker-alt mr-1"></i>${staff.room}</div>` : ''}
+    let html = '';
+    
+    // Show facilities in this zone
+    if (zone.facilities && zone.facilities.length > 0) {
+      html += '<div class="col-span-full"><h3 class="text-lg font-semibold text-gray-900 mb-3">Facilities</h3></div>';
+      zone.facilities.forEach(facility => {
+        html += `
+          <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+            <div class="flex items-start justify-between mb-2">
+              <div>
+                <h4 class="font-semibold text-gray-900 mb-1">${facility.name}</h4>
+                ${facility.room ? `<p class="text-sm text-gray-600 mb-1">Room: ${facility.room}</p>` : ''}
+                <p class="text-xs text-teal-600 mb-2">${facility.type.charAt(0).toUpperCase() + facility.type.slice(1)}</p>
+              </div>
+              <i class="${facility.icon} text-xl text-gray-400"></i>
+            </div>
+            ${facility.description ? `<p class="text-xs text-gray-600 mb-2">${facility.description}</p>` : ''}
+            ${facility.capacity ? `<p class="text-xs text-gray-500">Capacity: ${facility.capacity} people</p>` : ''}
           </div>
-        </div>
-      `).join('');
-    } else {
-      staffList.innerHTML = '<div class="col-span-full text-center text-gray-500 py-4">No staff information available for this zone.</div>';
+        `;
+      });
     }
     
+    // Show staff in this zone
+    if (zone.staff && zone.staff.length > 0) {
+      html += '<div class="col-span-full mt-4"><h3 class="text-lg font-semibold text-gray-900 mb-3">Staff</h3></div>';
+      zone.staff.forEach(staff => {
+        html += `
+          <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+            <h4 class="font-semibold text-gray-900 mb-1">${staff.name}</h4>
+            <p class="text-sm text-teal-600 mb-2">${staff.position}</p>
+            <div class="space-y-1 text-xs text-gray-600">
+              ${staff.email ? `<div><i class="fas fa-envelope mr-1"></i><a href="mailto:${staff.email}" class="hover:text-teal-600">${staff.email}</a></div>` : ''}
+              ${staff.phone ? `<div><i class="fas fa-phone mr-1"></i><a href="tel:${staff.phone}" class="hover:text-teal-600">${staff.phone}</a></div>` : ''}
+              ${staff.room ? `<div><i class="fas fa-map-marker-alt mr-1"></i>${staff.room}</div>` : ''}
+            </div>
+          </div>
+        `;
+      });
+    }
+    
+    if (!html) {
+      html = '<div class="col-span-full text-center text-gray-500 py-4">No information available for this zone.</div>';
+    }
+    
+    content.innerHTML = html;
     panel.classList.remove('hidden');
     panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     
     // Highlight zone on map
     document.querySelectorAll('.map-zone').forEach(el => {
-      el.classList.remove('ring-4', 'ring-teal-500');
+      el.classList.remove('ring-4', 'ring-teal-500', 'active');
     });
     const zoneElement = document.querySelector(`[data-zone="${zoneId}"]`);
     if (zoneElement) {
-      zoneElement.classList.add('ring-4', 'ring-teal-500');
+      zoneElement.classList.add('ring-4', 'ring-teal-500', 'active');
     }
   }
 
-  function closeZoneInfo() {
-    document.getElementById('zone-info-panel').classList.add('hidden');
-    document.querySelectorAll('.map-zone').forEach(el => {
+  function showFacilityInfo(facilityId) {
+    const facility = facilitiesData[facilityId];
+    if (!facility) return;
+    
+    const panel = document.getElementById('info-panel');
+    const title = document.getElementById('info-title');
+    const description = document.getElementById('info-description');
+    const content = document.getElementById('info-content');
+    
+    title.textContent = facility.name;
+    description.textContent = facility.description || `${facility.type.charAt(0).toUpperCase() + facility.type.slice(1)} facility`;
+    
+    content.innerHTML = `
+      <div class="bg-gray-50 rounded-lg p-6 border border-gray-200 col-span-full">
+        <div class="flex items-start gap-4 mb-4">
+          <div class="bg-gradient-to-r from-teal-500 to-cyan-500 rounded-full p-4">
+            <i class="${facility.icon} text-white text-2xl"></i>
+          </div>
+          <div class="flex-1">
+            <h3 class="text-xl font-bold text-gray-900 mb-2">${facility.name}</h3>
+            ${facility.room ? `<p class="text-sm text-gray-600 mb-1"><i class="fas fa-door-open mr-2"></i>Room: ${facility.room}</p>` : ''}
+            <p class="text-sm text-teal-600 mb-2"><i class="fas fa-tag mr-2"></i>Type: ${facility.type.charAt(0).toUpperCase() + facility.type.slice(1)}</p>
+            ${facility.capacity ? `<p class="text-sm text-gray-600 mb-2"><i class="fas fa-users mr-2"></i>Capacity: ${facility.capacity} people</p>` : ''}
+            ${facility.zone ? `<p class="text-sm text-gray-600"><i class="fas fa-map-marker-alt mr-2"></i>Zone: ${facility.zone}</p>` : ''}
+          </div>
+        </div>
+        ${facility.description ? `<p class="text-gray-600 mt-4">${facility.description}</p>` : ''}
+      </div>
+    `;
+    
+    panel.classList.remove('hidden');
+    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    
+    // Highlight facility marker
+    document.querySelectorAll('.facility-marker').forEach(el => {
       el.classList.remove('ring-4', 'ring-teal-500');
     });
+    const markerElement = document.querySelector(`[data-facility-id="${facilityId}"]`);
+    if (markerElement) {
+      markerElement.classList.add('ring-4', 'ring-teal-500');
+    }
   }
+
+  function filterByType(type) {
+    // Highlight all facilities of this type
+    document.querySelectorAll('.facility-marker').forEach(marker => {
+      const markerType = marker.getAttribute('data-facility-type');
+      if (markerType === type) {
+        marker.classList.add('ring-4', 'ring-teal-500', 'animate-pulse');
+      } else {
+        marker.classList.remove('ring-4', 'ring-teal-500', 'animate-pulse');
+        marker.style.opacity = '0.3';
+      }
+    });
+    
+    // Show info panel with all facilities of this type
+    const facilitiesOfType = Object.values(facilitiesData).filter(f => f.type === type);
+    if (facilitiesOfType.length > 0) {
+      const panel = document.getElementById('info-panel');
+      const title = document.getElementById('info-title');
+      const description = document.getElementById('info-description');
+      const content = document.getElementById('info-content');
+      
+      title.textContent = `${type.charAt(0).toUpperCase() + type.slice(1)} Facilities`;
+      description.textContent = `Found ${facilitiesOfType.length} ${type} facility/facilities on this floor`;
+      
+      content.innerHTML = facilitiesOfType.map(facility => `
+        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 cursor-pointer hover:shadow-md transition-shadow" onclick="showFacilityInfo(${facility.id})">
+          <div class="flex items-start justify-between mb-2">
+            <div>
+              <h4 class="font-semibold text-gray-900 mb-1">${facility.name}</h4>
+              ${facility.room ? `<p class="text-sm text-gray-600 mb-1">Room: ${facility.room}</p>` : ''}
+            </div>
+            <i class="${facility.icon} text-xl text-gray-400"></i>
+          </div>
+          ${facility.description ? `<p class="text-xs text-gray-600">${facility.description}</p>` : ''}
+        </div>
+      `).join('');
+      
+      panel.classList.remove('hidden');
+      panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    
+    // Reset after 3 seconds
+    setTimeout(() => {
+      document.querySelectorAll('.facility-marker').forEach(marker => {
+        marker.style.opacity = '1';
+        marker.classList.remove('ring-4', 'ring-teal-500', 'animate-pulse');
+      });
+    }, 3000);
+  }
+
+  function closeInfoPanel() {
+    document.getElementById('info-panel').classList.add('hidden');
+    document.querySelectorAll('.map-zone, .facility-marker').forEach(el => {
+      el.classList.remove('ring-4', 'ring-teal-500', 'active');
+      el.style.opacity = '';
+    });
+  }
+
+  // GPS Location Functions
+  // Configure your school's GPS bounding box here
+  // Get these coordinates from Google Maps or similar
+  // Format: { north: lat, south: lat, east: lng, west: lng }
+  const SCHOOL_GPS_BOUNDS = {
+    // Example coordinates - REPLACE WITH YOUR SCHOOL'S ACTUAL GPS COORDINATES
+    north: 3.0850,  // Northernmost latitude of your school
+    south: 3.0840,  // Southernmost latitude of your school
+    east: 101.6500,  // Easternmost longitude of your school
+    west: 101.6490   // Westernmost longitude of your school
+  };
+
+  let watchId = null;
+  let currentLocation = null;
+
+  function requestLocation() {
+    const btn = document.getElementById('gps-location-btn');
+    const btnText = document.getElementById('gps-btn-text');
+    const status = document.getElementById('gps-status');
+    const marker = document.getElementById('gps-location-marker');
+
+    if (!navigator.geolocation) {
+      status.textContent = 'GPS not supported by your browser';
+      status.classList.remove('hidden');
+      return;
+    }
+
+    if (watchId !== null) {
+      // Stop tracking
+      navigator.geolocation.clearWatch(watchId);
+      watchId = null;
+      marker.classList.add('hidden');
+      btnText.textContent = 'Show My Location';
+      btn.classList.remove('bg-red-500', 'hover:bg-red-600');
+      btn.classList.add('bg-gradient-to-r', 'from-teal-500', 'to-cyan-500', 'hover:from-teal-600', 'hover:to-cyan-600');
+      status.textContent = 'Location tracking stopped';
+      status.classList.remove('hidden');
+      return;
+    }
+
+    // Request location
+    btnText.textContent = 'Getting location...';
+    status.textContent = 'Requesting location permission...';
+    status.classList.remove('hidden');
+
+    const options = {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
+    };
+
+    watchId = navigator.geolocation.watchPosition(
+      function(position) {
+        currentLocation = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy
+        };
+
+        // Convert GPS coordinates to map coordinates
+        const mapCoords = gpsToMapCoordinates(currentLocation.latitude, currentLocation.longitude);
+        
+        if (mapCoords) {
+          // Position the marker
+          marker.style.left = mapCoords.x + '%';
+          marker.style.top = mapCoords.y + '%';
+          marker.classList.remove('hidden');
+          
+          btnText.textContent = 'Hide Location';
+          btn.classList.remove('bg-gradient-to-r', 'from-teal-500', 'to-cyan-500', 'hover:from-teal-600', 'hover:to-cyan-600');
+          btn.classList.add('bg-red-500', 'hover:bg-red-600');
+          
+          status.textContent = `Location found (accuracy: ${Math.round(currentLocation.accuracy)}m)`;
+          status.classList.remove('hidden');
+          
+          // Center map on location (optional)
+          // marker.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+          status.textContent = 'You are outside the school area';
+          status.classList.remove('hidden');
+          marker.classList.add('hidden');
+        }
+      },
+      function(error) {
+        let errorMsg = 'Unable to get location';
+        switch(error.code) {
+          case error.PERMISSION_DENIED:
+            errorMsg = 'Location permission denied. Please enable location access in your browser settings.';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMsg = 'Location information unavailable.';
+            break;
+          case error.TIMEOUT:
+            errorMsg = 'Location request timed out.';
+            break;
+        }
+        status.textContent = errorMsg;
+        status.classList.remove('hidden');
+        btnText.textContent = 'Show My Location';
+        watchId = null;
+      },
+      options
+    );
+  }
+
+  function gpsToMapCoordinates(latitude, longitude) {
+    // Check if coordinates are within school bounds
+    if (latitude < SCHOOL_GPS_BOUNDS.south || latitude > SCHOOL_GPS_BOUNDS.north ||
+        longitude < SCHOOL_GPS_BOUNDS.west || longitude > SCHOOL_GPS_BOUNDS.east) {
+      return null; // Outside school area
+    }
+
+    // Calculate percentage position within bounds
+    const latRange = SCHOOL_GPS_BOUNDS.north - SCHOOL_GPS_BOUNDS.south;
+    const lngRange = SCHOOL_GPS_BOUNDS.east - SCHOOL_GPS_BOUNDS.west;
+
+    // Calculate position as percentage (0-100)
+    const yPercent = ((SCHOOL_GPS_BOUNDS.north - latitude) / latRange) * 100;
+    const xPercent = ((longitude - SCHOOL_GPS_BOUNDS.west) / lngRange) * 100;
+
+    return {
+      x: xPercent,
+      y: yPercent
+    };
+  }
+
+  // Search functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+      searchInput.addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase().trim();
+        
+        if (searchTerm === '') {
+          // Reset all markers
+          document.querySelectorAll('.facility-marker').forEach(marker => {
+            marker.style.opacity = '1';
+            marker.classList.remove('ring-4', 'ring-teal-500');
+          });
+          return;
+        }
+        
+        // Filter facilities by search term
+        document.querySelectorAll('.facility-marker').forEach(marker => {
+          const facilityId = marker.getAttribute('data-facility-id');
+          if (facilityId) {
+            const facility = facilitiesData[facilityId];
+            if (facility) {
+              const matches = facility.name.toLowerCase().includes(searchTerm) ||
+                            facility.type.toLowerCase().includes(searchTerm) ||
+                            (facility.room && facility.room.toLowerCase().includes(searchTerm)) ||
+                            (facility.description && facility.description.toLowerCase().includes(searchTerm));
+              
+              if (matches) {
+                marker.style.opacity = '1';
+                marker.classList.add('ring-4', 'ring-teal-500');
+              } else {
+                marker.style.opacity = '0.3';
+                marker.classList.remove('ring-4', 'ring-teal-500');
+              }
+            }
+          }
+        });
+      });
+    }
+
+    // Setup map zone click listeners
+    document.querySelectorAll('.map-zone').forEach(zone => {
+      const zoneId = zone.getAttribute('data-zone');
+      if (zoneId) {
+        zone.onclick = null;
+        zone.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          showZoneInfo(zoneId);
+        });
+        zone.style.cursor = 'pointer';
+      }
+    });
+    
+    document.querySelectorAll('.facility-marker').forEach(marker => {
+      marker.style.cursor = 'pointer';
+    });
+  });
 </script>
 {% endblock %}
