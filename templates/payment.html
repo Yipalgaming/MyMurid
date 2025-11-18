@@ -42,9 +42,9 @@
           <span class="bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">Your Order</span>
         </h2>
         
-        <div class="space-y-4">
+        <div id="cart-items-container" class="space-y-4">
     {% for cart_item in cart_items %}
-          <div class="bg-gradient-to-br from-gray-50 to-white rounded-xl p-5 border border-gray-200 hover:border-green-300 hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]">
+          <div class="bg-gradient-to-br from-gray-50 to-white rounded-xl p-5 border border-gray-200 hover:border-green-300 hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]" data-menu-item-id="{{ cart_item.menu_item_id }}">
             <div class="flex items-center justify-between flex-wrap gap-4">
               <div class="flex-1 min-w-[200px]">
                 <h3 class="font-bold text-gray-900 text-lg mb-2">{{ cart_item.item.name }}</h3>
@@ -105,15 +105,15 @@
           <div class="bg-gray-50 rounded-xl p-4">
             <div class="flex justify-between items-center mb-2">
               <span class="text-gray-600">Your Balance:</span>
-              <span class="text-2xl font-bold text-blue-600">RM {{ "%.2f"|format(user.balance) }}</span>
+              <span class="text-2xl font-bold text-blue-600">RM {{ "%.2f"|format(user_balance) }}</span>
             </div>
           </div>
         </div>
 
         <!-- Payment Status -->
-        <div class="mt-6 p-4 rounded-xl {% if user.balance >= total %}bg-green-50 border border-green-200{% else %}bg-red-50 border border-red-200{% endif %}">
+        <div class="mt-6 p-4 rounded-xl {% if user_balance >= total %}bg-green-50 border border-green-200{% else %}bg-red-50 border border-red-200{% endif %}">
           <div class="flex items-center">
-            {% if user.balance >= total %}
+            {% if user_balance >= total %}
               <i class="fas fa-check-circle text-green-600 text-xl mr-3"></i>
               <div>
                 <h4 class="font-semibold text-green-800">Payment Ready</h4>
@@ -123,7 +123,7 @@
               <i class="fas fa-exclamation-triangle text-red-600 text-xl mr-3"></i>
               <div>
                 <h4 class="font-semibold text-red-800">Insufficient Balance</h4>
-                <p class="text-red-700 text-sm">You need RM {{ "%.2f"|format(total - user.balance) }} more to complete this payment.</p>
+                <p class="text-red-700 text-sm">You need RM {{ "%.2f"|format(total - user_balance) }} more to complete this payment.</p>
               </div>
             {% endif %}
           </div>
@@ -134,10 +134,9 @@
       <div class="flex flex-col sm:flex-row gap-4 items-stretch">
         <form method="POST" action="{{ url_for('payment') }}" class="flex-1" onsubmit="return confirmPayment()">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-  <input type="hidden" name="pay" value="true">
+          <input type="hidden" name="pay" value="true"/>
           <button type="submit" 
-                  class="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl {% if user.balance < total %}opacity-50 cursor-not-allowed{% endif %}"
-                  {% if user.balance < total %}disabled{% endif %}>
+                  class="w-full bg-gradient-to-r from green-600 to-emerald-600 hover:from-green-700hoot to-vermold> hover:to-700 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 transform hover-saline-ends {% if user_balance S pren-mens- Eq dos##}>
             <i class="fas fa-credit-card mr-2"></i>Pay Now
           </button>
 </form>
@@ -178,34 +177,15 @@ function confirmPayment() {
 
 async function updatePaymentQuantity(menuItemId, change) {
   const qtyElement = document.getElementById(`qty-${menuItemId}`);
-  const totalElement = document.getElementById(`total-amount-${menuItemId}`);
-  const decreaseBtn = document.getElementById(`decrease-${menuItemId}`);
-  const currentQty = parseInt(qtyElement.textContent);
-  const price = parseFloat(qtyElement.getAttribute('data-price'));
+  if (!qtyElement) return; // Item might have been removed
   
+  const currentQty = parseInt(qtyElement.textContent);
   const newQty = currentQty + change;
   
   // Prevent quantity from going below 1
   if (newQty < 1) {
     return;
   }
-  
-  // Disable button if quantity would be 1
-  if (newQty === 1) {
-    decreaseBtn.disabled = true;
-    decreaseBtn.classList.add('opacity-50', 'cursor-not-allowed');
-  } else {
-    decreaseBtn.disabled = false;
-    decreaseBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-  }
-  
-  // Update UI immediately for better UX
-  qtyElement.textContent = newQty;
-  const newTotal = (price * newQty).toFixed(2);
-  totalElement.textContent = newTotal;
-  
-  // Update total amount
-  updateTotalAmount();
   
   // Send update to server
   try {
@@ -224,40 +204,152 @@ async function updatePaymentQuantity(menuItemId, change) {
     const data = await response.json();
     
     if (!response.ok) {
-      // Revert on error
-      qtyElement.textContent = currentQty;
-      totalElement.textContent = (price * currentQty).toFixed(2);
-      updateTotalAmount();
       alert('Failed to update quantity: ' + (data.error || 'Unknown error'));
     } else {
-      // Reload page to sync with server
-      window.location.reload();
+      // Refresh cart items to get updated data from server
+      refreshCartItems();
     }
   } catch (error) {
-    // Revert on error
-    qtyElement.textContent = currentQty;
-    totalElement.textContent = (price * currentQty).toFixed(2);
-    updateTotalAmount();
+    console.error('Error updating quantity:', error);
     alert('Error updating quantity. Please try again.');
   }
 }
 
-function updateTotalAmount() {
-  let grandTotal = 0;
-  document.querySelectorAll('[id^="total-amount-"]').forEach(el => {
-    grandTotal += parseFloat(el.textContent);
+// Function to refresh cart items from API
+function refreshCartItems() {
+  const container = document.getElementById('cart-items-container');
+  if (!container) return;
+  
+  // Show loading state
+  container.innerHTML = '<div class="text-center py-8"><i class="fas fa-spinner fa-spin text-3xl text-green-500 mb-2"></i><p class="text-gray-600">Updating cart...</p></div>';
+  
+  fetch('/api/cart-items')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        if (data.cart_items.length > 0) {
+          renderCartItems(data.cart_items);
+          updatePaymentSummary(data.total, data.user_balance);
+        } else {
+          // No items, reload page to show empty state
+          window.location.reload();
+        }
+      } else {
+        alert('Failed to refresh cart: ' + (data.error || 'Unknown error'));
+        window.location.reload();
+      }
+    })
+    .catch(error => {
+      console.error('Error refreshing cart:', error);
+      alert('Error refreshing cart. Please refresh the page.');
+      window.location.reload();
+    });
+}
+
+// Function to render cart items dynamically
+function renderCartItems(cartItems) {
+  const container = document.getElementById('cart-items-container');
+  const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+  
+  let html = '';
+  
+  cartItems.forEach(item => {
+    const imageUrl = item.image_path 
+      ? `/static/images/${escapeHtml(item.image_path)}` 
+      : null;
+    
+    html += `
+      <div class="bg-gradient-to-br from-gray-50 to-white rounded-xl p-5 border border-gray-200 hover:border-green-300 hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]" data-menu-item-id="${item.menu_item_id}">
+        <div class="flex items-center justify-between flex-wrap gap-4">
+          <div class="flex-1 min-w-[200px]">
+            <h3 class="font-bold text-gray-900 text-lg mb-2">${escapeHtml(item.name)}</h3>
+            <div class="flex items-center gap-6 text-sm flex-wrap">
+              <span class="bg-green-50 px-3 py-1 rounded-lg text-green-700 font-medium">
+                <i class="fas fa-tag mr-1"></i>
+                RM ${item.price.toFixed(2)}
+              </span>
+              <div class="flex items-center gap-2 bg-gray-100 px-3 py-1 rounded-lg">
+                <button onclick="updatePaymentQuantity(${item.menu_item_id}, -1)" 
+                        class="w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-700 flex items-center justify-center transition-colors ${item.quantity === 1 ? 'opacity-50 cursor-not-allowed' : ''}"
+                        id="decrease-${item.menu_item_id}"
+                        ${item.quantity === 1 ? 'disabled' : ''}>
+                  <i class="fas fa-minus text-xs"></i>
+                </button>
+                <span class="font-semibold text-gray-900 w-8 text-center" id="qty-${item.menu_item_id}" data-price="${item.price}">${item.quantity}</span>
+                <button onclick="updatePaymentQuantity(${item.menu_item_id}, 1)" 
+                        class="w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-700 flex items-center justify-center transition-colors">
+                  <i class="fas fa-plus text-xs"></i>
+                </button>
+              </div>
+              <span class="bg-emerald-50 px-3 py-1 rounded-lg font-bold text-emerald-700" id="total-${item.menu_item_id}">
+                <i class="fas fa-coins mr-1"></i>
+                RM <span id="total-amount-${item.menu_item_id}">${item.total_price.toFixed(2)}</span>
+              </span>
+            </div>
+          </div>
+          <div>
+            <form method="POST" style="display:inline;">
+              <input type="hidden" name="csrf_token" value="${csrfToken}"/>
+              ${item.order_ids.map(orderId => `<input type="hidden" name="delete" value="${orderId}">`).join('')}
+              <button type="submit" onclick="return confirm('Remove all ${item.quantity} of ${escapeHtml(item.name)}?')" class="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
+                <i class="fas fa-trash mr-1"></i>Remove
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    `;
   });
   
+  container.innerHTML = html;
+}
+
+// Function to update payment summary
+function updatePaymentSummary(total, userBalance) {
   const totalDisplay = document.getElementById('payment-total-amount');
   if (totalDisplay) {
-    totalDisplay.textContent = `RM ${grandTotal.toFixed(2)}`;
+    totalDisplay.textContent = `RM ${total.toFixed(2)}`;
+  }
+  
+  // Update balance display
+  const balanceDisplay = document.querySelector('.text-blue-600');
+  if (balanceDisplay && balanceDisplay.textContent.includes('RM')) {
+    balanceDisplay.textContent = `RM ${userBalance.toFixed(2)}`;
+  }
+  
+  // Update payment status section
+  const paymentStatus = document.querySelector('.mt-6.p-4.rounded-xl');
+  if (paymentStatus) {
+    if (userBalance >= total) {
+      paymentStatus.className = 'mt-6 p-4 rounded-xl bg-green-50 border border-green-200';
+      paymentStatus.innerHTML = `
+        <div class="flex items-center">
+          <i class="fas fa-check-circle text-green-600 text-xl mr-3"></i>
+          <div>
+            <h4 class="font-semibold text-green-800">Payment Ready</h4>
+            <p class="text-green-700 text-sm">You have sufficient balance to complete this payment.</p>
+          </div>
+        </div>
+      `;
+    } else {
+      const needed = (total - userBalance).toFixed(2);
+      paymentStatus.className = 'mt-6 p-4 rounded-xl bg-red-50 border border-red-200';
+      paymentStatus.innerHTML = `
+        <div class="flex items-center">
+          <i class="fas fa-exclamation-triangle text-red-600 text-xl mr-3"></i>
+          <div>
+            <h4 class="font-semibold text-red-800">Insufficient Balance</h4>
+            <p class="text-red-700 text-sm">You need RM ${needed} more to complete this payment.</p>
+          </div>
+        </div>
+      `;
+    }
   }
   
   // Update payment button state
-  const userBalance = parseFloat('{{ user.balance|float }}');
   const payButton = document.querySelector('form[onsubmit] button[type="submit"]');
   if (payButton) {
-    if (userBalance < grandTotal) {
+    if (userBalance < total) {
       payButton.disabled = true;
       payButton.classList.add('opacity-50', 'cursor-not-allowed');
     } else {
@@ -265,6 +357,13 @@ function updateTotalAmount() {
       payButton.classList.remove('opacity-50', 'cursor-not-allowed');
     }
   }
+}
+
+// Helper function to escape HTML
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
 }
 
 // Initialize button states on page load

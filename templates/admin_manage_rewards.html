@@ -18,7 +18,7 @@
       <div class="flex items-center justify-between">
         <div>
           <h1 class="text-2xl md:text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Manage Rewards</h1>
-          <p class="text-gray-600 mt-1 text-sm md:text-base hidden sm:block">Create and manage reward items for students</p>
+          <p class="text-gray-600 mt-1 text-sm md:text-base hidden sm:block">Create and manage reward items for users</p>
         </div>
         <div class="flex items-center space-x-4">
           <div class="bg-gradient-to-r from-purple-500 to-pink-500 rounded-full p-2 md:p-3 shadow-lg">
@@ -58,7 +58,7 @@
                         <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
                             <i class="fas fa-tag mr-2"></i>Reward Name *
                         </label>
-                        <input type="text" 
+                        <input type="text" autocomplete="off" 
                                id="name" 
                                name="name" 
                                required
@@ -71,7 +71,7 @@
                         <label for="points_cost" class="block text-sm font-medium text-gray-700 mb-2">
                             <i class="fas fa-coins mr-2"></i>Points Cost *
                         </label>
-                        <input type="number" 
+                        <input type="number" autocomplete="off" 
                                id="points_cost" 
                                name="points_cost" 
                                required
@@ -113,7 +113,7 @@
                         <label for="discount_percentage" class="block text-sm font-medium text-gray-700 mb-2">
                             <i class="fas fa-percentage mr-2"></i>Discount Percentage
                         </label>
-                        <input type="number" 
+                        <input type="number" autocomplete="off" 
                                id="discount_percentage" 
                                name="discount_percentage"
                                min="1"

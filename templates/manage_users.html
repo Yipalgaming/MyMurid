@@ -1,0 +1,490 @@
+{% extends "base.html" %}
+{% block title %}Manage Users{% endblock %}
+{% block content %}
+<div class="fixed inset-y-0 left-0 md:left-64 right-0 bg-gradient-to-br from-blue-400 via-indigo-500 to-purple-500 overflow-hidden transition-all duration-300">
+  <!-- Mobile Top Nav -->
+  <nav class="absolute top-0 w-full bg-white border-b border-gray-200 z-50 shadow-md md:hidden transition-all duration-300">
+    <div class="flex items-center justify-between h-16 px-4">
+      <button onclick="toggleSidebar()" class="text-gray-600 hover:text-indigo-600 transition-colors p-2">
+        <i class="fas fa-bars text-2xl"></i>
+      </button>
+      <h1 class="text-lg font-semibold text-gray-800">MyMurid</h1>
+      <div class="w-10"></div> <!-- Spacer for centering -->
+    </div>
+  </nav>
+    <!-- Header -->
+  <div class="absolute top-16 md:top-0 w-full bg-white shadow-lg border-b z-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Manage Users</h1>
+          <p class="text-gray-600 mt-1 text-sm md:text-base hidden sm:block">Add and manage user accounts</p>
+        </div>
+        <div class="flex items-center space-x-4">
+          <div class="bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full p-3 shadow-lg">
+            <i class="fas fa-users text-white text-xl"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content Area -->
+  <div class="absolute top-44 md:top-24 left-0 right-0 bottom-0 md:bottom-0 overflow-y-auto pb-20 md:pb-0">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-8">
+    <!-- Add New User Form -->
+    <div class="bg-white rounded-2xl shadow-xl border border-gray-200 p-8 mb-8">
+      <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+        <i class="fas fa-user-plus text-blue-600 mr-2"></i>Add New User
+      </h2>
+      
+      <form method="POST" action="{{ url_for('add_student') }}" class="space-y-6">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+            <input type="text" autocomplete="off" 
+                   class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors" 
+                   id="name" 
+                   name="name" 
+                   placeholder="Enter user's full name"
+                   required>
+          </div>
+          
+          <div>
+            <label for="ic_number" class="block text-sm font-medium text-gray-700 mb-2">IC Number</label>
+            <div class="flex gap-2">
+                <input type="text" autocomplete="off" 
+                       class="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors" 
+                       id="ic_number" 
+                       name="ic_number" 
+                       maxlength="12"
+                       placeholder="Enter IC number"
+                       required>
+                <button type="button"
+                        onclick="startScan()"
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-xl font-medium transition-colors">
+                    <i class="fas fa-qrcode"></i>
+                </button>
+            </div>
+            <div id="scanner-container" class="mt-4 bg-gray-50 border border-dashed border-gray-300 rounded-xl p-4 h-64 flex items-center justify-center text-center text-gray-500 hidden">
+                <div>
+                    <i class="fas fa-camera text-3xl mb-2"></i>
+                    <p class="text-sm">Camera preview will appear here when scanning starts.</p>
+                </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div>
+            <label for="pin" class="block text-sm font-medium text-gray-700 mb-2">PIN (4 digits)</label>
+            <input type="text" autocomplete="off" 
+                   class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors" 
+                   id="pin" 
+                   name="pin" 
+                   pattern="[0-9]{4}" 
+                   maxlength="4" 
+                   placeholder="Enter 4-digit PIN"
+                   required>
+          </div>
+          
+          <div>
+            <label for="role" class="block text-sm font-medium text-gray-700 mb-2">Role</label>
+            <select class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors" 
+                    id="role" 
+                    name="role" 
+                    required>
+              <option value="student">Student</option>
+              <option value="staff">Staff</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          
+          <div>
+            <label for="balance" class="block text-sm font-medium text-gray-700 mb-2">Initial Balance (RM)</label>
+            <input type="number" autocomplete="off" 
+                   class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors" 
+                   id="balance" 
+                   name="balance" 
+                   min="0" 
+                   step="0.01"
+                   value="0" 
+                   placeholder="Enter initial balance"
+                   required>
+          </div>
+        </div>
+        
+        <div id="password_group" class="hidden">
+          <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Password (for admin/staff)</label>
+          <input type="password" autocomplete="off" 
+                 class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors" 
+                 id="password" 
+                 name="password"
+                 placeholder="Enter password">
+        </div>
+        
+        <button type="submit" 
+                class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
+          <i class="fas fa-plus mr-2"></i>Add User
+        </button>
+      </form>
+    </div>
+    
+    <!-- Existing Users List -->
+    <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+      <div class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white p-6">
+        <div class="flex items-center justify-between">
+          <h2 class="text-2xl font-bold flex items-center">
+            <i class="fas fa-list mr-2"></i>Existing Users
+          </h2>
+          <!-- Pagination Controls -->
+          <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-2">
+              <label for="itemsPerPage" class="text-sm font-medium">Show:</label>
+              <div class="relative flex items-center">
+                <input type="number" autocomplete="off" 
+                       id="itemsPerPage" 
+                       min="1" 
+                       value="10" 
+                       class="w-20 px-3 py-1.5 pr-8 rounded-lg border-2 border-white/40 bg-white/30 text-white font-medium placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/70 focus:border-white/60"
+                       placeholder="10"
+                       style="color: white;">
+                <div class="absolute right-1 flex flex-col h-full justify-center">
+                  <button type="button" 
+                          id="incrementItems" 
+                          class="w-5 h-4 flex items-center justify-center text-white hover:bg-white/30 rounded-t transition-colors"
+                          title="Increase">
+                    <i class="fas fa-chevron-up text-[10px]"></i>
+                  </button>
+                  <button type="button" 
+                          id="decrementItems" 
+                          class="w-5 h-4 flex items-center justify-center text-white hover:bg-white/30 rounded-b transition-colors border-t border-white/30"
+                          title="Decrease">
+                    <i class="fas fa-chevron-down text-[10px]"></i>
+                  </button>
+                </div>
+              </div>
+              <span class="text-sm">per page</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <button id="prevPage" 
+                      class="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Previous page">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <span id="pageInfo" class="text-sm font-medium px-2">Page 1 of 1</span>
+              <button id="nextPage" 
+                      class="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Next page">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-4 text-left font-semibold text-gray-700">Name</th>
+              <th class="px-6 py-4 text-left font-semibold text-gray-700">IC Number</th>
+              <th class="px-6 py-4 text-left font-semibold text-gray-700">Role</th>
+              <th class="px-6 py-4 text-left font-semibold text-gray-700">Balance</th>
+              <th class="px-6 py-4 text-left font-semibold text-gray-700">Status</th>
+              <th class="px-6 py-4 text-left font-semibold text-gray-700">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody" class="divide-y divide-gray-200">
+            {% for user in users %}
+            <tr class="user-row hover:bg-gray-50 transition-colors" data-user-id="{{ user.id }}">
+              <td class="px-6 py-4 font-medium text-gray-900">{{ user.name }}</td>
+              <td class="px-6 py-4 text-gray-600">{{ user.ic_number }}</td>
+              <td class="px-6 py-4">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium 
+                  {% if user.role == 'admin' %}bg-red-100 text-red-800
+                  {% elif user.role == 'staff' %}bg-yellow-100 text-yellow-800
+                  {% else %}bg-blue-100 text-blue-800{% endif %}">
+                  {{ user.role|title }}
+                </span>
+              </td>
+              <td class="px-6 py-4 font-semibold text-green-600">RM {{ user.balance }}</td>
+              <td class="px-6 py-4">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium 
+                  {% if user.frozen %}bg-red-100 text-red-800{% else %}bg-green-100 text-green-800{% endif %}">
+                  {% if user.frozen %}Frozen{% else %}Active{% endif %}
+                </span>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex space-x-2">
+                  <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg text-sm font-medium transition-colors" 
+                          onclick="editUser({{ user.id }})">
+                    <i class="fas fa-edit mr-1"></i>Edit
+                  </button>
+                  <button class="{% if user.frozen %}bg-green-500 hover:bg-green-600{% else %}bg-yellow-500 hover:bg-yellow-600{% endif %} text-white px-3 py-1 rounded-lg text-sm font-medium transition-colors" 
+                          onclick="toggleStatus({{ user.id }}, '{{ user.ic_number|e }}', {{ user.frozen|lower }})">
+                    {% if user.frozen %}<i class="fas fa-unlock mr-1"></i>Unfreeze{% else %}<i class="fas fa-lock mr-1"></i>Freeze{% endif %}
+                  </button>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Hide default number input spinner arrows */
+#itemsPerPage {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+#itemsPerPage::-webkit-outer-spin-button,
+#itemsPerPage::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+</style>
+
+<script>
+// Pagination state
+let currentPage = 1;
+let itemsPerPage = 10;
+let allRows = [];
+
+// Function to refresh row list
+function refreshRowList() {
+    allRows = Array.from(document.querySelectorAll('.user-row'));
+}
+
+// Initialize pagination
+document.addEventListener('DOMContentLoaded', function() {
+    // Get all user rows
+    refreshRowList();
+    
+    // Initialize pagination
+    updatePagination();
+    
+    // Event listeners
+    const itemsPerPageInput = document.getElementById('itemsPerPage');
+    
+    function handleItemsPerPageChange() {
+        const value = Number.parseInt(itemsPerPageInput.value, 10);
+        if (value > 0) {
+            itemsPerPage = value;
+            currentPage = 1; // Reset to first page when changing items per page
+            updatePagination();
+        } else {
+            // Reset to previous valid value if invalid
+            itemsPerPageInput.value = itemsPerPage;
+        }
+    }
+    
+    itemsPerPageInput.addEventListener('change', handleItemsPerPageChange);
+    itemsPerPageInput.addEventListener('blur', handleItemsPerPageChange);
+    itemsPerPageInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleItemsPerPageChange();
+            this.blur();
+        }
+    });
+    
+    // Custom increment/decrement buttons
+    const incrementBtn = document.getElementById('incrementItems');
+    const decrementBtn = document.getElementById('decrementItems');
+    
+    if (incrementBtn) {
+        incrementBtn.addEventListener('click', function() {
+            const currentValue = Number.parseInt(itemsPerPageInput.value, 10) || 1;
+            itemsPerPageInput.value = currentValue + 1;
+            handleItemsPerPageChange();
+        });
+    }
+    
+    if (decrementBtn) {
+        decrementBtn.addEventListener('click', function() {
+            const currentValue = Number.parseInt(itemsPerPageInput.value, 10) || 1;
+            if (currentValue > 1) {
+                itemsPerPageInput.value = currentValue - 1;
+                handleItemsPerPageChange();
+            }
+        });
+    }
+    
+    document.getElementById('prevPage').addEventListener('click', function() {
+        if (currentPage > 1) {
+            currentPage--;
+            updatePagination();
+        }
+    });
+    
+    document.getElementById('nextPage').addEventListener('click', function() {
+        const totalPages = Math.ceil(allRows.length / itemsPerPage);
+        if (currentPage < totalPages) {
+            currentPage++;
+            updatePagination();
+        }
+    });
+});
+
+function updatePagination() {
+    // Refresh row list to ensure we have all rows
+    refreshRowList();
+    
+    const totalItems = allRows.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    
+    // Calculate start and end indices
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    
+    // Hide all rows first
+    const allTableRows = document.querySelectorAll('tbody tr');
+    for (const row of allTableRows) {
+        if (row.classList.contains('user-row')) {
+            row.style.display = 'none';
+        }
+    }
+    
+    // Show rows for current page
+    for (let i = startIndex; i < endIndex && i < totalItems; i++) {
+        if (allRows[i]) {
+            allRows[i].style.display = '';
+        }
+    }
+    
+    // Update page info
+    const pageInfo = document.getElementById('pageInfo');
+    pageInfo.textContent = `Page ${currentPage} of ${totalPages || 1}`;
+    
+    // Update button states
+    document.getElementById('prevPage').disabled = currentPage === 1;
+    document.getElementById('nextPage').disabled = currentPage >= totalPages || totalPages === 0;
+}
+
+// Show/hide password field based on role
+document.getElementById('role').addEventListener('change', function() {
+    const passwordGroup = document.getElementById('password_group');
+    const passwordInput = document.getElementById('password');
+    
+    if (this.value === 'admin' || this.value === 'staff') {
+        passwordGroup.style.display = 'block';
+        passwordInput.required = true;
+    } else {
+        passwordGroup.style.display = 'none';
+        passwordInput.required = false;
+        passwordInput.value = '';
+    }
+});
+
+function editUser(userId) {
+    // You can implement edit functionality here
+    alert('Edit functionality can be added - for now, use the database script method');
+}
+
+function toggleStatus(userId, icNumber, isFrozen) {
+    const action = isFrozen ? 'unfreeze' : 'freeze';
+    const actionText = isFrozen ? 'unfreeze' : 'freeze';
+    
+    if (confirm(`Are you sure you want to ${actionText} this user's card?`)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ url_for("toggle_card_status") }}';
+        
+        // Add CSRF token
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrf_token';
+        csrfInput.value = '{{ csrf_token() }}';
+        
+        const icInput = document.createElement('input');
+        icInput.type = 'hidden';
+        icInput.name = 'ic';
+        icInput.value = icNumber;
+        
+        const actionInput = document.createElement('input');
+        actionInput.type = 'hidden';
+        actionInput.name = 'action';
+        actionInput.value = action;
+        
+        form.appendChild(csrfInput);
+        form.appendChild(icInput);
+        form.appendChild(actionInput);
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Barcode Scanner
+let scannerRunning = false;
+
+function startScan() {
+    if (scannerRunning) return;
+
+    const scannerContainer = document.getElementById('scanner-container');
+    scannerContainer.classList.remove('hidden');
+    scannerContainer.innerHTML = '<div class="text-center text-gray-500"><i class="fas fa-spinner fa-spin text-3xl mb-2"></i><p>Initializing camera...</p></div>';
+
+    // Load Quagga if not already loaded
+    if (typeof Quagga === 'undefined') {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js';
+        script.onload = function() {
+            initScanner();
+        };
+        document.head.appendChild(script);
+    } else {
+        initScanner();
+    }
+
+    function initScanner() {
+        Quagga.init({
+            inputStream: {
+                name: "Live",
+                type: "LiveStream",
+                target: scannerContainer,
+                constraints: {
+                    facingMode: "environment"
+                }
+            },
+            decoder: {
+                readers: ["code_128_reader"]
+            },
+            locate: true
+        }, function(err) {
+            if (err) {
+                console.error("Quagga init error:", err);
+                scannerContainer.innerHTML = '<div class="text-center text-red-500"><i class="fas fa-exclamation-triangle text-3xl mb-2"></i><p>Camera error. Make sure your browser has permission.</p></div>';
+                return;
+            }
+            Quagga.start();
+            scannerRunning = true;
+        });
+
+        Quagga.onDetected(function(result) {
+            const code = result.codeResult.code;
+            document.getElementById('ic_number').value = code;
+            stopScan();
+        });
+    }
+}
+
+function stopScan() {
+    if (scannerRunning) {
+        Quagga.stop();
+        scannerRunning = false;
+        const scannerContainer = document.getElementById('scanner-container');
+        scannerContainer.classList.add('hidden');
+    }
+}
+</script>
+  </div>
+</div>
+{% endblock %}

@@ -370,10 +370,20 @@ def rate_limit_exceeded():
 @app.route('/login', methods=['GET', 'POST'])
 @add_security_headers
 def login():
-    print(f"Login route accessed, method: {request.method}")
-    print(f"Current user authenticated: {current_user.is_authenticated}")
+    # Safe print function that handles Unicode characters
+    def safe_print(msg):
+        try:
+            print(msg)
+        except UnicodeEncodeError:
+            try:
+                print(msg.encode('utf-8', errors='replace').decode('utf-8', errors='replace'))
+            except:
+                pass
+    
+    safe_print(f"Login route accessed, method: {request.method}")
+    safe_print(f"Current user authenticated: {current_user.is_authenticated}")
     if current_user.is_authenticated:
-        print(f"User already authenticated: {current_user.name}, role: {current_user.role}")
+        safe_print(f"User already authenticated: {current_user.name}, role: {current_user.role}")
         if current_user.role == 'admin':
             return redirect(url_for('admin_dashboard'))
         elif current_user.role == 'staff':
@@ -387,25 +397,25 @@ def login():
             pin = request.form.get('pin', '').strip()
             password = request.form.get('password', '').strip()
             
-            print(f"Login attempt: IC={ic}, PIN={'*' * len(pin)}")
+            safe_print(f"Login attempt: IC={ic}, PIN={'*' * len(pin)}")
             
             # Input validation - show same error message for format errors and invalid credentials
             if not validate_ic_number(ic) or not validate_pin(pin):
-                print(f"Validation failed: IC={ic}, PIN={'*' * len(pin)}")
+                safe_print(f"Validation failed: IC={ic}, PIN={'*' * len(pin)}")
                 flash(INVALID_CREDENTIALS, 'error')
                 return redirect(url_for('login'))
             
-            print(f"Validation passed, looking up student: {ic}")
+            safe_print(f"Validation passed, looking up student: {ic}")
             user = safe_get_student(ic)
-            print(f"Student lookup result: {user}")
+            safe_print(f"Student lookup result: {user}")
             if not user:
-                print(f"Student not found: {ic}")
+                safe_print(f"Student not found: {ic}")
                 flash(INVALID_CREDENTIALS, 'error')
                 return redirect(url_for('login'))
 
             # Check PIN
             if not user.check_pin(pin):
-                print(f"Invalid PIN for student: {ic}")
+                safe_print(f"Invalid PIN for student: {ic}")
                 flash(INVALID_CREDENTIALS, 'error')
                 return redirect(url_for('login'))
             
@@ -420,11 +430,11 @@ def login():
             
             # Check if account is frozen
             if user.frozen:
-                print(f"Account frozen for student: {ic}")
+                safe_print(f"Account frozen for student: {ic}")
                 flash(ACCOUNT_FROZEN, 'error')
                 return redirect(url_for('login'))
             
-            print(f"Login successful for user: {user.name}, role: {user.role}")
+            safe_print(f"Login successful for user: {user.name}, role: {user.role}")
             login_user(user, remember=False)
             # Store user type in session to help load_user function
             session['user_type'] = 'student'
@@ -434,20 +444,36 @@ def login():
             client_ip = request.remote_addr
             if hasattr(app, 'rate_limit_storage') and client_ip in app.rate_limit_storage:
                 del app.rate_limit_storage[client_ip]
-                print(f"Cleared rate limit for {client_ip} after successful login")
+                safe_print(f"Cleared rate limit for {client_ip} after successful login")
             
             if user.role == 'admin':
-                print(f"Redirecting admin {user.name} to admin dashboard")
+                safe_print(f"Redirecting admin {user.name} to admin dashboard")
                 return redirect(url_for('admin_dashboard'))
             elif user.role == 'staff':
-                print(f"Redirecting staff {user.name} to staff dashboard")
+                safe_print(f"Redirecting staff {user.name} to staff dashboard")
                 return redirect(url_for('staff_dashboard'))
             else:
-                print(f"Redirecting student {user.name} to student dashboard")
+                safe_print(f"Redirecting student {user.name} to student dashboard")
                 return redirect(url_for('student_dashboard'))
                 
         except Exception as e:
-            print(f"Login error: {str(e)}")
+            import traceback
+            error_trace = traceback.format_exc()
+            # Safe error message that handles Unicode
+            try:
+                error_msg = str(e)
+            except UnicodeEncodeError:
+                error_msg = "Encoding error occurred"
+            
+            try:
+                print(f"Login error: {error_msg}")
+                print(f"Full traceback:\n{error_trace}")
+            except UnicodeEncodeError:
+                # Fallback for console output
+                print("Login error: (Unicode encoding issue)")
+                print("Full traceback: (check logs for details)")
+            
+            app.logger.error(f"Login error: {error_msg}\n{error_trace}")
             flash('An error occurred during login. Please try again.', 'error')
             return redirect(url_for('login'))
 
@@ -1038,7 +1064,32 @@ def student_dashboard():
 def admin_dashboard():
     print(f"Admin dashboard accessed by user: {current_user.name}, role: {current_user.role}")
     if current_user.role == 'admin':
-        return render_template('admin.html', user=current_user)
+        # Calculate statistics
+        total_students = StudentInfo.query.count()
+        
+        # Active orders: paid orders that are not completed
+        active_orders = Order.query.filter_by(
+            payment_status='paid',
+            status='pending'
+        ).count()
+        
+        # Total revenue: sum of all paid orders
+        total_revenue_result = db.session.query(func.sum(Order.total_price)).filter_by(
+            payment_status='paid'
+        ).scalar()
+        total_revenue = float(total_revenue_result) if total_revenue_result else 0.0
+        
+        # Pending feedback: all feedback (assuming all feedback needs review)
+        pending_feedback = Feedback.query.count()
+        
+        stats = {
+            'total_students': total_students,
+            'active_orders': active_orders,
+            'total_revenue': total_revenue,
+            'pending_feedback': pending_feedback
+        }
+        
+        return render_template('admin.html', user=current_user, stats=stats)
     else:
         print(f"User {current_user.name} with role {current_user.role} redirected to home")
         return redirect(url_for('home'))
@@ -1047,7 +1098,33 @@ def admin_dashboard():
 @login_required
 def staff_dashboard():
     if current_user.role == 'staff':
-        return render_template('staff.html', user=current_user)
+        # Calculate statistics
+        # Active orders: paid orders that are not completed
+        active_orders = Order.query.filter_by(
+            payment_status='paid',
+            status='pending'
+        ).count()
+        
+        # Total revenue: sum of all paid orders
+        total_revenue_result = db.session.query(func.sum(Order.total_price)).filter_by(
+            payment_status='paid'
+        ).scalar()
+        total_revenue = float(total_revenue_result) if total_revenue_result else 0.0
+        
+        # Paid orders: count of all paid orders
+        paid_orders = Order.query.filter_by(payment_status='paid').count()
+        
+        # Pending feedback: all feedback (assuming all feedback needs review)
+        pending_feedback = Feedback.query.count()
+        
+        stats = {
+            'active_orders': active_orders,
+            'total_revenue': total_revenue,
+            'paid_orders': paid_orders,
+            'pending_feedback': pending_feedback
+        }
+        
+        return render_template('staff.html', user=current_user, stats=stats)
     else:
         return redirect(url_for('home'))
 
@@ -1059,6 +1136,54 @@ def get_menu_data():
         MenuItem.category.isnot(None)
     ).distinct().all()
     return items, [cat[0] for cat in categories]
+
+def build_cart_summary(student):
+    """Build a summary of the student's current unpaid cart items"""
+    from collections import defaultdict
+    
+    unpaid_orders = Order.query.filter_by(
+        student_id=student.id,
+        payment_status='unpaid'
+    ).order_by(Order.order_time.asc()).all()
+    
+    grouped_orders = defaultdict(lambda: {
+        'item': None,
+        'quantity': 0,
+        'total_price': 0,
+        'order_ids': [],
+        'first_order_time': None
+    })
+    
+    for order in unpaid_orders:
+        menu_id = order.menu_item_id
+        if grouped_orders[menu_id]['item'] is None:
+            grouped_orders[menu_id]['item'] = order.item
+            grouped_orders[menu_id]['first_order_time'] = order.order_time
+        grouped_orders[menu_id]['quantity'] += order.quantity
+        grouped_orders[menu_id]['total_price'] += float(order.total_price or 0)
+        grouped_orders[menu_id]['order_ids'].append(order.id)
+    
+    cart_items = []
+    for menu_id, data in grouped_orders.items():
+        cart_items.append({
+            'menu_item_id': menu_id,
+            'name': data['item'].name if data['item'] else 'Item',
+            'price': float(data['item'].price) if data['item'] else 0,
+            'quantity': data['quantity'],
+            'total_price': data['total_price'],
+            'order_ids': data['order_ids'],
+            'image_path': data['item'].image_path if data['item'] and data['item'].image_path else None,
+            'first_order_time': data['first_order_time'].isoformat() if data['first_order_time'] else None
+        })
+    
+    cart_items.sort(key=lambda x: x['first_order_time'] if x['first_order_time'] else '')
+    total = sum(item['total_price'] for item in cart_items)
+    
+    return {
+        'cart_items': cart_items,
+        'total': total,
+        'user_balance': float(student.balance)
+    }
 
 def validate_cart_data(cart_json):
     """Validate and parse cart data from request"""
@@ -1340,11 +1465,20 @@ def handle_order_submission():
 def payment():
     student = StudentInfo.query.get(current_user.id)
 
+    if not student:
+        flash("❌ Student account not found. Please contact an administrator.", "error")
+        return redirect(url_for("student_dashboard"))
+
     if request.method == "POST":
         if "delete" in request.form:
             return handle_order_delete(student)
         if "pay" in request.form:
             return handle_order_payment(student)
+
+    try:
+        user_balance = float(student.balance) if student.balance is not None else 0.0
+    except (TypeError, ValueError, InvalidOperation):
+        user_balance = 0.0
 
     unpaid_orders = Order.query.filter_by(student_id=student.id, payment_status='unpaid').all()
     
@@ -1372,7 +1506,13 @@ def payment():
         })
     
     total = sum(item['total_price'] for item in grouped_cart_items)
-    return render_template("payment.html", cart_items=grouped_cart_items, total=total, user=student)
+    return render_template(
+        "payment.html",
+        cart_items=grouped_cart_items,
+        total=total,
+        user=student,
+        user_balance=user_balance
+    )
 
 @app.route("/my-orders")
 @login_required
@@ -1431,6 +1571,129 @@ def handle_order_delete(student):
         flash("❌ No orders found or already paid.", "error")
     return redirect(url_for("payment"))
 
+@app.route('/api/cart-items', methods=['GET'])
+@login_required
+def api_cart_items():
+    """API endpoint to get current cart items as JSON for instant updates"""
+    if current_user.role != 'student':
+        return jsonify({'error': ACCESS_DENIED}), 403
+    
+    student = StudentInfo.query.get(current_user.id)
+    if not student:
+        return jsonify({'error': 'Student not found'}), 404
+    
+    summary = build_cart_summary(student)
+    return jsonify({'success': True, **summary})
+
+@app.route('/api/cart/add', methods=['POST'])
+@login_required
+def api_cart_add():
+    """API endpoint to add an item to the student's cart"""
+    if current_user.role != 'student':
+        return jsonify({'error': ACCESS_DENIED}), 403
+    
+    data = request.get_json() or {}
+    menu_item_id = data.get('menu_item_id')
+    quantity = data.get('quantity', 1)
+    
+    if not menu_item_id:
+        return jsonify({'error': 'Missing menu_item_id'}), 400
+    
+    try:
+        quantity = int(quantity)
+    except (TypeError, ValueError):
+        quantity = 1
+    
+    if quantity < 1:
+        quantity = 1
+    
+    student = StudentInfo.query.get(current_user.id)
+    if not student:
+        return jsonify({'error': 'Student not found'}), 404
+    
+    menu_item = MenuItem.query.get(menu_item_id)
+    if not menu_item or not menu_item.is_available:
+        return jsonify({'error': 'Menu item not available'}), 404
+    
+    try:
+        unpaid_orders = Order.query.filter_by(
+            student_id=student.id,
+            menu_item_id=menu_item_id,
+            payment_status='unpaid'
+        ).all()
+        
+        if unpaid_orders:
+            current_quantity = sum(order.quantity for order in unpaid_orders)
+            new_quantity = current_quantity + quantity
+            main_order = unpaid_orders[0]
+            main_order.quantity = new_quantity
+            main_order.total_price = float(menu_item.price) * new_quantity
+            for order in unpaid_orders[1:]:
+                db.session.delete(order)
+        else:
+            new_order = Order(
+                student_id=student.id,
+                menu_item_id=menu_item_id,
+                quantity=quantity,
+                total_price=float(menu_item.price) * quantity,
+                payment_status='unpaid'
+            )
+            db.session.add(new_order)
+        
+        db.session.commit()
+        summary = build_cart_summary(student)
+        return jsonify({
+            'success': True,
+            'message': f"{menu_item.name} added to your orders.",
+            **summary
+        })
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error adding to cart: {str(e)}")
+        return jsonify({'error': 'Failed to add item to cart'}), 500
+
+@app.route('/api/cart/remove', methods=['POST'])
+@login_required
+def api_cart_remove():
+    """API endpoint to remove a menu item from the student's cart"""
+    if current_user.role != 'student':
+        return jsonify({'error': ACCESS_DENIED}), 403
+    
+    data = request.get_json() or {}
+    menu_item_id = data.get('menu_item_id')
+    
+    if not menu_item_id:
+        return jsonify({'error': 'Missing menu_item_id'}), 400
+    
+    student = StudentInfo.query.get(current_user.id)
+    if not student:
+        return jsonify({'error': 'Student not found'}), 404
+    
+    try:
+        unpaid_orders = Order.query.filter_by(
+            student_id=student.id,
+            menu_item_id=menu_item_id,
+            payment_status='unpaid'
+        ).all()
+        
+        if not unpaid_orders:
+            return jsonify({'error': 'Item not found in cart'}), 404
+        
+        for order in unpaid_orders:
+            db.session.delete(order)
+        
+        db.session.commit()
+        summary = build_cart_summary(student)
+        return jsonify({
+            'success': True,
+            'message': 'Item removed from your orders.',
+            **summary
+        })
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error removing cart item: {str(e)}")
+        return jsonify({'error': 'Failed to remove item'}), 500
+
 @app.route('/api/update-order-quantity', methods=['POST'])
 @login_required
 def update_order_quantity():
@@ -1485,10 +1748,11 @@ def update_order_quantity():
             unpaid_orders[0].total_price = float(menu_item.price) * new_quantity
         
         db.session.commit()
+        summary = build_cart_summary(student)
         return jsonify({
             'success': True,
-            'quantity': new_quantity,
-            'total_price': float(menu_item.price) * new_quantity
+            'message': 'Quantity updated',
+            **summary
         })
     except Exception as e:
         db.session.rollback()
@@ -1637,6 +1901,85 @@ def paid_orders():
 
     return render_template("paid_orders.html", grouped_orders=grouped_orders, search_query=search_query)
 
+@app.route("/api/paid-orders", methods=["GET"])
+@login_required
+def api_paid_orders():
+    """API endpoint to return paid orders as JSON for instant updates"""
+    if current_user.role not in ['admin', 'staff']:
+        return jsonify({'error': 'Unauthorized access'}), 403
+
+    # Get search query
+    search_query = request.args.get('search', '').strip()
+    
+    # Optimize query with join to avoid N+1 queries
+    query = db.session.query(Order, StudentInfo, MenuItem)\
+        .join(StudentInfo)\
+        .join(MenuItem)\
+        .filter(Order.payment_status == 'paid')\
+        .order_by(Order.order_time.desc())
+    
+    # Apply search filter
+    if search_query:
+        query = query.filter(
+            db.or_(
+                StudentInfo.name.ilike(f'%{search_query}%'),
+                StudentInfo.ic_number.ilike(f'%{search_query}%'),
+                MenuItem.name.ilike(f'%{search_query}%')
+            )
+        )
+    
+    paid_orders = query.all()
+
+    # Group orders by student and menu item name
+    from collections import defaultdict
+    grouped_by_student = defaultdict(lambda: defaultdict(lambda: {'orders': [], 'total_qty': 0, 'total_price': 0, 'status': 'pending'}))
+    
+    for order, student, menu_item in paid_orders:
+        grouped_by_student[student][menu_item.name]['orders'].append(order)
+        grouped_by_student[student][menu_item.name]['total_qty'] += order.quantity
+        grouped_by_student[student][menu_item.name]['total_price'] += float(order.total_price or 0)
+        # If any order is completed, mark as completed
+        if order.status == 'completed':
+            grouped_by_student[student][menu_item.name]['status'] = 'completed'
+        grouped_by_student[student][menu_item.name]['menu_item'] = menu_item
+
+    # Convert to JSON-serializable format
+    result = []
+    for student, items in grouped_by_student.items():
+        student_data = {
+            'id': student.id,
+            'name': student.name,
+            'ic_number': student.ic_number,
+            'items': []
+        }
+        
+        for item_name, data in items.items():
+            student_data['items'].append({
+                'name': item_name,
+                'total_qty': data['total_qty'],
+                'total_price': data['total_price'],
+                'status': data['status'],
+                'order_ids': [o.id for o in data['orders']],
+                'image_path': data['menu_item'].image_path if data['menu_item'].image_path else None,
+                'orders_count': len(data['orders'])
+            })
+        
+        # Sort by status (pending first)
+        student_data['items'].sort(key=lambda x: x['status'] == 'completed')
+        result.append(student_data)
+
+    # Sort students: first by pending orders count (descending), then by name
+    result.sort(key=lambda x: (
+        -sum(1 for item in x['items'] if item['status'] == 'pending'),
+        x['name'].lower()
+    ))
+
+    return jsonify({
+        'success': True,
+        'orders': result,
+        'search_query': search_query
+    })
+
 @app.route("/mark-done", methods=["POST"])
 @login_required
 def mark_order_done():
@@ -1700,11 +2043,14 @@ def delete_order():
             if order and order.payment_status == 'paid':
                 student = StudentInfo.query.get(order.student_id)
                 if student:
-                    # If order is pending, refund the money
+                    # If order is not completed (pending), refund the money to student
                     if order.status != 'completed':
                         refund_amount = float(order.total_price or 0)
+                        # Refund the full amount back to student balance
                         student.balance += int(refund_amount)
                         refunded_amount += refund_amount
+                        app.logger.info(f"Refunding RM {refund_amount:.2f} to student {student.id} ({student.name}) for deleted order {oid}")
+                    # If order is completed, no refund (order already fulfilled)
                 
                 db.session.delete(order)
                 deleted_count += 1
@@ -2114,7 +2460,7 @@ def toggle_card_status():
 
     if not validate_ic_number(ic):
         flash(INVALID_IC_FORMAT, 'error')
-        return redirect(url_for('manage_students'))
+        return redirect(url_for('manage_users'))
 
     student = safe_get_student(ic)
     if not student:
@@ -2128,10 +2474,10 @@ def toggle_card_status():
             flash(f"{student.name}'s card has been unfrozen.", "success")
         else:
             flash("Invalid action.", "error")
-            return redirect(url_for('manage_students'))
+            return redirect(url_for('manage_users'))
         db.session.commit()
 
-    return redirect(url_for('manage_students'))
+    return redirect(url_for('manage_users'))
 
 @app.route('/student_balances')
 @login_required
@@ -2151,19 +2497,16 @@ def transactions():
     total_out = sum(abs(t.amount) for t in logs if t.amount < 0)
     return render_template('transactions.html', logs=logs, total_in=total_in, total_out=total_out)
 
-@app.route('/manage_students')
+@app.route('/manage_users')
 @login_required
-def manage_students():
+def manage_users():
     if current_user.role != 'admin':
         flash(ACCESS_DENIED, "error")
         return redirect(url_for('home'))
     
-    # Optimize query - use pagination for large datasets
-    page = request.args.get('page', 1, type=int)
-    students = StudentInfo.query.order_by(StudentInfo.name).paginate(
-        page=page, per_page=20, error_out=False
-    )
-    return render_template('manage_students.html', students=students)
+    # Return all users - client-side pagination handles display
+    users = StudentInfo.query.order_by(StudentInfo.name).all()
+    return render_template('manage_users.html', users=users)
 
 def validate_student_form_data(form_data):
     """Validate all student form data"""
@@ -2187,7 +2530,12 @@ def validate_student_form_data(form_data):
     if role not in ['student', 'staff', 'admin']:
         raise ValueError('Invalid role selected.')
     
-    if not validate_amount(balance):
+    # Validate balance - allow 0 for new students
+    try:
+        balance_float = float(balance)
+        if balance_float < 0:
+            raise ValueError(INVALID_AMOUNT)
+    except (ValueError, TypeError):
         raise ValueError(INVALID_AMOUNT)
     
     # Validate password for admin/staff roles
@@ -2247,16 +2595,16 @@ def add_student():
         db.session.commit()
         
         flash(f'✅ Successfully added student: {student_data["name"]} (IC: {student_data["ic_number"]})', 'success')
-        return redirect(url_for('manage_students'))
+        return redirect(url_for('manage_users'))
         
     except ValueError as e:
         flash(str(e), 'error')
-        return redirect(url_for('manage_students'))
+        return redirect(url_for('manage_users'))
     except Exception as e:
         db.session.rollback()
         app.logger.error(f"Error adding student: {str(e)}")
         flash('Error adding student. Please try again.', 'error')
-        return redirect(url_for('manage_students'))
+        return redirect(url_for('manage_users'))
 
 @app.route('/food-demand-analytics')
 @login_required

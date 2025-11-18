@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Order Food{% endblock %}
 {% block content %}
-<div class="fixed inset-y-0 left-0 md:left-64 right-0 bg-gradient-to-br from-purple-400 via-pink-500 to-red-500 overflow-hidden transition-all duration-300">
+<div id="order-page" data-is-student="{{ 'true' if current_user.role == 'student' else 'false' }}" class="fixed inset-y-0 left-0 md:left-64 right-0 bg-gradient-to-br from-purple-400 via-pink-500 to-red-500 overflow-hidden transition-all duration-300">
   <!-- Mobile Top Nav -->
   <nav class="absolute top-0 w-full bg-white border-b border-gray-200 z-50 shadow-md md:hidden transition-all duration-300">
     <div class="flex items-center justify-between h-16 px-4">
@@ -74,8 +74,11 @@
           <h3 class="text-sm sm:text-lg font-semibold text-gray-900 mb-1 sm:mb-2 line-clamp-1 sm:line-clamp-none">{{ item.name }}</h3>
           <p class="text-gray-600 text-xs sm:text-sm mb-2 sm:mb-4 line-clamp-1 sm:line-clamp-2 hidden sm:block">{{ item.description or 'Delicious food item' }}</p>
           
-          <button onclick="addToCart({{ item.id }}, '{{ item.name|e }}', {{ item.price }})" 
-                  class="order-action w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white py-1.5 sm:py-2.5 px-2 sm:px-4 rounded-lg sm:rounded-xl text-xs sm:text-base font-medium transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center">
+          <button 
+                  class="order-action add-to-cart-btn w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white py-1.5 sm:py-2.5 px-2 sm:px-4 rounded-lg sm:rounded-xl text-xs sm:text-base font-medium transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center"
+                  data-item-id="{{ item.id }}"
+                  data-item-name="{{ item.name|e }}"
+                  data-item-price="{{ item.price }}">
             <i class="fas fa-plus mr-1 sm:mr-2 text-xs sm:text-sm"></i><span class="hidden sm:inline">Add to Cart</span><span class="sm:hidden">Add</span>
           </button>
           {% if current_user.role == 'admin' %}
@@ -107,6 +110,7 @@
   </div>
 </div>
 
+{% if current_user.role == 'student' %}
 <!-- Cart Bottom Bar -->
 <div id="cart-bar" class="fixed bottom-0 left-0 md:left-64 right-0 bg-white shadow-2xl border-t border-gray-200 z-[60] transform translate-y-full transition-transform duration-300">
   <div class="max-w-7xl mx-auto p-6">
@@ -127,14 +131,13 @@
         <span id="cart-total" class="text-2xl font-bold text-blue-600">RM0.00</span>
       </div>
       
-      <form id="order-form" action="{{ url_for('order') }}" method="POST">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-        <input type="hidden" name="cart_items" id="cart_items_input">
-        <button type="submit" onclick="return prepareOrderSubmission()" 
-                class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-xl font-semibold text-lg transition-colors duration-200">
-          <i class="fas fa-check mr-2"></i>Submit Order
-        </button>
-      </form>
+      <a href="{{ url_for('payment') }}" 
+         class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-xl font-semibold text-lg transition-colors duration-200 flex items-center justify-center">
+        <i class="fas fa-arrow-right mr-2"></i>Go to Payment
+      </a>
+      <p class="text-sm text-gray-500 text-center mt-2">
+        Added items are saved instantly. Review and pay on the payment page.
+      </p>
     </div>
   </div>
 </div>
@@ -147,8 +150,13 @@
     <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold">0</span>
   </button>
 </div>
+{% endif %}
 
 <script>
+const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
+const csrfToken = csrfTokenMeta ? csrfTokenMeta.getAttribute('content') : '';
+const orderPageEl = document.getElementById('order-page');
+const isStudent = orderPageEl ? orderPageEl.dataset.isStudent === 'true' : false;
 let cart = [];
 let editMode = false;
 
@@ -178,21 +186,97 @@ function showToast(message, type = 'success') {
   }, 3000);
 }
 
-function addToCart(id, name, price) {
-  const existing = cart.find(item => item.id === id);
-  if (existing) {
-    existing.quantity += 1;
-    showToast(`${name} added! (Qty: ${existing.quantity})`, 'success');
+function normalizeCartItemsFromApi(apiItems = []) {
+  return apiItems.map(item => ({
+    id: item.menu_item_id ?? item.id,
+    name: item.name ?? 'Item',
+    price: Number(item.price ?? 0),
+    quantity: Number(item.quantity ?? 1)
+  }));
+}
+
+function syncCartDataFromResponse(data) {
+  if (data && Array.isArray(data.cart_items)) {
+    cart = normalizeCartItemsFromApi(data.cart_items);
   } else {
-    cart.push({ id, name, price, quantity: 1 });
-    showToast(`${name} added to cart!`, 'success');
+    cart = [];
   }
   updateCartDisplay();
 }
 
-function removeFromCart(id) {
-  cart = cart.filter(item => item.id !== id);
-  updateCartDisplay();
+async function refreshCartFromServer() {
+  if (!isStudent) return;
+  try {
+    const response = await fetch('/api/cart-items');
+    const data = await response.json();
+    if (response.ok && data.success) {
+      syncCartDataFromResponse(data);
+    }
+  } catch (error) {
+    console.error('Error refreshing cart:', error);
+  }
+}
+
+async function addToCart(id, name, price = 0) {
+  if (!isStudent) {
+    showToast('Only students can add orders from this page.', 'error');
+    return;
+  }
+  
+  try {
+    const response = await fetch('/api/cart/add', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken
+      },
+      body: JSON.stringify({
+        menu_item_id: id,
+        quantity: 1
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok || !data.success) {
+      showToast(data.error || 'Failed to add item.', 'error');
+    } else {
+      syncCartDataFromResponse(data);
+      showToast(data.message || `${name} added to your orders!`, 'success');
+      toggleCart(true);
+    }
+  } catch (error) {
+    console.error('Error adding item:', error);
+    showToast('Error adding item. Please try again.', 'error');
+  }
+}
+
+async function removeFromCart(id) {
+  if (!isStudent) return;
+  
+  try {
+    const response = await fetch('/api/cart/remove', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken
+      },
+      body: JSON.stringify({
+        menu_item_id: id
+      })
+    });
+    
+    const data = await response.json();
+    if (!response.ok || !data.success) {
+      showToast(data.error || 'Failed to remove item.', 'error');
+    } else {
+      syncCartDataFromResponse(data);
+      showToast(data.message || 'Item removed from your orders.', 'success');
+    }
+  } catch (error) {
+    console.error('Error removing item:', error);
+    showToast('Error removing item. Please try again.', 'error');
+  }
 }
 
 function updateCartDisplay() {
@@ -200,36 +284,49 @@ function updateCartDisplay() {
   const cartTotal = document.getElementById('cart-total');
   const cartCount = document.getElementById('cart-count');
   
+  if (!cartItems || !cartTotal || !cartCount) {
+    return;
+  }
+  
   cartItems.innerHTML = '';
   let total = 0;
   let itemCount = 0;
   
-  cart.forEach(item => {
-    total += item.price * item.quantity;
-    itemCount += item.quantity;
-    
-    const cartItem = document.createElement('div');
-    cartItem.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-xl';
-    cartItem.innerHTML = `
-      <div class="flex-1">
-        <h4 class="font-medium text-gray-900">${item.name}</h4>
-        <p class="text-sm text-gray-600">RM ${item.price.toFixed(2)} each</p>
-      </div>
-      <div class="flex items-center space-x-3">
-        <button onclick="updateQuantity(${item.id}, -1)" class="bg-gray-200 text-gray-700 w-8 h-8 rounded-full hover:bg-gray-300 transition-colors">
-          <i class="fas fa-minus text-xs"></i>
-        </button>
-        <span class="font-semibold text-gray-900 w-8 text-center">${item.quantity}</span>
-        <button onclick="updateQuantity(${item.id}, 1)" class="bg-gray-200 text-gray-700 w-8 h-8 rounded-full hover:bg-gray-300 transition-colors">
-          <i class="fas fa-plus text-xs"></i>
-        </button>
-        <button onclick="removeFromCart(${item.id})" class="text-red-500 hover:text-red-700 ml-2">
-          <i class="fas fa-trash text-sm"></i>
-        </button>
+  if (cart.length === 0) {
+    cartItems.innerHTML = `
+      <div class="text-center py-6 text-gray-500">
+        <i class="fas fa-box-open text-2xl mb-2"></i>
+        <p>No items added yet.</p>
       </div>
     `;
-    cartItems.appendChild(cartItem);
-  });
+  } else {
+    for (const item of cart) {
+      total += item.price * item.quantity;
+      itemCount += item.quantity;
+      
+      const cartItem = document.createElement('div');
+      cartItem.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-xl';
+      cartItem.innerHTML = `
+        <div class="flex-1">
+          <h4 class="font-medium text-gray-900">${item.name}</h4>
+          <p class="text-sm text-gray-600">RM ${item.price.toFixed(2)} each</p>
+        </div>
+        <div class="flex items-center space-x-3">
+          <button onclick="updateQuantity(${item.id}, -1)" class="bg-gray-200 text-gray-700 w-8 h-8 rounded-full hover:bg-gray-300 transition-colors">
+            <i class="fas fa-minus text-xs"></i>
+          </button>
+          <span class="font-semibold text-gray-900 w-8 text-center">${item.quantity}</span>
+          <button onclick="updateQuantity(${item.id}, 1)" class="bg-gray-200 text-gray-700 w-8 h-8 rounded-full hover:bg-gray-300 transition-colors">
+            <i class="fas fa-plus text-xs"></i>
+          </button>
+          <button onclick="removeFromCart(${item.id})" class="text-red-500 hover:text-red-700 ml-2">
+            <i class="fas fa-trash text-sm"></i>
+          </button>
+        </div>
+      `;
+      cartItems.appendChild(cartItem);
+    }
+  }
   
   cartTotal.textContent = `RM${total.toFixed(2)}`;
   cartCount.textContent = itemCount;
@@ -241,30 +338,52 @@ function updateCartDisplay() {
   }
 }
 
-function toggleCart() {
+function toggleCart(forceOpen = false) {
   const cartBar = document.getElementById('cart-bar');
+  if (!cartBar) return;
+  
+  if (forceOpen) {
+    cartBar.classList.remove('translate-y-full');
+    return;
+  }
+  
   cartBar.classList.toggle('translate-y-full');
 }
 
-function updateQuantity(id, change) {
-  const item = cart.find(item => item.id === id);
-  if (item) {
-    item.quantity += change;
-    if (item.quantity <= 0) {
-      removeFromCart(id);
+async function updateQuantity(id, change) {
+  if (!isStudent) return;
+  
+  const item = cart.find(entry => entry.id === id);
+  if (!item) return;
+  
+  const newQuantity = item.quantity + change;
+  if (newQuantity < 1) {
+    return removeFromCart(id);
+  }
+  
+  try {
+    const response = await fetch('/api/update-order-quantity', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken
+      },
+      body: JSON.stringify({
+        menu_item_id: id,
+        quantity: newQuantity
+      })
+    });
+    
+    const data = await response.json();
+    if (!response.ok || !data.success) {
+      showToast(data.error || 'Failed to update quantity.', 'error');
     } else {
-      updateCartDisplay();
+      syncCartDataFromResponse(data);
     }
+  } catch (error) {
+    console.error('Error updating quantity:', error);
+    showToast('Error updating quantity. Please try again.', 'error');
   }
-}
-
-function prepareOrderSubmission() {
-  if (cart.length === 0) {
-    alert("Please add items to your cart.");
-    return false;
-  }
-  document.getElementById('cart_items_input').value = JSON.stringify(cart);
-  return true;
 }
 
 function setEditMode(enabled) {
@@ -274,19 +393,25 @@ function setEditMode(enabled) {
   const adminAddButtons = document.querySelectorAll('.admin-add-button');
   const toggleButtons = [document.getElementById('toggleEditModeBtn'), document.getElementById('toggleEditModeBtnMobile')].filter(Boolean);
 
-  orderActions.forEach(btn => btn.classList.toggle('hidden', enabled));
-  adminActions.forEach(section => section.classList.toggle('hidden', !enabled));
-  adminAddButtons.forEach(btn => btn.classList.toggle('hidden', !enabled));
-  toggleButtons.forEach(btn => {
+  for (const btn of orderActions) {
+    btn.classList.toggle('hidden', enabled);
+  }
+  for (const section of adminActions) {
+    section.classList.toggle('hidden', !enabled);
+  }
+  for (const btn of adminAddButtons) {
+    btn.classList.toggle('hidden', !enabled);
+  }
+  for (const btn of toggleButtons) {
     btn.innerHTML = enabled ? '<i class="fas fa-check mr-2"></i>Done Editing' : '<i class="fas fa-edit mr-2"></i>Edit Menu';
-  });
+  }
 
   if (enabled) {
-    if (window.location.hash !== '#manage') {
-      window.location.hash = 'manage';
+    if (globalThis.location.hash !== '#manage') {
+      globalThis.location.hash = 'manage';
     }
-  } else if (window.location.hash === '#manage') {
-    history.replaceState(null, '', window.location.pathname + window.location.search);
+  } else if (globalThis.location.hash === '#manage') {
+    globalThis.history.replaceState(null, '', globalThis.location.pathname + globalThis.location.search);
   }
 }
 
@@ -295,23 +420,22 @@ function toggleEditMode() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-  const params = new URLSearchParams(window.location.search);
-  const startInEdit = window.location.hash === '#manage' || params.get('mode') === 'edit';
+  const params = new URLSearchParams(globalThis.location.search);
+  const startInEdit = globalThis.location.hash === '#manage' || params.get('mode') === 'edit';
   setEditMode(startInEdit);
   
-  // Load existing unpaid orders into cart
-  {% if existing_cart %}
-  const existingCart = {{ existing_cart|tojson }};
-  existingCart.forEach(item => {
-    cart.push({
-      id: item.id,
-      name: item.name,
-      price: item.price,
-      quantity: item.quantity
-    });
+  document.addEventListener('click', function(event) {
+    const button = event.target.closest('.add-to-cart-btn');
+    if (!button) return;
+    const itemId = Number(button.dataset.itemId);
+    const itemName = button.dataset.itemName || 'Item';
+    const itemPrice = Number(button.dataset.itemPrice || 0);
+    addToCart(itemId, itemName, itemPrice);
   });
-  updateCartDisplay();
-  {% endif %}
+  
+  if (isStudent) {
+    refreshCartFromServer();
+  }
 });
 </script>
 {% endblock %}

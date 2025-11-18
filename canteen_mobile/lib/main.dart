@@ -27,7 +27,7 @@ class WebViewApp extends StatefulWidget {
 
 class _WebViewAppState extends State<WebViewApp> {
   InAppWebViewController? webViewController;
-  bool isLoading = true;
+  bool isLoading = false;
   bool hasError = false;
   String errorMessage = '';
   int _currentIndex = 0;
@@ -88,7 +88,7 @@ class _WebViewAppState extends State<WebViewApp> {
             },
             onLoadStart: (controller, url) {
               setState(() {
-                isLoading = true;
+                isLoading = false;
                 hasError = false;
               });
             },
@@ -111,27 +111,6 @@ class _WebViewAppState extends State<WebViewApp> {
               );
             },
           ),
-          if (isLoading)
-            Container(
-              color: Colors.white,
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        Colors.blue[600]!,
-                      ),
-                    ),
-                    SizedBox(height: 16),
-                    Text(
-                      'Loading MyMurid Canteen...',
-                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                    ),
-                  ],
-                ),
-              ),
-            ),
           if (hasError)
             Container(
               color: Colors.white,

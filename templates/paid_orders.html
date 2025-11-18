@@ -39,7 +39,7 @@
         <div class="flex-1 w-full md:w-auto">
           <form method="GET" action="{{ url_for('paid_orders') }}" class="flex gap-2">
             <div class="flex-1 relative">
-              <input type="text" 
+              <input type="text" autocomplete="off" 
                      name="search" 
                      value="{{ search_query }}"
                      placeholder="Search by student name, IC, or food name..." 
@@ -98,7 +98,7 @@
               <th class="px-6 py-4 text-left font-semibold">Actions</th>
     </tr>
   </thead>
-          <tbody class="divide-y divide-gray-200">
+          <tbody id="orders-tbody" class="divide-y divide-gray-200">
     {% for student, items in grouped_orders.items() %}
       {% set student_total = items|sum(attribute='total_price') %}
       {% set student_pending = items|selectattr('status', 'equalto', 'pending')|list|length %}
@@ -173,7 +173,7 @@
                   <div class="flex space-x-2">
                     {% if item.status != 'completed' %}
                     <button class="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl" 
-                            onclick="markDone([{{ item.order_ids|join(',') }}], this)">
+                            onclick="markDone([{{ item.order_ids|join(',') }}])">
                       <i class="fas fa-check mr-1"></i>
                       Mark Done
                     </button>
@@ -181,7 +181,7 @@
 
           {% if current_user.role == "admin" %}
                     <button class="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl" 
-                            onclick="deleteOrder([{{ item.order_ids|join(',') }}], '{{ item.status }}', this)">
+                            onclick="deleteOrder([{{ item.order_ids|join(',') }}], '{{ item.status }}')">
                       <i class="fas fa-trash mr-1"></i>
                       Delete
                     </button>
@@ -197,21 +197,157 @@
     </div>
 
     <!-- Empty State -->
-    {% if not grouped_orders %}
-    <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-12 text-center">
+    <div id="empty-state" class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-12 text-center {% if grouped_orders %}hidden{% endif %}">
       <div class="bg-gray-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
         <i class="fas fa-box-open text-gray-400 text-2xl"></i>
       </div>
       <h3 class="text-xl font-semibold text-gray-900 mb-2">No Orders Found</h3>
       <p class="text-gray-600">There are no paid orders to display at the moment.</p>
     </div>
-    {% endif %}
   </div>
 </div>
 
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
 let html5QrcodeScanner = null;
+const isAdmin = {{ 'true' if current_user.role == 'admin' else 'false' }};
+const searchQuery = '{{ search_query }}';
+
+// Function to refresh orders from API
+function refreshOrders() {
+  const tbody = document.getElementById('orders-tbody');
+  const emptyState = document.getElementById('empty-state');
+  
+  // Show loading state
+  tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-12 text-center"><div class="flex items-center justify-center"><i class="fas fa-spinner fa-spin text-3xl text-orange-500 mr-3"></i><span class="text-gray-600">Loading orders...</span></div></td></tr>';
+  
+  // Build API URL with search query
+  let apiUrl = '/api/paid-orders';
+  if (searchQuery) {
+    apiUrl += '?search=' + encodeURIComponent(searchQuery);
+  }
+  
+  fetch(apiUrl)
+    .then(response => response.json())
+    .then(data => {
+      if (data.success && data.orders.length > 0) {
+        emptyState.classList.add('hidden');
+        renderOrders(data.orders);
+      } else {
+        tbody.innerHTML = '';
+        emptyState.classList.remove('hidden');
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching orders:', error);
+      tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-12 text-center text-red-500">Error loading orders. Please refresh the page.</td></tr>';
+    });
+}
+
+// Function to render orders dynamically
+function renderOrders(orders) {
+  const tbody = document.getElementById('orders-tbody');
+  let html = '';
+  
+  orders.forEach(student => {
+    const studentTotal = student.items.reduce((sum, item) => sum + item.total_price, 0);
+    const studentPending = student.items.filter(item => item.status === 'pending').length;
+    const studentCompleted = student.items.filter(item => item.status === 'completed').length;
+    
+    // Student Header Row
+    html += `
+      <tr class="bg-gradient-to-r from-orange-50 to-red-50 border-t-2 border-orange-300">
+        <td colspan="4" class="px-6 py-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <div class="bg-gradient-to-r from-orange-400 to-red-400 rounded-full w-12 h-12 flex items-center justify-center mr-4">
+                <i class="fas fa-user text-white"></i>
+              </div>
+              <div>
+                <div class="font-bold text-lg text-gray-900">${escapeHtml(student.name)}</div>
+                <div class="text-sm text-gray-600">IC: ${escapeHtml(student.ic_number)}</div>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-sm text-gray-600 mb-1">
+                <span class="font-semibold">${student.items.length}</span> item(s) • 
+                <span class="font-semibold text-yellow-600">${studentPending}</span> pending • 
+                <span class="font-semibold text-green-600">${studentCompleted}</span> completed
+              </div>
+              <div class="text-lg font-bold text-green-700">Total: RM ${studentTotal.toFixed(2)}</div>
+            </div>
+          </div>
+        </td>
+      </tr>
+    `;
+    
+    // Student Orders
+    student.items.forEach(item => {
+      const isCompleted = item.status === 'completed';
+      const imageUrl = item.image_path 
+        ? `/static/images/${escapeHtml(item.image_path)}` 
+        : null;
+      
+      html += `
+        <tr class="${isCompleted ? 'done-row bg-gray-50' : 'hover:bg-gray-50'} transition-colors" data-order-ids="${item.order_ids.join(',')}">
+          <td class="px-6 py-4 pl-16">
+            <div class="text-sm text-gray-400 italic">—</div>
+          </td>
+          <td class="px-6 py-4">
+            <div class="flex items-center">
+              ${imageUrl 
+                ? `<img src="${imageUrl}" alt="${escapeHtml(item.name)}" class="w-16 h-16 object-cover rounded-lg mr-3">`
+                : `<div class="bg-gray-100 rounded-lg p-2 mr-3"><i class="fas fa-utensils text-gray-600"></i></div>`
+              }
+              <div>
+                <div class="font-medium text-gray-900">${escapeHtml(item.name)}</div>
+                <div class="text-sm text-gray-500">Quantity: ${item.total_qty}</div>
+                <div class="text-sm text-green-600 font-semibold">RM ${item.total_price.toFixed(2)}</div>
+                ${item.orders_count > 1 
+                  ? `<div class="text-xs text-gray-400 mt-1">${item.orders_count} separate order(s)</div>`
+                  : ''
+                }
+              </div>
+            </div>
+          </td>
+          <td class="px-6 py-4">
+            ${isCompleted
+              ? '<span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800"><i class="fas fa-check-circle mr-1"></i>Completed</span>'
+              : '<span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800"><i class="fas fa-clock mr-1"></i>Pending</span>'
+            }
+          </td>
+          <td class="px-6 py-4">
+            <div class="flex space-x-2">
+              ${!isCompleted
+                ? `<button class="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl" onclick="markDone([${item.order_ids.join(',')}])"><i class="fas fa-check mr-1"></i>Mark Done</button>`
+                : ''
+              }
+              ${isAdmin
+                ? `<button class="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl" onclick="deleteOrder([${item.order_ids.join(',')}], '${item.status}')"><i class="fas fa-trash mr-1"></i>Delete</button>`
+                : ''
+              }
+            </div>
+          </td>
+        </tr>
+      `;
+    });
+  });
+  
+  tbody.innerHTML = html;
+  
+  // Apply toggle state if needed
+  const toggleDone = document.getElementById('toggleDone');
+  if (toggleDone && !toggleDone.checked) {
+    toggleDoneRows();
+  }
+}
+
+// Helper function to escape HTML
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
 
 function toggleDoneRows() {
   const checkbox = document.getElementById('toggleDone');
@@ -232,7 +368,7 @@ function toggleDoneRows() {
   }
 }
 
-function markDone(orderIds, button) {
+function markDone(orderIds) {
   if (!Array.isArray(orderIds)) {
     orderIds = [orderIds];
   }
@@ -247,21 +383,8 @@ function markDone(orderIds, button) {
   .then(response => response.json())
   .then(data => {
     if (data.success) {
-      // Update button to show completed state
-      button.innerHTML = '<i class="fas fa-check mr-1"></i>Completed';
-      button.classList.remove('bg-gradient-to-r', 'from-green-500', 'to-emerald-500', 'hover:from-green-600', 'hover:to-emerald-600');
-      button.classList.add('bg-gray-400', 'cursor-not-allowed');
-      button.disabled = true;
-      
-      // Update status badge
-      const row = button.closest('tr');
-      const statusCell = row.querySelector('td:nth-child(3)');
-      statusCell.innerHTML = '<span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800"><i class="fas fa-check-circle mr-1"></i>Completed</span>';
-      
-      // Add completed styling
-      row.classList.add('done-row', 'bg-gray-50');
-      
-      // Show success message
+      // Refresh the order list
+      refreshOrders();
       showToast(data.message || 'Order(s) marked as completed', 'success');
     } else {
       showToast(data.error || 'Failed to mark order as done', 'error');
@@ -273,14 +396,19 @@ function markDone(orderIds, button) {
   });
 }
 
-function deleteOrder(orderIds, status, button) {
+function deleteOrder(orderIds, status) {
   if (!Array.isArray(orderIds)) {
     orderIds = [orderIds];
   }
   
+  // Find the row to get the price for confirmation
+  const row = document.querySelector(`tr[data-order-ids="${orderIds.join(',')}"]`);
+  const priceElement = row ? row.querySelector('.text-green-600') : null;
+  const price = priceElement ? priceElement.textContent.trim() : '';
+  
   const isPending = status !== 'completed';
   const confirmMsg = isPending 
-    ? `Are you sure you want to delete this order? The student will be refunded RM ${button.closest('tr').querySelector('.text-green-600').textContent.trim()}.`
+    ? `Are you sure you want to delete this order? The student will be refunded RM ${price}.`
     : 'Are you sure you want to delete this completed order?';
   
   if (confirm(confirmMsg)) {
@@ -294,17 +422,10 @@ function deleteOrder(orderIds, status, button) {
     .then(response => response.json())
     .then(data => {
       if (data.success) {
-        button.closest('tr').remove();
+        // Refresh the order list
+        refreshOrders();
         showToast(data.message || 'Order deleted successfully', 'success');
-        
-        // Reload page if no more orders to show
-        setTimeout(() => {
-          const remainingRows = document.querySelectorAll('tbody tr');
-          if (remainingRows.length === 0) {
-            window.location.reload();
-          }
-        }, 1000);
-      } else {
+    } else {
         showToast(data.error || 'Failed to delete order', 'error');
       }
     })
