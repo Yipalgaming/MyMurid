@@ -269,3 +269,16 @@ class Facility(db.Model):
     display_order = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=8))))
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=8))), onupdate=lambda: datetime.now(timezone(timedelta(hours=8))))
+
+class News(db.Model):
+    __tablename__ = 'news'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    author_id = db.Column(db.Integer, db.ForeignKey(STUDENT_INFO_ID), nullable=False)
+    is_published = db.Column(db.Boolean, default=True, index=True)
+    priority = db.Column(db.Integer, default=0)  # Higher priority = shown first
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=8))), index=True)
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=8))), onupdate=lambda: datetime.now(timezone(timedelta(hours=8))))
+    
+    author = db.relationship('StudentInfo', foreign_keys=[author_id], backref='news_created')

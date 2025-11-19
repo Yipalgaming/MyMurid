@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, jsonify, flash, url
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from flask_wtf.csrf import CSRFProtect
-from models import db, StudentInfo, MenuItem, Order, Vote, Feedback, FeedbackMedia, Parent, ParentChild, Payment, RewardCategory, Achievement, StudentPoints, RewardItem, StudentRedemption, Directory, Facility
+from models import db, StudentInfo, MenuItem, Order, Vote, Feedback, FeedbackMedia, Parent, ParentChild, Payment, RewardCategory, Achievement, StudentPoints, RewardItem, StudentRedemption, Directory, Facility, News
 import os, json, uuid
 from barcode import Code128
 from barcode.writer import ImageWriter
@@ -1055,7 +1055,11 @@ def apply_reward(redemption_id):
 @login_required
 def student_dashboard():
     if current_user.role == 'student':
-        return render_template('dashboard.html', user=current_user)
+        # Fetch published news ordered by priority (desc) and created_at (desc)
+        news_items = News.query.filter_by(is_published=True).order_by(
+            News.priority.desc(), News.created_at.desc()
+        ).limit(10).all()
+        return render_template('dashboard.html', user=current_user, news_items=news_items)
     else:
         return redirect(url_for('home'))
 
@@ -1107,6 +1111,81 @@ def admin_dashboard():
     else:
         print(f"User {current_user.name} with role {current_user.role} redirected to home")
         return redirect(url_for('home'))
+
+@app.route('/admin/news', methods=['GET', 'POST'])
+@login_required
+def admin_news():
+    """Admin page to manage news/announcements"""
+    if current_user.role != 'admin':
+        flash(ACCESS_DENIED, "error")
+        return redirect(url_for('home'))
+    
+    if request.method == 'POST':
+        # Create new news
+        title = request.form.get('title', '').strip()
+        content = request.form.get('content', '').strip()
+        priority = request.form.get('priority', '0', type=int)
+        is_published = request.form.get('is_published') == 'on'
+        
+        if not title or not content:
+            flash('Title and content are required.', 'error')
+            return redirect(url_for('admin_news'))
+        
+        news = News(
+            title=title,
+            content=content,
+            author_id=current_user.id,
+            priority=priority,
+            is_published=is_published
+        )
+        db.session.add(news)
+        db.session.commit()
+        flash('News created successfully!', 'success')
+        return redirect(url_for('admin_news'))
+    
+    # GET: Display all news
+    all_news = News.query.order_by(News.priority.desc(), News.created_at.desc()).all()
+    return render_template('admin_news.html', user=current_user, news_items=all_news)
+
+@app.route('/admin/news/<int:news_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_news(news_id):
+    """Edit existing news"""
+    if current_user.role != 'admin':
+        flash(ACCESS_DENIED, "error")
+        return redirect(url_for('home'))
+    
+    news = News.query.get_or_404(news_id)
+    
+    if request.method == 'POST':
+        news.title = request.form.get('title', '').strip()
+        news.content = request.form.get('content', '').strip()
+        news.priority = request.form.get('priority', '0', type=int)
+        news.is_published = request.form.get('is_published') == 'on'
+        
+        if not news.title or not news.content:
+            flash('Title and content are required.', 'error')
+            return redirect(url_for('edit_news', news_id=news_id))
+        
+        db.session.commit()
+        flash('News updated successfully!', 'success')
+        return redirect(url_for('admin_news'))
+    
+    return render_template('admin_news_edit.html', user=current_user, news=news)
+
+@app.route('/admin/news/<int:news_id>/delete', methods=['POST'])
+@login_required
+def delete_news(news_id):
+    """Delete news"""
+    if current_user.role != 'admin':
+        flash(ACCESS_DENIED, "error")
+        return redirect(url_for('home'))
+    
+    news = News.query.get_or_404(news_id)
+    db.session.delete(news)
+    db.session.commit()
+    flash('News deleted successfully!', 'success')
+    return redirect(url_for('admin_news'))
 
 @app.route('/staff')
 @login_required
