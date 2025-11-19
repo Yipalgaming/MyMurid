@@ -1056,9 +1056,15 @@ def apply_reward(redemption_id):
 def student_dashboard():
     if current_user.role == 'student':
         # Fetch published news ordered by priority (desc) and created_at (desc)
-        news_items = News.query.filter_by(is_published=True).order_by(
-            News.priority.desc(), News.created_at.desc()
-        ).limit(10).all()
+        # Handle case where News table might not exist yet (migration not run)
+        try:
+            news_items = News.query.filter_by(is_published=True).order_by(
+                News.priority.desc(), News.created_at.desc()
+            ).limit(10).all()
+        except Exception as e:
+            # If News table doesn't exist yet, return empty list
+            app.logger.warning(f"News table not available: {e}")
+            news_items = []
         return render_template('dashboard.html', user=current_user, news_items=news_items)
     else:
         return redirect(url_for('home'))
