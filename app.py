@@ -486,9 +486,9 @@ def logout():
         print(f"User {current_user.name} logging out")
     # Clear user type from session
     session.pop('user_type', None)
-        logout_user()
+    logout_user()
     flash('Logged out successfully!', 'success')
-        return redirect(url_for('login'))
+    return redirect(url_for('login'))
 
 # Parent Authentication Routes
 @app.route('/parent/register', methods=['GET', 'POST'])
