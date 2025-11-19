@@ -136,10 +136,11 @@
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
           <input type="hidden" name="pay" value="true"/>
           <button type="submit" 
-                  class="w-full bg-gradient-to-r from green-600 to-emerald-600 hover:from-green-700hoot to-vermold> hover:to-700 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 transform hover-saline-ends {% if user_balance S pren-mens- Eq dos##}>
+                  class="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl {% if user_balance < total %}opacity-50 cursor-not-allowed{% endif %}"
+                  {% if user_balance < total %}disabled{% endif %}>
             <i class="fas fa-credit-card mr-2"></i>Pay Now
           </button>
-</form>
+        </form>
         
         <form action="{{ url_for('order') }}" method="GET" class="flex-1">
           <button type="submit" 

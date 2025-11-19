@@ -104,55 +104,78 @@
         <i class="fas fa-bolt text-blue-600 mr-2"></i>Quick Actions
       </h2>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <a href="{{ url_for('order') }}" class="group bg-gray-50 rounded-xl p-6 border border-black/20 shadow-xl hover:shadow-2xl transition-all duration-300 hover:border-blue-300">
+        <a href="{{ url_for('order') }}" class="group bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border-2 border-green-200 shadow-xl hover:shadow-2xl transition-all duration-300 hover:border-green-400 hover:scale-105">
           <div class="text-center">
-            <div class="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-              <i class="fas fa-utensils text-green-600 text-2xl"></i>
+            <div class="bg-gradient-to-r from-green-500 to-emerald-500 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-lg">
+              <i class="fas fa-utensils text-white text-2xl"></i>
             </div>
-            <h3 class="font-semibold text-gray-900 mb-2">Place Order</h3>
-            <p class="text-gray-600 text-sm">Order food from canteen</p>
+            <h3 class="font-bold text-gray-900 mb-2">Order Food</h3>
+            <p class="text-gray-600 text-sm">Browse menu & place order</p>
           </div>
         </a>
 
-        <a href="{{ url_for('rewards_dashboard') }}" class="group bg-gray-50 rounded-xl p-6 border border-black/20 shadow-xl hover:shadow-2xl transition-all duration-300 hover:border-blue-300">
+        <a href="{{ url_for('payment') }}" class="group bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border-2 border-blue-200 shadow-xl hover:shadow-2xl transition-all duration-300 hover:border-blue-400 hover:scale-105">
           <div class="text-center">
-            <div class="bg-yellow-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-              <i class="fas fa-trophy text-yellow-600 text-2xl"></i>
+            <div class="bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-lg">
+              <i class="fas fa-credit-card text-white text-2xl"></i>
             </div>
-            <h3 class="font-semibold text-gray-900 mb-2">Rewards</h3>
-            <p class="text-gray-600 text-sm">View achievements & rewards</p>
+            <h3 class="font-bold text-gray-900 mb-2">Payment</h3>
+            <p class="text-gray-600 text-sm">Pay for your orders</p>
           </div>
         </a>
 
-        <a href="{{ url_for('vote') }}" class="group bg-gray-50 rounded-xl p-6 border border-black/20 shadow-xl hover:shadow-2xl transition-all duration-300 hover:border-blue-300">
+        <a href="{{ url_for('my_orders') }}" class="group bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border-2 border-purple-200 shadow-xl hover:shadow-2xl transition-all duration-300 hover:border-purple-400 hover:scale-105">
           <div class="text-center">
-            <div class="bg-purple-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-              <i class="fas fa-vote-yea text-purple-600 text-2xl"></i>
+            <div class="bg-gradient-to-r from-purple-500 to-pink-500 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-lg">
+              <i class="fas fa-receipt text-white text-2xl"></i>
             </div>
-            <h3 class="font-semibold text-gray-900 mb-2">Vote</h3>
-            <p class="text-gray-600 text-sm">Vote for your favorite food</p>
+            <h3 class="font-bold text-gray-900 mb-2">My Orders</h3>
+            <p class="text-gray-600 text-sm">View order history</p>
           </div>
         </a>
 
-        <a href="{{ url_for('feedback') }}" class="group bg-gray-50 rounded-xl p-6 border border-black/20 shadow-xl hover:shadow-2xl transition-all duration-300 hover:border-blue-300">
+        <a href="{{ url_for('student_profile') }}" class="group bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-6 border-2 border-amber-200 shadow-xl hover:shadow-2xl transition-all duration-300 hover:border-amber-400 hover:scale-105">
           <div class="text-center">
-            <div class="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-              <i class="fas fa-comment text-blue-600 text-2xl"></i>
+            <div class="bg-gradient-to-r from-amber-500 to-orange-500 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-lg">
+              <i class="fas fa-user text-white text-2xl"></i>
             </div>
-            <h3 class="font-semibold text-gray-900 mb-2">Feedback</h3>
-            <p class="text-gray-600 text-sm">Share your feedback</p>
+            <h3 class="font-bold text-gray-900 mb-2">My Profile</h3>
+            <p class="text-gray-600 text-sm">View account details</p>
           </div>
         </a>
+      </div>
 
-        <a href="{{ url_for('logout') }}" class="group bg-gray-50 rounded-xl p-6 border border-black/20 shadow-xl hover:shadow-2xl transition-all duration-300 hover:border-red-300">
-          <div class="text-center">
-            <div class="bg-red-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-              <i class="fas fa-sign-out-alt text-red-600 text-2xl"></i>
+      <!-- Secondary Actions -->
+      <div class="mt-6 pt-6 border-t border-gray-200">
+        <h3 class="text-sm font-medium text-gray-500 mb-4">More Options</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <a href="{{ url_for('rewards_dashboard') }}" class="group bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-yellow-300 hover:shadow-md transition-all duration-300">
+            <div class="flex items-center">
+              <div class="bg-yellow-100 rounded-full p-2 mr-3 group-hover:scale-110 transition-transform">
+                <i class="fas fa-trophy text-yellow-600"></i>
+              </div>
+              <span class="text-sm font-medium text-gray-700">Rewards</span>
             </div>
-            <h3 class="font-semibold text-gray-900 mb-2">Logout</h3>
-            <p class="text-gray-600 text-sm">Sign out of your account</p>
-          </div>
-        </a>
+          </a>
+
+          <a href="{{ url_for('vote') }}" class="group bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-purple-300 hover:shadow-md transition-all duration-300">
+            <div class="flex items-center">
+              <div class="bg-purple-100 rounded-full p-2 mr-3 group-hover:scale-110 transition-transform">
+                <i class="fas fa-vote-yea text-purple-600"></i>
+              </div>
+              <span class="text-sm font-medium text-gray-700">Food Suggestion</span>
+            </div>
+          </a>
+
+          <a href="{{ url_for('feedback') }}" class="group bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-300">
+            <div class="flex items-center">
+              <div class="bg-blue-100 rounded-full p-2 mr-3 group-hover:scale-110 transition-transform">
+                <i class="fas fa-comment text-blue-600"></i>
+              </div>
+              <span class="text-sm font-medium text-gray-700">Feedback</span>
+            </div>
+          </a>
+        </div>
       </div>
     </div>
     </div>
