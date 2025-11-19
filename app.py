@@ -349,10 +349,10 @@ def home():
     if current_user.is_authenticated:
         # Check if it's a Parent user (no role attribute)
         if hasattr(current_user, 'role'):
-        if current_user.role == 'student':
-            return redirect(url_for('student_dashboard'))
-        elif current_user.role == 'admin':
-            return redirect(url_for('admin_dashboard'))
+            if current_user.role == 'student':
+                return redirect(url_for('student_dashboard'))
+            elif current_user.role == 'admin':
+                return redirect(url_for('admin_dashboard'))
             elif current_user.role == 'staff':
                 return redirect(url_for('staff_dashboard'))
         else:
