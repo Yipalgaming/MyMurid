@@ -1529,20 +1529,20 @@ def handle_order_submission():
         cart_items = validate_cart_data(request.form.get("cart_items"))
     except ValueError as e:
         flash(f"❌ {str(e)}", "error")
-            return redirect(url_for("order"))
+        return redirect(url_for("order"))
 
-        student = StudentInfo.query.get(current_user.id)
-        if not student:
-            flash("❌ Student not found.", "error")
-            return redirect(url_for("order"))
+    student = StudentInfo.query.get(current_user.id)
+    if not student:
+        flash("❌ Student not found.", "error")
+        return redirect(url_for("order"))
 
     try:
         orders_created = create_orders_from_cart(cart_items, student.id)
         db.session.commit()
         
         if orders_created > 0:
-        flash("✅ Order submitted! Proceed to payment.", "success")
-        return redirect(url_for("payment"))
+            flash("✅ Order submitted! Proceed to payment.", "success")
+            return redirect(url_for("payment"))
         else:
             flash("❌ No valid items in cart.", "error")
             return redirect(url_for("order"))
@@ -1652,9 +1652,9 @@ def handle_order_delete(student):
     deleted_count = 0
     
     for order_id in order_ids:
-    order = Order.query.get(order_id)
+        order = Order.query.get(order_id)
         if order and order.student_id == student.id and order.payment_status == 'unpaid':
-        db.session.delete(order)
+            db.session.delete(order)
             deleted_count += 1
     
     if deleted_count > 0:
@@ -1893,10 +1893,10 @@ def handle_order_payment(student):
         total_amount = validate_payment_conditions(student, unpaid_orders)
         
         process_payment_transaction(student, unpaid_orders, total_amount)
-    db.session.commit()
+        db.session.commit()
         
-    flash("✅ Payment successful!", "success")
-    return redirect(url_for("student_dashboard"))
+        flash("✅ Payment successful!", "success")
+        return redirect(url_for("student_dashboard"))
         
     except ValueError as e:
         flash(f"❌ {str(e)}", "error")
@@ -2100,7 +2100,7 @@ def mark_order_done():
                 updated_count += 1
         
         if updated_count > 0:
-    db.session.commit()
+            db.session.commit()
             return jsonify({'success': True, 'message': f'{updated_count} order(s) marked as completed'})
         else:
             return jsonify({'error': 'No valid orders found'}), 404
@@ -2145,11 +2145,11 @@ def delete_order():
                         app.logger.info(f"Refunding RM {refund_amount:.2f} to student {student.id} ({student.name}) for deleted order {oid}")
                     # If order is completed, no refund (order already fulfilled)
                 
-        db.session.delete(order)
+                db.session.delete(order)
                 deleted_count += 1
         
         if deleted_count > 0:
-        db.session.commit()
+            db.session.commit()
             message = f'{deleted_count} order(s) deleted'
             if refunded_amount > 0:
                 message += f'. RM {refunded_amount:.2f} refunded to student account.'
@@ -2239,7 +2239,7 @@ def feedback():
         saved_paths = []
         
         try:
-        db.session.add(new_feedback)
+            db.session.add(new_feedback)
             db.session.flush()  # assign ID before adding attachments
             
             for file_storage in attachments:
@@ -2255,7 +2255,7 @@ def feedback():
                 )
                 db.session.add(media_record)
             
-        db.session.commit()
+            db.session.commit()
             flash('Feedback submitted successfully.', 'success')
         except ValueError as ve:
             db.session.rollback()
@@ -2399,21 +2399,21 @@ def _render_admin_finance_page():
             flash(ACCOUNT_FROZEN, "error")
             return redirect(request.url)
 
-            try:
+        try:
             amount_int = int(amount)
             student.balance += amount_int
             topup_student = student
-        
-                new_tx = Transaction(
+            
+            new_tx = Transaction(
                 type="Top-up",
                 amount=amount_int,  # Fixed: use int instead of string
                 description=f"Top-up for {student.name}"
-                )
-                db.session.add(new_tx)
-                db.session.commit()
+            )
+            db.session.add(new_tx)
+            db.session.commit()
             flash(f"Successfully topped up RM{amount_int} for {student.name}.", "success")
         except Exception as e:
-                db.session.rollback()
+            db.session.rollback()
             app.logger.error(f"Top-up error: {str(e)}")
             flash("Error processing top-up. Please try again.", "error")
     
