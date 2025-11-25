@@ -213,6 +213,19 @@ let html5QrcodeScanner = null;
 const isAdmin = {{ 'true' if current_user.role == 'admin' else 'false' }};
 const searchQuery = '{{ search_query }}';
 
+// Wait for library to load
+let libraryLoaded = false;
+if (typeof Html5Qrcode !== 'undefined') {
+  libraryLoaded = true;
+} else {
+  // Wait a bit for the library to load
+  setTimeout(() => {
+    if (typeof Html5Qrcode !== 'undefined') {
+      libraryLoaded = true;
+    }
+  }, 500);
+}
+
 // Function to refresh orders from API
 function refreshOrders() {
   const tbody = document.getElementById('orders-tbody');
@@ -442,22 +455,58 @@ function startBarcodeScan() {
   
   if (isHidden) {
     container.classList.remove('hidden');
-    container.innerHTML = '<div id="reader" style="width: 100%;"></div>';
+    container.innerHTML = '<div class="text-center text-blue-500"><i class="fas fa-spinner fa-spin text-3xl mb-2"></i><p>Initializing camera...</p></div>';
     
-    if (typeof Html5Qrcode !== 'undefined') {
+    // Check if library is loaded
+    if (typeof Html5Qrcode === 'undefined') {
+      container.innerHTML = `
+        <div class="text-center text-red-500">
+          <i class="fas fa-exclamation-triangle text-3xl mb-2"></i>
+          <p>Barcode scanner library failed to load.</p>
+          <p class="text-sm mt-2">Please refresh the page and try again.</p>
+          <button onclick="location.reload()" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg">Refresh Page</button>
+        </div>
+      `;
+      return;
+    }
+    
+    // Check if camera is available
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      container.innerHTML = `
+        <div class="text-center text-red-500">
+          <i class="fas fa-exclamation-triangle text-3xl mb-2"></i>
+          <p>Camera not supported in this browser.</p>
+          <p class="text-sm mt-2">Please use Chrome, Firefox, or Safari.</p>
+        </div>
+      `;
+      return;
+    }
+    
+    // Create scanner container
+    container.innerHTML = '<div id="reader" style="width: 100%; min-height: 300px;"></div>';
+    
+    try {
       html5QrcodeScanner = new Html5Qrcode("reader");
+      
       html5QrcodeScanner.start(
         { facingMode: "environment" },
         {
           fps: 10,
-          qrbox: { width: 250, height: 250 }
+          qrbox: { width: 250, height: 250 },
+          aspectRatio: 1.0
         },
         (decodedText, decodedResult) => {
           // Stop scanning
-          html5QrcodeScanner.stop().then(() => {
-            container.classList.add('hidden');
-            html5QrcodeScanner = null;
-          }).catch(err => console.error(err));
+          if (html5QrcodeScanner) {
+            html5QrcodeScanner.stop().then(() => {
+              container.classList.add('hidden');
+              html5QrcodeScanner = null;
+            }).catch(err => {
+              console.error('Error stopping scanner:', err);
+              container.classList.add('hidden');
+              html5QrcodeScanner = null;
+            });
+          }
           
           // Search using the scanned code
           const searchInput = document.querySelector('input[name="search"]');
@@ -467,23 +516,35 @@ function startBarcodeScan() {
           }
         },
         (errorMessage) => {
-          // Ignore scanning errors
+          // Ignore scanning errors (these are normal during scanning)
         }
       ).catch(err => {
         console.error('Error starting scanner:', err);
+        let errorMsg = 'Failed to start camera.';
+        if (err.message && err.message.includes('Permission')) {
+          errorMsg = 'Camera permission denied. Please allow camera access and try again.';
+        } else if (err.message && err.message.includes('NotFound')) {
+          errorMsg = 'No camera found. Please connect a camera and try again.';
+        }
+        
         container.innerHTML = `
           <div class="text-center text-red-500">
             <i class="fas fa-exclamation-triangle text-3xl mb-2"></i>
-            <p>Failed to start camera. Please check permissions.</p>
-            <button onclick="startBarcodeScan()" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg">Try Again</button>
+            <p>${errorMsg}</p>
+            <button onclick="startBarcodeScan()" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Try Again</button>
+            <button onclick="document.getElementById('scanner-container').classList.add('hidden')" class="mt-2 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">Cancel</button>
           </div>
         `;
+        html5QrcodeScanner = null;
       });
-    } else {
+    } catch (err) {
+      console.error('Error creating scanner:', err);
       container.innerHTML = `
         <div class="text-center text-red-500">
           <i class="fas fa-exclamation-triangle text-3xl mb-2"></i>
-          <p>Barcode scanner library failed to load. Please refresh the page.</p>
+          <p>Failed to initialize scanner.</p>
+          <p class="text-sm mt-2">${err.message || 'Unknown error'}</p>
+          <button onclick="startBarcodeScan()" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg">Try Again</button>
         </div>
       `;
     }
@@ -493,7 +554,11 @@ function startBarcodeScan() {
       html5QrcodeScanner.stop().then(() => {
         container.classList.add('hidden');
         html5QrcodeScanner = null;
-      }).catch(err => console.error(err));
+      }).catch(err => {
+        console.error('Error stopping scanner:', err);
+        container.classList.add('hidden');
+        html5QrcodeScanner = null;
+      });
     } else {
       container.classList.add('hidden');
     }

@@ -1892,12 +1892,25 @@ def process_payment_transaction(student, unpaid_orders, total_amount):
     # Mark orders as paid
     for order in unpaid_orders:
         order.payment_status = 'paid'
+    
+    # Build description with item details
+    item_names = []
+    for order in unpaid_orders:
+        if order.item:
+            item_names.append(f"{order.quantity}x {order.item.name}")
+    
+    description = f"Payment by {student.name} for {len(unpaid_orders)} item(s)"
+    if item_names:
+        description += f": {', '.join(item_names[:3])}"  # Show first 3 items
+        if len(item_names) > 3:
+            description += f" and {len(item_names) - 3} more"
         
     # Create transaction record
     new_tx = Transaction(
+        student_id=student.id,
         type="Payment",
         amount=Decimal(-total_amount).quantize(Decimal('0.01')),
-        description=f"Payment for {len(unpaid_orders)} items"
+        description=description
         )
     db.session.add(new_tx)
 
@@ -2420,6 +2433,7 @@ def _render_admin_finance_page():
             topup_student = student
             
             new_tx = Transaction(
+                student_id=student.id,
                 type="Top-up",
                 amount=amount_int,  # Fixed: use int instead of string
                 description=f"Top-up for {student.name}"
@@ -2493,6 +2507,7 @@ def approve_payment(transaction_id):
             
             # Create transaction record
             new_tx = Transaction(
+                student_id=child.id,
                 type="Top-up",
                 amount=int(payment.amount),
                 description=f"QR Payment top-up for {child.name} (Transaction: {transaction_id[:8]})"
@@ -2600,9 +2615,12 @@ def student_balances():
 def transactions():
     if current_user.role not in ['admin', 'staff']:
         return redirect(url_for('home'))
-    logs = Transaction.query.order_by(Transaction.transaction_time.desc()).all()
-    total_in = sum(t.amount for t in logs if t.amount > 0)
-    total_out = sum(abs(t.amount) for t in logs if t.amount < 0)
+    # Join with StudentInfo to get student details
+    logs = db.session.query(Transaction, StudentInfo)\
+        .outerjoin(StudentInfo, Transaction.student_id == StudentInfo.id)\
+        .order_by(Transaction.transaction_time.desc()).all()
+    total_in = sum(t[0].amount for t in logs if t[0].amount > 0)
+    total_out = sum(abs(t[0].amount) for t in logs if t[0].amount < 0)
     return render_template('transactions.html', logs=logs, total_in=total_in, total_out=total_out)
 
 @app.route('/manage_users')
