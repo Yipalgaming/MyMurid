@@ -2196,7 +2196,7 @@ def generate_barcode(ic_number):
 
 @app.route('/test-barcodes')
 def test_barcodes():
-    returews render_template('test_barcodes.html')
+    return render_template('test_barcodes.html')
 
 @app.route('/vote', methods=['GET', 'POST'])
 @login_required
