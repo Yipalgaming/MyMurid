@@ -1126,6 +1126,15 @@ def admin_news():
         flash(ACCESS_DENIED, "error")
         return redirect(url_for('home'))
     
+    # Check if News table exists
+    try:
+        # Try to query to see if table exists
+        News.query.first()
+    except Exception as e:
+        flash('News table not found. Please run database migration: flask db upgrade', 'error')
+        app.logger.error(f"News table not available: {e}")
+        return render_template('admin_news.html', user=current_user, news_items=[])
+    
     if request.method == 'POST':
         # Create new news
         title = request.form.get('title', '').strip()
@@ -2187,7 +2196,7 @@ def generate_barcode(ic_number):
 
 @app.route('/test-barcodes')
 def test_barcodes():
-    return render_template('test_barcodes.html')
+    returews render_template('test_barcodes.html')
 
 @app.route('/vote', methods=['GET', 'POST'])
 @login_required
