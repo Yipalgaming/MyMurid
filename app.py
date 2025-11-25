@@ -13,7 +13,8 @@ from werkzeug.utils import secure_filename
 from transactions import Transaction
 from sqlalchemy import func
 from sqlalchemy.engine import make_url
-from datetime import timedelta, datetime, timezone
+from datetime import timedelta
+from tz_utils import now_myt, MYT
 from config import config
 from error_handlers import register_error_handlers
 import re
@@ -44,6 +45,10 @@ app.config.setdefault('MAX_CONTENT_LENGTH', 50 * 1024 * 1024)  # 50 MB limit for
 ALLOWED_MENU_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 ALLOWED_FEEDBACK_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 ALLOWED_FEEDBACK_VIDEO_EXTENSIONS = {'mp4', 'mov', 'avi', 'mkv', 'webm'}
+
+# Feature toggles
+FEATURE_STUDENT_PROFILE_ENABLED = False
+FEATURE_DIRECTORY_ENABLED = False
 
 # Ensure upload directories exist
 for folder in [app.config['FEEDBACK_UPLOAD_FOLDER'], app.config['MENU_IMAGE_UPLOAD_FOLDER']]:
@@ -753,7 +758,7 @@ def check_payment_status(transaction_id):
             # Update payment status based on provider response
             if result['status'] == 'completed' and payment.status == 'pending':
                 payment.status = 'completed'
-                payment.completed_at = datetime.now(timezone(timedelta(hours=8)))
+                payment.completed_at = now_myt()
                 payment.bank_reference = result.get('reference_id')
                 
                 # Add balance to child's account
@@ -767,7 +772,7 @@ def check_payment_status(transaction_id):
             if time.time() - payment.created_at.timestamp() > 30:
                 if payment.status == 'pending':
                     payment.status = 'completed'
-                    payment.completed_at = datetime.now(timezone(timedelta(hours=8)))
+                    payment.completed_at = now_myt()
                     
                     # Add balance to child's account
                     child = StudentInfo.query.get(payment.student_id)
@@ -782,7 +787,7 @@ def check_payment_status(transaction_id):
         if time.time() - payment.created_at.timestamp() > 30:
             if payment.status == 'pending':
                 payment.status = 'completed'
-                payment.completed_at = datetime.now(timezone(timedelta(hours=8)))
+                payment.completed_at = now_myt()
                 
                 # Add balance to child's account
                 child = StudentInfo.query.get(payment.student_id)
@@ -890,7 +895,7 @@ def redeem_reward(reward_id):
             reward_item_id=reward_item.id,
             points_used=reward_item.points_cost,
             status='pending',
-            expires_at=datetime.now(timezone(timedelta(hours=8))) + timedelta(days=30)  # 30 days to use
+            expires_at=now_myt() + timedelta(days=30)  # 30 days to use
         )
         
         # Update student's available points
@@ -1040,7 +1045,7 @@ def apply_reward(redemption_id):
     
     # Mark as redeemed
     redemption.status = 'redeemed'
-    redemption.redeemed_at = datetime.now(timezone(timedelta(hours=8)))
+    redemption.redeemed_at = now_myt()
     
     db.session.commit()
     
@@ -1072,6 +1077,12 @@ def student_dashboard():
 @app.route('/student-profile')
 @login_required
 def student_profile():
+    if not FEATURE_STUDENT_PROFILE_ENABLED:
+        flash("Student profile page is currently unavailable.", "info")
+        if current_user.role == 'student':
+            return redirect(url_for('student_dashboard'))
+        return redirect(url_for('home'))
+
     if current_user.role == 'student':
         student = StudentInfo.query.get(current_user.id)
         if student:
@@ -2306,6 +2317,12 @@ def feedback():
 @login_required
 def directory():
     """Display school directory map - SMK SEKSYEN 3 BANDAR KINRARA"""
+    if not FEATURE_DIRECTORY_ENABLED:
+        flash("School directory is currently unavailable.", "info")
+        if current_user.role == 'admin':
+            return redirect(url_for('admin_dashboard'))
+        return redirect(url_for('home'))
+
     # Single floor plan - show all staff and facilities regardless of floor
     floor_level = request.args.get('floor', 1, type=int)
     
@@ -2498,7 +2515,7 @@ def approve_payment(transaction_id):
     try:
         # Update payment status
         payment.status = 'completed'
-        payment.completed_at = datetime.now(timezone(timedelta(hours=8)))
+        payment.completed_at = now_myt()
         
         # Add balance to student's account
         child = StudentInfo.query.get(payment.student_id)

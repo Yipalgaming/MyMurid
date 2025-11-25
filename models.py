@@ -2,6 +2,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from datetime import datetime, timezone, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
+from tz_utils import now_myt
 
 db = SQLAlchemy()
 
@@ -60,7 +61,7 @@ class MenuItem(db.Model):
     category = db.Column(db.String(50), index=True)
     image_path = db.Column(db.String(100))
     is_available = db.Column(db.Boolean, default=True, index=True)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=8))))
+    created_at = db.Column(db.DateTime, default=now_myt)
 
 
 class Order(db.Model):
@@ -73,12 +74,12 @@ class Order(db.Model):
     status = db.Column(db.String(20), default='pending', index=True)
     student = db.relationship("StudentInfo", backref="orders")
     item = db.relationship('MenuItem', backref='orders', foreign_keys=[menu_item_id])
-    order_time = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=8))), index=True)
+    order_time = db.Column(db.DateTime, default=now_myt, index=True)
     payment_status = db.Column(db.String(20), default='unpaid', index=True)
     
 class Feedback(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=8))))
+    timestamp = db.Column(db.DateTime, default=now_myt)
     message = db.Column(db.Text)
     student_id = db.Column(db.Integer, db.ForeignKey(STUDENT_INFO_ID))
     student = db.relationship('StudentInfo', backref='feedbacks')
@@ -99,11 +100,11 @@ class FeedbackMedia(db.Model):
     media_type = db.Column(db.String(20), nullable=False)  # image or video
     original_filename = db.Column(db.String(255))
     mimetype = db.Column(db.String(100))
-    uploaded_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=8))))
+    uploaded_at = db.Column(db.DateTime, default=now_myt)
 
 class Vote(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=8))))
+    timestamp = db.Column(db.DateTime, default=now_myt)
     food_name = db.Column(db.String(100))
     student_id = db.Column(db.Integer, db.ForeignKey(STUDENT_INFO_ID))
     student = db.relationship('StudentInfo', backref='votes')
@@ -112,7 +113,7 @@ class TopUp(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     student_id = db.Column(db.Integer, db.ForeignKey(STUDENT_INFO_ID))
     amount = db.Column(db.Integer)
-    timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=8))))
+    timestamp = db.Column(db.DateTime, default=now_myt)
     student = db.relationship('StudentInfo', backref='topups')
 
 class Parent(db.Model, UserMixin):
@@ -122,7 +123,7 @@ class Parent(db.Model, UserMixin):
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     phone = db.Column(db.String(20))
     password_hash = db.Column(db.String(255), nullable=False)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=8))))
+    created_at = db.Column(db.DateTime, default=now_myt)
     is_active = db.Column(db.Boolean, default=True)
     
     # Relationship with children
@@ -144,7 +145,7 @@ class ParentChild(db.Model):
     parent_id = db.Column(db.Integer, db.ForeignKey('parent.id'), nullable=False)
     child_id = db.Column(db.Integer, db.ForeignKey(STUDENT_INFO_ID), nullable=False)
     relationship = db.Column(db.String(20), default='parent')  # parent, guardian, etc.
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=8))))
+    created_at = db.Column(db.DateTime, default=now_myt)
 
 class Payment(db.Model):
     __tablename__ = 'payment'
@@ -157,7 +158,7 @@ class Payment(db.Model):
     transaction_id = db.Column(db.String(100), unique=True)
     status = db.Column(db.String(20), default='pending')  # pending, completed, failed
     bank_reference = db.Column(db.String(100))
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=8))))
+    created_at = db.Column(db.DateTime, default=now_myt)
     completed_at = db.Column(db.DateTime)
     
     parent = db.relationship('Parent', backref='payments')
@@ -172,7 +173,7 @@ class RewardCategory(db.Model):
     icon = db.Column(db.String(50))  # Font Awesome icon class
     color = db.Column(db.String(20))  # Color for UI
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=8))))
+    created_at = db.Column(db.DateTime, default=now_myt)
 
 class Achievement(db.Model):
     __tablename__ = 'achievement'
@@ -184,7 +185,7 @@ class Achievement(db.Model):
     icon = db.Column(db.String(50))
     badge_color = db.Column(db.String(20))
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=8))))
+    created_at = db.Column(db.DateTime, default=now_myt)
     
     category = db.relationship('RewardCategory', backref='achievements')
 
@@ -196,7 +197,7 @@ class StudentPoints(db.Model):
     points_earned = db.Column(db.Integer, nullable=False)
     awarded_by = db.Column(db.Integer, db.ForeignKey(STUDENT_INFO_ID))  # Admin/teacher who awarded
     reason = db.Column(db.Text)  # Specific reason for earning points
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=8))))
+    created_at = db.Column(db.DateTime, default=now_myt)
     
     student = db.relationship('StudentInfo', foreign_keys=[student_id], backref='points_earned')
     achievement = db.relationship('Achievement', backref='student_earnings')
@@ -213,7 +214,7 @@ class RewardItem(db.Model):
     reward_type = db.Column(db.String(20), default='discount')  # discount, free_item, cash_credit
     is_active = db.Column(db.Boolean, default=True)
     stock_quantity = db.Column(db.Integer)  # For limited items
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=8))))
+    created_at = db.Column(db.DateTime, default=now_myt)
     
     menu_item = db.relationship('MenuItem', backref='reward_items')
 
@@ -226,7 +227,7 @@ class StudentRedemption(db.Model):
     status = db.Column(db.String(20), default='pending')  # pending, redeemed, expired
     redeemed_at = db.Column(db.DateTime)
     expires_at = db.Column(db.DateTime)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=8))))
+    created_at = db.Column(db.DateTime, default=now_myt)
     
     student = db.relationship('StudentInfo', backref='redemptions')
     reward_item = db.relationship('RewardItem', backref='redemptions')
@@ -248,8 +249,8 @@ class Directory(db.Model):
     photo_path = db.Column(db.String(100))  # Path to staff photo
     is_active = db.Column(db.Boolean, default=True)
     display_order = db.Column(db.Integer, default=0)  # For ordering within department
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=8))))
-    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=8))), onupdate=lambda: datetime.now(timezone(timedelta(hours=8))))
+    created_at = db.Column(db.DateTime, default=now_myt)
+    updated_at = db.Column(db.DateTime, default=now_myt, onupdate=now_myt)
 
 class Facility(db.Model):
     __tablename__ = 'facility'
@@ -267,8 +268,8 @@ class Facility(db.Model):
     color = db.Column(db.String(20), default='blue')  # Color for the icon/marker
     is_active = db.Column(db.Boolean, default=True)
     display_order = db.Column(db.Integer, default=0)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=8))))
-    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=8))), onupdate=lambda: datetime.now(timezone(timedelta(hours=8))))
+    created_at = db.Column(db.DateTime, default=now_myt)
+    updated_at = db.Column(db.DateTime, default=now_myt, onupdate=now_myt)
 
 class News(db.Model):
     __tablename__ = 'news'
@@ -278,7 +279,7 @@ class News(db.Model):
     author_id = db.Column(db.Integer, db.ForeignKey(STUDENT_INFO_ID), nullable=False)
     is_published = db.Column(db.Boolean, default=True, index=True)
     priority = db.Column(db.Integer, default=0)  # Higher priority = shown first
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=8))), index=True)
-    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=8))), onupdate=lambda: datetime.now(timezone(timedelta(hours=8))))
+    created_at = db.Column(db.DateTime, default=now_myt, index=True)
+    updated_at = db.Column(db.DateTime, default=now_myt, onupdate=now_myt)
     
     author = db.relationship('StudentInfo', foreign_keys=[author_id], backref='news_created')

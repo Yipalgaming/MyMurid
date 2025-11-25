@@ -72,7 +72,7 @@
     </div>
 
     <!-- News Feed -->
-    <!-- <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-6 mb-8">
+    <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-6 mb-8">
       <h2 class="text-xl font-semibold text-gray-900 mb-6 flex items-center">
         <i class="fas fa-newspaper text-blue-600 mr-2"></i>News & Announcements
       </h2>
@@ -111,7 +111,7 @@
           <p>No news or announcements at the moment.</p>
         </div>
       {% endif %}
-    </div> -->
+    </div>
 
     <!-- Account Information -->
     <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-6 mb-8">
@@ -145,7 +145,7 @@
       <h2 class="text-xl font-semibold text-gray-900 mb-6 flex items-center">
         <i class="fas fa-bolt text-blue-600 mr-2"></i>Quick Actions
       </h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <a href="{{ url_for('order') }}" class="group bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border-2 border-green-200 shadow-xl hover:shadow-2xl transition-all duration-300 hover:border-green-400 hover:scale-105">
           <div class="text-center">
             <div class="bg-gradient-to-r from-green-500 to-emerald-500 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-lg">
@@ -173,16 +173,6 @@
             </div>
             <h3 class="font-bold text-gray-900 mb-2">My Orders</h3>
             <p class="text-gray-600 text-sm">View order history</p>
-          </div>
-        </a>
-
-        <a href="{{ url_for('student_profile') }}" class="group bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-6 border-2 border-amber-200 shadow-xl hover:shadow-2xl transition-all duration-300 hover:border-amber-400 hover:scale-105">
-          <div class="text-center">
-            <div class="bg-gradient-to-r from-amber-500 to-orange-500 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-lg">
-              <i class="fas fa-user text-white text-2xl"></i>
-            </div>
-            <h3 class="font-bold text-gray-900 mb-2">My Profile</h3>
-            <p class="text-gray-600 text-sm">View account details</p>
           </div>
         </a>
       </div>
