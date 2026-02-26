@@ -1,0 +1,375 @@
+{% extends "base.html" %}
+{% block title %}Student Counter Orders{% endblock %}
+{% block content %}
+<div class="fixed inset-y-0 left-0 md:left-64 right-0 bg-gradient-to-br from-teal-400 via-emerald-500 to-cyan-500 overflow-hidden transition-all duration-300">
+  <!-- Mobile Top Nav -->
+  <nav class="absolute top-0 w-full bg-white border-b border-gray-200 z-50 shadow-md md:hidden transition-all duration-300">
+    <div class="flex items-center justify-between h-16 px-4">
+      <button onclick="toggleSidebar()" class="text-gray-600 hover:text-indigo-600 transition-colors p-2">
+        <i class="fas fa-bars text-2xl"></i>
+      </button>
+      <h1 class="text-lg font-semibold text-gray-800">MyMurid</h1>
+      <div class="w-10"></div>
+    </div>
+  </nav>
+
+  <!-- Header -->
+  <div class="absolute top-16 md:top-0 w-full bg-white shadow-lg border-b z-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl md:text-3xl font-bold bg-gradient-to-r from-teal-600 to-emerald-600 bg-clip-text text-transparent">
+            Student Counter Orders
+          </h1>
+          <p class="text-gray-600 mt-1 text-sm md:text-base hidden sm:block">
+            Search for a student to review their paid orders and optionally add new ones at the counter.
+          </p>
+        </div>
+        <div class="flex items-center space-x-4">
+          <div class="bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full p-3 shadow-lg">
+            <i class="fas fa-cash-register text-white text-xl"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content Area -->
+  <div class="absolute top-44 md:top-24 left-0 right-0 bottom-0 overflow-y-auto pb-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-8 space-y-6">
+      <!-- Search -->
+      <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6">
+        <form id="student-search-form" method="GET" action="{{ url_for('staff_student_orders') }}" class="flex flex-col md:flex-row gap-4 items-start md:items-center">
+          <div class="flex-1 w-full md:w-auto">
+            <div class="relative">
+              <input
+                type="text"
+                name="search"
+                autocomplete="off"
+                value="{{ search_query }}"
+                placeholder="Search by student name or IC..."
+                class="w-full px-4 py-3 pl-10 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-colors"
+              >
+              <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button
+              type="submit"
+              class="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg"
+            >
+              <i class="fas fa-search mr-2"></i>Search
+            </button>
+            <button
+              type="button"
+              onclick="startStudentScan()"
+              class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg"
+            >
+              <i class="fas fa-qrcode mr-2"></i>Scan
+            </button>
+            {% if search_query %}
+            <a
+              href="{{ url_for('staff_student_orders') }}"
+              class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center"
+            >
+              <i class="fas fa-times mr-2"></i>Clear
+            </a>
+            {% endif %}
+          </div>
+        </form>
+        <div id="scanner-container" class="mt-4 bg-gray-50 border border-dashed border-gray-300 rounded-xl p-4 min-h-[200px] flex items-center justify-center hidden">
+          <div class="text-center text-gray-500">
+            <i class="fas fa-camera text-3xl mb-2"></i>
+            <p>Camera will appear here</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Student List -->
+      <div id="students-container">
+        {% if students_data %}
+        <div class="space-y-4">
+          {% for entry in students_data %}
+          {% set student = entry.student %}
+          {% set cart_items = entry.cart_items %}
+          {% set total = entry.total %}
+          {% set balance = entry.user_balance %}
+          <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-5 md:p-6">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-gray-100 pb-4 mb-4">
+              <div class="flex items-center gap-4">
+                <div class="bg-gradient-to-r from-teal-400 to-emerald-400 rounded-full w-12 h-12 flex items-center justify-center">
+                  <i class="fas fa-user text-white"></i>
+                </div>
+                <div>
+                  <div class="font-bold text-lg text-gray-900">{{ student.name }}</div>
+                  <div class="text-sm text-gray-600">IC: {{ student.ic_number }}</div>
+                </div>
+              </div>
+              <div class="text-right space-y-1 text-sm text-gray-600">
+                <div>
+                  Wallet Balance:
+                  <span class="font-bold text-indigo-700">RM {{ "%.2f"|format(balance or 0) }}</span>
+                </div>
+                {% if cart_items %}
+                <div>
+                  Paid Orders Total:
+                  <span class="font-bold text-emerald-700">RM {{ "%.2f"|format(total or 0) }}</span>
+                </div>
+                {% elif search_query %}
+                <div>No paid orders found for this student.</div>
+                {% endif %}
+              </div>
+            </div>
+
+            {% if cart_items %}
+            <div class="space-y-3 mb-4">
+              {% for item in cart_items %}
+              <div class="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
+                <div>
+                  <div class="font-medium text-gray-900">{{ item.name }}</div>
+                  <div class="text-sm text-gray-600">
+                    {{ item.quantity }} × RM {{ "%.2f"|format(item.price or 0) }}
+                  </div>
+                </div>
+                <div class="text-right">
+                  <div class="font-semibold text-emerald-700">
+                    RM {{ "%.2f"|format(item.total_price or 0) }}
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="mt-2 flex justify-end">
+              <a
+                href="{{ url_for('staff_student_orders_detail', student_id=student.id) }}"
+                class="inline-flex items-center bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg"
+              >
+                <i class="fas fa-arrow-right mr-2"></i>
+                Open Counter Order
+              </a>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-10 text-center">
+          <div class="bg-gray-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-box-open text-gray-400 text-2xl"></i>
+          </div>
+          <h3 class="text-xl font-semibold text-gray-900 mb-2">No matching students found</h3>
+          <p class="text-gray-600">Try searching by a different name or IC number.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+let studentSearchTimeout = null;
+let currentSearchTerm = '';
+let autoRefreshIntervalId = null;
+
+async function fetchStudentSummaries(searchTerm = '') {
+  const params = new URLSearchParams();
+  if (searchTerm) {
+    params.append('search', searchTerm);
+  }
+  const response = await fetch('/api/staff/student-orders?' + params.toString(), {
+    headers: {
+      'Accept': 'application/json'
+    }
+  });
+  if (!response.ok) {
+    throw new Error('Failed to load student orders');
+  }
+  return response.json();
+}
+
+function renderStudentsFromApi(data) {
+  const container = document.getElementById('students-container');
+  if (!container) return;
+
+  if (!data.success || !data.students || data.students.length === 0) {
+    container.innerHTML = `
+      <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-10 text-center">
+        <div class="bg-gray-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+          <i class="fas fa-box-open text-gray-400 text-2xl"></i>
+        </div>
+        <h3 class="text-xl font-semibold text-gray-900 mb-2">No matching students found</h3>
+        <p class="text-gray-600">Try searching by a different name or IC number.</p>
+      </div>
+    `;
+    return;
+  }
+
+  const parts = [];
+  data.students.forEach(entry => {
+    const s = entry.student || {};
+    const items = entry.items || [];
+    const wallet = Number(entry.wallet_balance || 0).toFixed(2);
+    const totalPaid = Number(entry.total_paid || 0).toFixed(2);
+
+    const itemsHtml = items.length
+      ? items.map(item => {
+          const name = item.name || 'Item';
+          const qty = item.quantity || 0;
+          const price = Number(item.price || 0).toFixed(2);
+          const lineTotal = Number(item.total_price || 0).toFixed(2);
+          return `
+            <div class="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
+              <div>
+                <div class="font-medium text-gray-900">${name}</div>
+                <div class="text-sm text-gray-600">
+                  ${qty} × RM ${price}
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="font-semibold text-emerald-700">
+                  RM ${lineTotal}
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('')
+      : '';
+
+    const paidSummary = items.length
+      ? `
+        <div>
+          Paid Orders Total:
+          <span class="font-bold text-emerald-700">RM ${totalPaid}</span>
+        </div>
+      `
+      : (currentSearchTerm
+        ? `<div>No paid orders found for this student.</div>`
+        : '');
+
+    parts.push(`
+      <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-5 md:p-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-gray-100 pb-4 mb-4">
+          <div class="flex items-center gap-4">
+            <div class="bg-gradient-to-r from-teal-400 to-emerald-400 rounded-full w-12 h-12 flex items-center justify-center">
+              <i class="fas fa-user text-white"></i>
+            </div>
+            <div>
+              <div class="font-bold text-lg text-gray-900">${s.name || ''}</div>
+              <div class="text-sm text-gray-600">IC: ${s.ic_number || ''}</div>
+            </div>
+          </div>
+          <div class="text-right space-y-1 text-sm text-gray-600">
+            <div>
+              Wallet Balance:
+              <span class="font-bold text-indigo-700">RM ${wallet}</span>
+            </div>
+            ${paidSummary}
+          </div>
+        </div>
+        ${items.length ? `<div class="space-y-3 mb-4">${itemsHtml}</div>` : ''}
+        <div class="mt-2 flex justify-end">
+          <a
+            href="/staff/student-orders/${s.id}"
+            class="inline-flex items-center bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg"
+          >
+            <i class="fas fa-arrow-right mr-2"></i>
+            Open Counter Order
+          </a>
+        </div>
+      </div>
+    `);
+  });
+
+  container.innerHTML = `<div class="space-y-4">${parts.join('')}</div>`;
+}
+
+async function refreshStudentsDebounced(newSearchTerm) {
+  currentSearchTerm = newSearchTerm || '';
+  try {
+    const data = await fetchStudentSummaries(currentSearchTerm);
+    renderStudentsFromApi(data);
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  const form = document.getElementById('student-search-form');
+  const input = form ? form.querySelector('input[name="search"]') : null;
+  if (form && input) {
+    form.addEventListener('submit', function (evt) {
+      evt.preventDefault();
+      // handled by JS
+    });
+    input.addEventListener('input', function () {
+      if (studentSearchTimeout) {
+        clearTimeout(studentSearchTimeout);
+      }
+      const value = input.value || '';
+      studentSearchTimeout = setTimeout(() => {
+        refreshStudentsDebounced(value);
+      }, 300);
+    });
+    // initial load from API to ensure sync with latest data
+    currentSearchTerm = input.value || '';
+    refreshStudentsDebounced(currentSearchTerm);
+    // periodic auto-refresh for new orders
+    autoRefreshIntervalId = window.setInterval(() => {
+      refreshStudentsDebounced(currentSearchTerm);
+    }, 5000);
+  }
+});
+
+let studentScanner = null;
+let scannerActive = false;
+
+function startStudentScan() {
+  const container = document.getElementById('scanner-container');
+  const form = document.getElementById('student-search-form');
+  const input = form ? form.querySelector('input[name="search"]') : null;
+  if (!container || !form || !input) return;
+
+  if (scannerActive && studentScanner) {
+    studentScanner.stop().then(() => {
+      studentScanner.clear();
+      container.classList.add('hidden');
+      scannerActive = false;
+    });
+    return;
+  }
+
+  container.classList.remove('hidden');
+
+  const html5QrCode = new Html5Qrcode('scanner-container');
+  studentScanner = html5QrCode;
+  scannerActive = true;
+
+  const config = {
+    fps: 10,
+    qrbox: 250
+  };
+
+  html5QrCode.start(
+    { facingMode: 'environment' },
+    config,
+    (decodedText) => {
+      input.value = decodedText;
+      currentSearchTerm = decodedText;
+      refreshStudentsDebounced(decodedText);
+      html5QrCode.stop().then(() => {
+        html5QrCode.clear();
+        container.classList.add('hidden');
+        scannerActive = false;
+      });
+    },
+    () => {
+      // ignore scan errors
+    }
+  ).catch((err) => {
+    console.error('Error starting scanner:', err);
+  });
+}
+</script>
+{% endblock %}

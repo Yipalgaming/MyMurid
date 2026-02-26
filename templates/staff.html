@@ -89,21 +89,6 @@
         <i class="fas fa-tools text-indigo-600 mr-2"></i>Staff Tools
       </h2>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <!-- Financial Management -->
-        <div class="bg-white/70 rounded-xl p-6 border border-white/30">
-          <div class="flex items-center mb-4">
-            <div class="bg-green-100 rounded-full w-12 h-12 flex items-center justify-center mr-4">
-              <i class="fas fa-money-bill-wave text-green-600 text-xl"></i>
-            </div>
-            <h3 class="text-lg font-semibold text-gray-900">Financial</h3>
-          </div>
-          <div class="space-y-3">
-            <a href="{{ url_for('transactions') }}" class="block w-full bg-green-50 hover:bg-green-100 text-green-700 px-4 py-2 rounded-xl transition-colors">
-              <i class="fas fa-exchange-alt mr-2"></i>Transactions
-            </a>
-          </div>
-        </div>
-
         <!-- Order Management -->
         <div class="bg-white/70 rounded-xl p-6 border border-white/30">
           <div class="flex items-center mb-4">
@@ -115,6 +100,9 @@
           <div class="space-y-3">
             <a href="{{ url_for('paid_orders') }}" class="block w-full bg-purple-50 hover:bg-purple-100 text-purple-700 px-4 py-2 rounded-xl transition-colors">
               <i class="fas fa-receipt mr-2"></i>Paid Orders
+            </a>
+            <a href="{{ url_for('staff_student_orders') }}" class="block w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-4 py-2 rounded-xl transition-colors">
+              <i class="fas fa-user-graduate mr-2"></i>Student Pre-Orders & Pay
             </a>
           </div>
         </div>

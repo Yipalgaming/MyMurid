@@ -1247,6 +1247,192 @@ def staff_dashboard():
     else:
         return redirect(url_for('home'))
 
+
+def _get_staff_student_paid_summaries(search_query: str):
+    """Helper: return list of students with their paid-order summaries."""
+    # Base query: only students (exclude parents and other future roles)
+    students_query = StudentInfo.query
+    if search_query:
+        like_pattern = f"%{search_query}%"
+        students_query = students_query.filter(
+            db.or_(
+                StudentInfo.name.ilike(like_pattern),
+                StudentInfo.ic_number.ilike(like_pattern),
+            )
+        )
+
+    students = students_query.order_by(StudentInfo.name.asc()).all()
+
+    summaries = []
+    from collections import defaultdict
+
+    for student in students:
+        paid_orders = (
+            Order.query.filter_by(student_id=student.id, payment_status="paid")
+            .order_by(Order.order_time.desc())
+            .all()
+        )
+
+        grouped = defaultdict(
+            lambda: {"name": None, "quantity": 0, "price": 0.0, "total_price": 0.0}
+        )
+
+        for order in paid_orders:
+            menu_id = order.menu_item_id
+            item = order.item
+            if grouped[menu_id]["name"] is None and item is not None:
+                grouped[menu_id]["name"] = item.name
+                grouped[menu_id]["price"] = float(item.price or 0)
+            grouped[menu_id]["quantity"] += order.quantity or 0
+            grouped[menu_id]["total_price"] += float(order.total_price or 0)
+
+        paid_items = []
+        total_paid = 0.0
+        for data in grouped.values():
+            if not data["name"]:
+                continue
+            paid_items.append(data)
+            total_paid += data["total_price"]
+
+        summaries.append(
+            {
+                "student": student,
+                "cart_items": paid_items,
+                "total": total_paid,
+                "user_balance": float(student.balance or 0),
+            }
+        )
+
+    # On main view (no search), only show students who actually have paid orders
+    if not search_query:
+        summaries = [s for s in summaries if s["cart_items"]]
+
+    return summaries
+
+
+@app.route("/staff/student-orders", methods=["GET"])
+@login_required
+def staff_student_orders():
+    """Staff/admin HTML view: search students and view their paid orders."""
+    if current_user.role not in ["staff", "admin"]:
+        flash(ACCESS_DENIED, "error")
+        return redirect(url_for("student_dashboard"))
+
+    search_query = (request.args.get("search") or "").strip()
+    students_data = _get_staff_student_paid_summaries(search_query)
+
+    return render_template(
+        "staff_student_orders.html",
+        students_data=students_data,
+        search_query=search_query,
+    )
+
+
+@app.route("/api/staff/student-orders", methods=["GET"])
+@login_required
+def api_staff_student_orders():
+    """JSON API for staff_student_orders (used for live search/refresh)."""
+    if current_user.role not in ["staff", "admin"]:
+        return jsonify({"success": False, "error": "Unauthorized"}), 403
+
+    search_query = (request.args.get("search") or "").strip()
+    summaries = _get_staff_student_paid_summaries(search_query)
+
+    students = []
+    for entry in summaries:
+        student = entry["student"]
+        students.append(
+            {
+                "student": {
+                    "id": student.id,
+                    "name": student.name,
+                    "ic_number": student.ic_number,
+                },
+                "wallet_balance": entry["user_balance"],
+                "total_paid": entry["total"],
+                "items": entry["cart_items"],
+            }
+        )
+
+    return jsonify({"success": True, "students": students})
+
+
+@app.route("/staff/student-orders/<int:student_id>", methods=["GET", "POST"])
+@login_required
+def staff_student_orders_detail(student_id):
+    """Staff/admin screen to add orders for a student and pay on the spot."""
+    if current_user.role not in ["staff", "admin"]:
+        flash(ACCESS_DENIED, "error")
+        return redirect(url_for("student_dashboard"))
+
+    student = StudentInfo.query.get_or_404(student_id)
+
+    items, categories = get_menu_data()
+
+    if request.method == "POST":
+        # Build a temporary list of orders based on submitted quantities
+        cart_orders = []
+        for item in items:
+            field_name = f"qty_{item.id}"
+            qty_raw = (request.form.get(field_name) or "").strip()
+            if not qty_raw:
+                continue
+            try:
+                qty = int(qty_raw)
+            except ValueError:
+                continue
+            if qty <= 0:
+                continue
+
+            total_price = float(item.price or 0) * qty
+            order = Order(
+                student_id=student.id,
+                menu_item_id=item.id,
+                quantity=qty,
+                total_price=total_price,
+                payment_status="unpaid",
+            )
+            db.session.add(order)
+            cart_orders.append(order)
+
+        if not cart_orders:
+            flash("Please enter at least one item quantity to create an order.", "error")
+            return redirect(url_for("staff_student_orders_detail", student_id=student.id))
+
+        try:
+            total_amount = validate_payment_conditions(student, cart_orders)
+            process_payment_transaction(student, cart_orders, total_amount)
+            db.session.commit()
+
+            flash(
+                f"Payment of RM {total_amount:.2f} recorded for {student.name}.",
+                "success",
+            )
+            return redirect(url_for("staff_student_orders_detail", student_id=student.id))
+        except ValueError as e:
+            db.session.rollback()
+            flash(str(e), "error")
+        except Exception as e:
+            db.session.rollback()
+            app.logger.error(
+                f"Error processing staff payment for student {student.id}: {e}"
+            )
+            flash("Failed to process payment. Please try again.", "error")
+
+    # GET or failed POST: show student + menu to build a new order
+    try:
+        user_balance = float(student.balance) if student.balance is not None else 0.0
+    except (TypeError, ValueError, InvalidOperation):
+        user_balance = 0.0
+
+    return render_template(
+        "staff_student_orders_detail.html",
+        student=student,
+        items=items,
+        categories=categories,
+        user_balance=user_balance,
+    )
+
 def get_menu_data():
     """Get menu items and categories for order page"""
     items = MenuItem.query.filter_by(is_available=True).order_by(MenuItem.category, MenuItem.name).all()
