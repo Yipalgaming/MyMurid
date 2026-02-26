@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% block title %}Student Profile{% endblock %}
+{% block content %}
+<div class="min-h-screen w-full bg-gradient-to-br from-[#f1f4ff] via-[#f4edff] to-[#e8e6ff] py-10 px-4 flex items-center justify-center">
+  <div class="relative w-full max-w-[460px]">
+    <div class="absolute -inset-6 bg-gradient-to-br from-purple-200/60 via-blue-200/40 to-pink-200/60 blur-3xl rounded-[48px]"></div>
+    <div class="relative">
+      <div class="grid gap-8 lg:grid-cols-[1.1fr_1fr]">
+        <div class="relative bg-white rounded-[40px] shadow-[0_30px_70px_rgba(99,102,241,0.25)] overflow-hidden border border-white/70">
+          <!-- Header -->
+          <div class="relative bg-gradient-to-br from-[#7f64ff] via-[#6c5cff] to-[#f472b6] px-8 pt-10 pb-20 text-white">
+            <div class="flex items-start justify-between">
+              <div>
+                <p class="text-xs uppercase tracking-[0.4em] text-white/70">Student Account</p>
+                <h1 class="text-3xl font-black mt-3">{{ user.name }}</h1>
+                <p class="text-sm text-white/80 mt-1">ID #{{ user.id }}</p>
+              </div>
+              <div class="text-right">
+                <button id="copyIcBtn" class="inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 text-xs px-4 py-2 rounded-full transition">
+                  <i class="fas fa-copy text-sm"></i> Copy IC
+                </button>
+                <p class="text-[13px] text-white/70 mt-2">IC: <span id="icValue">{{ user.ic_number }}</span></p>
+              </div>
+            </div>
+
+            <div class="mt-8 grid grid-cols-3 gap-3 text-center">
+              <div class="bg-white/15 rounded-2xl py-4">
+                <p class="text-[11px] uppercase tracking-[0.3em] text-white/70">Balance</p>
+                <p class="text-2xl font-bold mt-1">RM {{ "%.2f"|format(user.balance or 0) }}</p>
+              </div>
+              <div class="bg-white/15 rounded-2xl py-4">
+                <p class="text-[11px] uppercase tracking-[0.3em] text-white/70">StarPoints</p>
+                <p class="text-2xl font-bold mt-1">{{ user.available_points or 0 }}</p>
+              </div>
+              <div class="bg-white/15 rounded-2xl py-4">
+                <p class="text-[11px] uppercase tracking-[0.3em] text-white/70">Status</p>
+                <p class="text-xl font-semibold mt-1">
+                  <span class="{% if user.frozen %}text-red-200{% else %}text-lime-200{% endif %}">
+                    {{ 'Frozen' if user.frozen else 'Active' }}
+                  </span>
+                </p>
+              </div>
+            </div>
+
+            <div class="mt-6 flex items-center gap-3">
+              <button id="toggleDetails" class="flex-1 bg-white text-[#6c5cff] font-semibold py-3 rounded-2xl shadow-lg shadow-black/20 hover:translate-y-0.5 transition">
+                View Account QR
+              </button>
+              <a href="{{ url_for('payment') }}" class="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center hover:bg-white/30 transition">
+                <i class="fas fa-credit-card text-xl"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Details Column -->
+        <div class="relative bg-white rounded-[32px] border border-white/70 shadow-[0_20px_60px_rgba(79,70,229,0.15)] p-6 lg:p-8 space-y-6">
+          <div id="qrPanel" class="hidden bg-gradient-to-br from-purple-50 to-indigo-50 rounded-3xl border border-purple-100 shadow-lg shadow-purple-200/40 p-6 text-center">
+            <p class="text-xs uppercase tracking-[0.3em] text-gray-500">Scan for quick info</p>
+            <div class="mt-4 bg-white rounded-3xl p-5">
+              <div id="qrCode" class="w-full flex justify-center"></div>
+            </div>
+            <p class="text-[13px] text-gray-500 mt-4">Share this with canteen staff to view your account instantly.</p>
+          </div>
+
+        <!-- Info Cards -->
+        <div class="bg-white rounded-3xl border border-gray-100 shadow-xl shadow-gray-200/60 p-6 space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs tracking-[0.4em] uppercase text-gray-400">IC Number</p>
+              <p class="text-lg font-semibold text-gray-900 mt-1">{{ user.ic_number }}</p>
+            </div>
+            <span class="inline-flex items-center gap-2 text-sm bg-gray-100 text-gray-600 px-4 py-2 rounded-full">
+              <i class="fas fa-id-card text-gray-500"></i> {{ user.role|capitalize }}
+            </span>
+          </div>
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs tracking-[0.4em] uppercase text-gray-400">Account Status</p>
+              <p class="text-lg font-semibold mt-1 {% if user.frozen %}text-red-600{% else %}text-emerald-600{% endif %}">
+                {{ 'Temporarily Frozen' if user.frozen else 'Active & Ready' }}
+              </p>
+            </div>
+            <span class="inline-flex items-center gap-2 text-sm {% if user.frozen %}bg-red-50 text-red-600{% else %}bg-emerald-50 text-emerald-600{% endif %} px-4 py-2 rounded-full">
+              <span class="w-2 h-2 rounded-full {% if user.frozen %}bg-red-500{% else %}bg-emerald-500{% endif %} animate-pulse"></span>
+              {% if user.frozen %}Frozen{% else %}Live{% endif %}
+            </span>
+          </div>
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs tracking-[0.4em] uppercase text-gray-400">Last Updated</p>
+              <p class="text-lg font-semibold text-gray-900 mt-1">
+                {{ (user.updated_at.strftime('%d %b %Y, %I:%M %p') if (user.updated_at is defined and user.updated_at) else "Just now") }}
+              </p>
+            </div>
+            <span class="text-sm text-gray-500">Local Time</span>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="space-y-4">
+          <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-3xl border border-purple-100 p-5">
+            <p class="text-xs tracking-[0.4em] uppercase text-purple-400">Quick Actions</p>
+            <div class="grid grid-cols-2 gap-4 mt-4">
+              <a href="{{ url_for('order') }}" class="group bg-white rounded-2xl border border-gray-100 p-4 flex flex-col items-start gap-1 hover:border-indigo-200 hover:shadow-lg transition">
+                <div class="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center mb-2">
+                  <i class="fas fa-utensils"></i>
+                </div>
+                <p class="font-semibold text-gray-900">Order Food</p>
+                <p class="text-xs text-gray-500">Browse canteen menu</p>
+              </a>
+              <a href="{{ url_for('payment') }}" class="group bg-white rounded-2xl border border-gray-100 p-4 flex flex-col items-start gap-1 hover:border-indigo-200 hover:shadow-lg transition">
+                <div class="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mb-2">
+                  <i class="fas fa-wallet"></i>
+                </div>
+                <p class="font-semibold text-gray-900">Go to Payment</p>
+                <p class="text-xs text-gray-500">Pay or top-up instantly</p>
+              </a>
+              <a href="{{ url_for('my_orders') }}" class="group bg-white rounded-2xl border border-gray-100 p-4 flex flex-col items-start gap-1 hover:border-indigo-200 hover:shadow-lg transition">
+                <div class="w-10 h-10 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mb-2">
+                  <i class="fas fa-receipt"></i>
+                </div>
+                <p class="font-semibold text-gray-900">My Orders</p>
+                <p class="text-xs text-gray-500">Track purchase history</p>
+              </a>
+              <a href="{{ url_for('rewards_dashboard') }}" class="group bg-white rounded-2xl border border-gray-100 p-4 flex flex-col items-start gap-1 hover:border-indigo-200 hover:shadow-lg transition">
+                <div class="w-10 h-10 rounded-2xl bg-pink-100 text-pink-600 flex items-center justify-center mb-2">
+                  <i class="fas fa-trophy"></i>
+                </div>
+                <p class="font-semibold text-gray-900">Rewards</p>
+                <p class="text-xs text-gray-500">Redeem Rewards</p>
+              </a>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-3xl border border-gray-100 shadow-lg shadow-gray-200/50 p-5">
+            <div class="flex items-center justify-between mb-4">
+              <p class="text-xs tracking-[0.4em] uppercase text-gray-400">Support & Tools</p>
+              <a href="{{ url_for('feedback') }}" class="text-sm text-indigo-500 font-semibold hover:underline">Need Help?</a>
+            </div>
+            <div class="space-y-3">
+              <button onclick="window.location.href='{{ url_for('vote') }}'" class="w-full flex items-center justify-between bg-gray-50 hover:bg-gray-100 rounded-2xl py-3 px-4 transition">
+                <div class="flex items-center gap-3">
+                  <span class="w-10 h-10 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center">
+                    <i class="fas fa-vote-yea"></i>
+                  </span>
+                  <div class="text-left">
+                    <p class="font-semibold text-gray-900">Suggest Food</p>
+                    <p class="text-xs text-gray-500">Vote for new menu ideas</p>
+                  </div>
+                </div>
+                <i class="fas fa-chevron-right text-gray-400"></i>
+              </button>
+              <button onclick="window.location.href='{{ url_for('feedback') }}'" class="w-full flex items-center justify-between bg-gray-50 hover:bg-gray-100 rounded-2xl py-3 px-4 transition">
+                <div class="flex items-center gap-3">
+                  <span class="w-10 h-10 rounded-2xl bg-sky-100 text-sky-600 flex items-center justify-center">
+                    <i class="fas fa-comment-dots"></i>
+                  </span>
+                  <div class="text-left">
+                    <p class="font-semibold text-gray-900">Send Feedback</p>
+                    <p class="text-xs text-gray-500">Tell us how we can improve</p>
+                  </div>
+                </div>
+                <i class="fas fa-chevron-right text-gray-400"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha512-3Jd1rHVyH8ADnjT+hInxGXixpmKHEht6VbFjtP0Kk4vFza0YwOuk+qS0p8DWKkGL4tnDz0PpS9C0hKx0tz6Tsg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const copyBtn = document.getElementById('copyIcBtn');
+  const icValue = document.getElementById('icValue');
+  const toggleDetails = document.getElementById('toggleDetails');
+  const qrPanel = document.getElementById('qrPanel');
+
+  if (copyBtn && icValue) {
+    copyBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(icValue.textContent.trim());
+        copyBtn.innerHTML = '<i class="fas fa-check text-sm"></i> Copied!';
+        setTimeout(() => {
+          copyBtn.innerHTML = '<i class="fas fa-copy text-sm"></i> Copy IC';
+        }, 1500);
+      } catch (err) {
+        alert('Unable to copy IC at the moment.');
+      }
+    });
+  }
+
+  if (toggleDetails && qrPanel) {
+    const qrCodeElement = document.getElementById('qrCode');
+    let qrCodeGenerated = false;
+    
+    toggleDetails.addEventListener('click', () => {
+      const isHidden = qrPanel.classList.contains('hidden');
+      qrPanel.classList.toggle('hidden');
+      toggleDetails.textContent = qrPanel.classList.contains('hidden') ? 'View Account QR' : 'Hide Account QR';
+      
+      // Generate QR code only when panel is shown and not already generated
+      if (!isHidden && !qrCodeGenerated && window.QRCode && qrCodeElement) {
+        // Clear any existing QR code
+        qrCodeElement.innerHTML = '';
+        
+        // Generate new QR code
+        try {
+          new QRCode(qrCodeElement, {
+            text: `Name: {{ user.name }} | IC: {{ user.ic_number }} | Balance: RM {{ "%.2f"|format(user.balance or 0) }}`,
+            width: 200,
+            height: 200,
+            colorDark : "#1f2937",
+            colorLight : "#f9fafb",
+            correctLevel : QRCode.CorrectLevel.H
+          });
+          qrCodeGenerated = true;
+        } catch (error) {
+          console.error('Error generating QR code:', error);
+          qrCodeElement.innerHTML = '<p class="text-red-500 text-sm">Failed to generate QR code</p>';
+        }
+      }
+    });
+  }
+});
+</script>
+{% endblock %}
+
