@@ -333,7 +333,29 @@ def load_user(user_id):
 
 @app.context_processor
 def inject_user():
-    return {'user': current_user}
+    return {'user': current_user, 'demo_mode': session.get('demo_mode', False)}
+
+DEMO_STUDENT_IC = '1111'
+DEMO_STUDENT_PIN = '1234'
+
+
+def _login_demo_student():
+    """Log in the demo student account. Returns redirect response or None on failure."""
+    user = safe_get_student(DEMO_STUDENT_IC)
+    if not user or not user.check_pin(DEMO_STUDENT_PIN):
+        flash('Demo student account is not available. Please contact an administrator.', 'error')
+        return redirect(url_for('login'))
+    if user.frozen:
+        flash(ACCOUNT_FROZEN, 'error')
+        return redirect(url_for('login'))
+    if user.role != 'student':
+        flash('Demo account is not configured as a student.', 'error')
+        return redirect(url_for('login'))
+
+    login_user(user, remember=False)
+    session['user_type'] = 'student'
+    session['demo_mode'] = True
+    return redirect(url_for('student_dashboard'))
 
 @app.context_processor
 def inject_csrf_token():
@@ -370,6 +392,17 @@ def rate_limit_exceeded():
     """Show rate limit exceeded page"""
     return render_template('rate_limit.html')
 
+
+@app.route('/demo')
+@add_security_headers
+def demo():
+    """Auto-login demo student and open the student portal."""
+    if current_user.is_authenticated:
+        if getattr(current_user, 'role', None) == 'student':
+            session['demo_mode'] = True
+            return redirect(url_for('student_dashboard'))
+        return redirect(url_for('home'))
+    return _login_demo_student()
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -443,6 +476,7 @@ def login():
             login_user(user, remember=False)
             # Store user type in session to help load_user function
             session['user_type'] = 'student'
+            session.pop('demo_mode', None)
             flash('Login successful!', 'success')
             
             # Clear rate limit on successful login
@@ -491,6 +525,7 @@ def logout():
         print(f"User {current_user.name} logging out")
     # Clear user type from session
     session.pop('user_type', None)
+    session.pop('demo_mode', None)
     logout_user()
     flash('Logged out successfully!', 'success')
     return redirect(url_for('login'))

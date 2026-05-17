@@ -15,7 +15,7 @@
 
   <!-- Header -->
   <div class="absolute top-16 md:top-0 w-full bg-white shadow-lg border-b z-10">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6">
+    <div class="w-full px-4 sm:px-6 lg:px-8 py-4 md:py-6">
       <div class="flex items-center justify-between">
         <div>
           <h1 class="text-2xl md:text-3xl font-bold bg-gradient-to-r from-teal-600 to-emerald-600 bg-clip-text text-transparent">
@@ -36,7 +36,7 @@
 
   <!-- Content Area -->
   <div class="absolute top-52 md:top-28 left-0 right-0 bottom-0 overflow-y-auto pb-20">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-10">
+    <div class="w-full px-3 sm:px-6 lg:px-8 pt-4 pb-10">
       <!-- Student summary -->
       <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-5 md:p-6 mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div class="flex items-center gap-4">
@@ -63,10 +63,10 @@
       <form method="POST" action="{{ url_for('staff_student_orders_detail', student_id=student.id) }}" id="counter-order-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
 
-        <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-5 md:p-6">
-          <div class="flex flex-col lg:flex-row lg:items-start lg:space-x-6 space-y-6 lg:space-y-0">
-            <!-- Menu list -->
-            <div class="flex-1">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
+          <!-- Menu list (main card) -->
+          <div class="lg:col-span-8 xl:col-span-9 min-w-0">
+            <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-5 md:p-6">
               <div class="flex items-center justify-between mb-4">
                 <h2 class="text-xl font-semibold text-gray-900 flex items-center">
                   <i class="fas fa-utensils text-teal-600 mr-2"></i>
@@ -79,9 +79,9 @@
               </div>
 
               {% if items %}
-              <div class="space-y-4">
+              <div class="space-y-3 sm:space-y-4">
                 {% for item in items %}
-                <div class="w-full bg-white rounded-2xl shadow-lg border border-gray-200 p-4 flex flex-col justify-between">
+                <div class="w-full bg-white rounded-2xl shadow-lg border border-gray-200 p-4 flex flex-col justify-between overflow-hidden">
                   <div>
                     <div class="flex items-center justify-between mb-1">
                       <h3 class="font-semibold text-gray-900 text-sm md:text-base">{{ item.name }}</h3>
@@ -99,7 +99,9 @@
                       <button
                         type="button"
                         class="w-8 h-8 flex items-center justify-center rounded-full bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
-                        onclick="changeItemQuantity(event, {{ item.id }}, -1)"
+                        data-qty-btn="1"
+                        data-item-id="{{ item.id }}"
+                        data-delta="-1"
                       >
                         <i class="fas fa-minus text-xs"></i>
                       </button>
@@ -107,7 +109,9 @@
                       <button
                         type="button"
                         class="w-8 h-8 flex items-center justify-center rounded-full bg-emerald-500 text-white hover:bg-emerald-600"
-                        onclick="changeItemQuantity(event, {{ item.id }}, 1)"
+                        data-qty-btn="1"
+                        data-item-id="{{ item.id }}"
+                        data-delta="1"
                       >
                         <i class="fas fa-plus text-xs"></i>
                       </button>
@@ -128,15 +132,17 @@
               <p class="text-sm text-gray-500">No available menu items.</p>
               {% endif %}
             </div>
+          </div>
 
-            <!-- Order summary -->
-            <div class="w-full lg:w-80 bg-gray-50 rounded-xl border border-gray-200 p-4 flex flex-col justify-between">
-              <div>
+          <!-- Order summary (sticky card on desktop) -->
+          <div class="lg:col-span-4 xl:col-span-3 min-w-0">
+            <div class="bg-gray-50 rounded-2xl border border-gray-200 p-4 shadow-lg lg:sticky lg:top-32 max-h-[calc(100vh-9rem)] flex flex-col">
+              <div class="flex-1 min-h-0">
                 <h3 class="text-lg font-semibold text-gray-900 mb-3 flex items-center">
                   <i class="fas fa-clipboard-list text-teal-600 mr-2"></i>
                   Current Order
                 </h3>
-                <div id="order-summary-items" class="space-y-2 max-h-64 overflow-y-auto text-sm text-gray-700">
+                <div id="order-summary-items" class="space-y-2 overflow-y-auto text-sm text-gray-700 pr-1">
                   <p class="text-gray-500 text-sm">No items selected yet.</p>
                 </div>
               </div>
@@ -227,6 +233,16 @@ function changeItemQuantity(event, itemId, delta) {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
+  // Attach quantity button handlers
+  document.querySelectorAll('[data-qty-btn="1"]').forEach(function (btn) {
+    btn.addEventListener('click', function (evt) {
+      const itemId = this.getAttribute('data-item-id');
+      const deltaRaw = this.getAttribute('data-delta') || '0';
+      const delta = Number.parseInt(deltaRaw, 10) || 0;
+      changeItemQuantity(evt, itemId, delta);
+    });
+  });
+
   updateEstimatedTotal();
 });
 </script>
