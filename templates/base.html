@@ -375,7 +375,6 @@
           {% endif %}
         </nav>
         
-        {% if not demo_mode %}
         <!-- Logout Button - Fixed at Bottom -->
         <div class="flex-shrink-0 p-6 border-t border-gray-200">
           <a href="{{ url_for('logout') }}" class="nav-item-modern text-red-600 hover:bg-red-500 hover:text-white">
@@ -383,7 +382,6 @@
             <span>Logout</span>
           </a>
         </div>
-        {% endif %}
       </div>
     </div>
   {% endif %}
